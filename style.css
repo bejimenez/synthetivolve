@@ -44,10 +44,25 @@ header p {
     margin: 0;
 }
 
-/* 2. Dashboard Styles */
+/*
+================================
+2. UTILITY CLASSES (THE FIX IS HERE)
+================================
+*/
+.hidden {
+    display: none !important;
+}
+
+
+/*
+================================
+3. DASHBOARD & NAVIGATION STYLES
+================================
+*/
 .dashboard-container {
     width: 100%;
     max-width: 960px;
+    margin: 0 auto;
 }
 
 .dashboard-grid {
@@ -73,33 +88,13 @@ header p {
     margin-bottom: 20px;
 }
 
-.stats-container {
-    display: flex;
-    justify-content: space-around;
-    text-align: center;
-}
-
-.stat-item .stat-label {
-    display: block;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    margin-bottom: 5px;
-}
-
-.stat-item .stat-value {
-    display: block;
-    color: var(--text-primary);
-    font-size: 1.8rem;
-    font-weight: 700;
-}
-
-.nav-buttons, .log-actions {
+.nav-buttons {
     display: flex;
     flex-direction: column;
     gap: 15px;
 }
 
-.nav-button, .log-button {
+.nav-button {
     text-decoration: none;
     text-align: center;
     padding: 12px;
@@ -111,7 +106,7 @@ header p {
     cursor: pointer;
 }
 
-.nav-button:hover, .log-button:hover {
+.nav-button:hover {
     border-color: var(--primary-glow);
     color: var(--primary-glow);
 }
@@ -121,32 +116,6 @@ header p {
     background-color: #222;
     cursor: not-allowed;
 }
-.nav-button.disabled:hover {
-    border-color: var(--border-color);
-    color: var(--text-secondary);
-}
-
-.chart-placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 150px;
-    border: 2px dashed var(--border-color);
-    border-radius: 6px;
-    color: var(--text-secondary);
-}
-
-/* 3. Calculator & Form Styles */
-.container {
-    background-color: var(--surface-dark);
-    padding: 30px 40px;
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-    width: 100%;
-    max-width: 600px;
-    margin: 20px auto; /* Center the calculator on its page */
-}
 
 .back-link {
     color: var(--primary-glow);
@@ -154,88 +123,13 @@ header p {
     display: inline-block;
     margin-bottom: 25px;
 }
-.back-link:hover {
-    text-decoration: underline;
-}
 
-.form-group {
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
 
-.form-group label {
-    flex-basis: 120px;
-    flex-shrink: 0;
-    font-weight: 700;
-    color: var(--text-primary);
-    text-align: right;
-}
-
-input[type="number"], select {
-    flex-grow: 1;
-    padding: 12px;
-    background-color: var(--bg-dark);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    font-size: 1rem;
-    transition: border-color 0.3s, box-shadow 0.3s;
-}
-
-input:focus, select:focus {
-    outline: none;
-    border-color: var(--primary-glow);
-    box-shadow: 0 0 8px rgba(0, 242, 234, 0.5);
-}
-
-button[type="submit"] {
-    width: 100%;
-    padding: 15px;
-    margin-top: 10px;
-    background-color: var(--primary-glow);
-    color: var(--bg-dark);
-    border: none;
-    border-radius: 6px;
-    font-size: 1.1rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-button[type="submit"]:hover {
-    box-shadow: var(--glow-shadow);
-    transform: translateY(-2px);
-}
-
-#results-container {
-    margin-top: 30px;
-    padding: 20px;
-    background-color: #161616;
-    border-left: 4px solid var(--primary-glow);
-    border-radius: 8px;
-}
-
-#results-output strong {
-    color: var(--primary-glow);
-    font-size: 1.2rem;
-}
-
-.warning {
-    background-color: rgba(255, 0, 255, 0.05);
-    border-left: 4px solid var(--secondary-accent);
-    padding: 12px;
-    margin-top: 15px;
-    border-radius: 4px;
-}
-.warning strong {
-    color: var(--secondary-accent) !important;
-}
-
-/* --- Nutrition Log Specific Styles --- */
+/*
+================================
+4. NUTRITION LOGGER STYLES
+================================
+*/
 .nutrition-container {
     width: 100%;
     max-width: 800px;
@@ -257,144 +151,32 @@ button[type="submit"]:hover {
     align-items: center;
     margin-bottom: 20px;
 }
-.date-navigator h2 {
-    margin: 0;
-    color: var(--primary-glow);
-}
-.date-navigator button {
-    background: none;
-    border: none;
-    color: var(--text-primary);
-    font-size: 1.2rem;
-    cursor: pointer;
-}
+.date-navigator h2 { margin: 0; color: var(--primary-glow); }
+.date-navigator button { background: none; border: none; color: var(--text-primary); font-size: 1.2rem; cursor: pointer; }
 
-.totals-bar {
-    display: flex;
-    justify-content: space-around;
-    text-align: center;
-}
+.totals-bar { display: flex; justify-content: space-around; text-align: center; }
+.total-item span { display: block; font-size: 0.8rem; color: var(--text-secondary); }
+.total-item strong { font-size: 1.2rem; font-weight: 700; color: var(--primary-glow); }
 
-.total-item span {
-    display: block;
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-}
-.total-item strong {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: var(--primary-glow);
-}
+#timeline-container { padding: 20px 0; }
 
-/* Timeline Styles */
-#timeline-container {
-    padding: 20px 0;
-}
+.time-block { margin-bottom: 25px; }
 
-.time-block {
-    margin-bottom: 25px;
-}
+.time-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 15px; }
+.time-header h3 { margin: 0; color: var(--text-secondary); font-weight: 400; }
 
-.time-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 8px;
-    margin-bottom: 15px;
-}
-.time-header h3 {
-    margin: 0;
-    color: var(--text-secondary);
-    font-weight: 400;
-}
-.add-food-btn-sm {
-    background: none;
-    border: 1px solid var(--border-color);
-    color: var(--text-secondary);
-    border-radius: 50%;
-    width: 28px;
-    height: 28px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-.add-food-btn-sm:hover {
-    color: var(--primary-glow);
-    border-color: var(--primary-glow);
-}
+.food-list { display: flex; flex-direction: column; gap: 10px; }
+.food-item { background-color: var(--surface-dark); padding: 10px 15px; border-left: 3px solid var(--primary-glow); border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
 
-.food-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-/* You'll need a style for the actual food items inside the list */
-.food-item {
-    background-color: var(--surface-dark);
-    padding: 10px 15px;
-    border-left: 3px solid var(--primary-glow);
-    border-radius: 4px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+#fab-add-food { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 50%; background-color: var(--primary-glow); color: var(--bg-dark); border: none; font-size: 1.8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0, 242, 234, 0.4); transition: all 0.3s ease; z-index: 20; }
+#fab-add-food:hover { transform: scale(1.1); box-shadow: var(--glow-shadow); }
 
 
-/* Floating Action Button */
-#fab-add-food {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background-color: var(--primary-glow);
-    color: var(--bg-dark);
-    border: none;
-    font-size: 1.8rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 15px rgba(0, 242, 234, 0.4);
-    transition: all 0.3s ease;
-    z-index: 20;
-}
-#fab-add-food:hover {
-    transform: scale(1.1);
-    box-shadow: var(--glow-shadow);
-}
-
-/* Paste Bar */
-#paste-bar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background-color: #2a2a2a;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 15px;
-    padding: 15px;
-    z-index: 20;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
-}
-#paste-bar button {
-    /* Basic button styling */
-    background-color: var(--primary-glow);
-    color: var(--bg-dark);
-    border: none;
-    padding: 10px 15px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-#paste-bar button:hover {
-    background-color: var(--primary-glow-dark);
-}
-
-/* --- Modal Styles --- */
+/*
+================================
+5. MODAL & FORM STYLES (Used by multiple pages)
+================================
+*/
 .modal {
     position: fixed;
     z-index: 100;
@@ -429,6 +211,58 @@ button[type="submit"]:hover {
     cursor: pointer;
 }
 
+.form-group {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.form-group label {
+    flex-basis: 120px;
+    flex-shrink: 0;
+    font-weight: 400;
+    color: var(--text-secondary);
+    text-align: right;
+}
+
+input[type="number"], input[type="text"], input[type="search"], select {
+    flex-grow: 1;
+    padding: 12px;
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--primary-glow);
+    box-shadow: 0 0 8px rgba(0, 242, 234, 0.5);
+}
+
+button[type="submit"], .log-button {
+    width: 100%;
+    padding: 15px;
+    margin-top: 10px;
+    background-color: var(--primary-glow);
+    color: var(--bg-dark);
+    border: none;
+    border-radius: 6px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+button[type="submit"]:hover, .log-button:hover {
+    box-shadow: var(--glow-shadow);
+    transform: translateY(-2px);
+}
+
 #food-search-results {
     list-style: none;
     padding: 0;
@@ -444,17 +278,4 @@ button[type="submit"]:hover {
 #food-search-results li:hover {
     background-color: #2a2a2a;
     color: var(--primary-glow);
-}
-
-/* 4. Responsive Design */
-@media (max-width: 600px) {
-    .form-group {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 8px;
-    }
-    .form-group label {
-        flex-basis: auto;
-        text-align: left;
-    }
 }
