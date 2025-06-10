@@ -123,6 +123,14 @@ button[type="submit"]:hover {
     font-size: 1.2rem;
 }
 
+.warning {
+    background-color: #fdf3e6;
+    border-left: 4px solid #f39c12;
+    padding: 10px;
+    margin-top: 15px;
+    border-radius: 4px;
+}
+
 /* Utility Classes */
 .hidden {
     display: none !important;

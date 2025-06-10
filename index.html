@@ -70,7 +70,11 @@
                 </div>
                 
                 <div id="rate-group" class="form-group hidden">
-                    <label for="rate">Rate (per week):</label>
+                    <label for="rate">Rate:</label>
+                    <select id="rate-type">
+                        <option value="fixed">Fixed Amount/week</option>
+                        <option value="percentage">% of Bodyweight/week</option>
+                    </select>
                     <input type="number" id="rate" value="0.5" step="0.1">
                     <span id="rate-unit">kg</span>
                 </div>
