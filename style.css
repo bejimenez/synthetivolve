@@ -1,0 +1,147 @@
+/* Basic Reset & Font */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f4f7f6;
+    color: #333;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.container {
+    background-color: #ffffff;
+    padding: 30px 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 600px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 20px;
+}
+
+header h1 {
+    color: #2c3e50;
+    margin: 0;
+}
+
+header p {
+    color: #7f8c8d;
+    font-weight: 300;
+}
+
+/* Form Styling */
+.form-group {
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.form-group label {
+    flex-basis: 150px;
+    font-weight: 700;
+    color: #34495e;
+}
+
+.form-group .radio-group {
+    display: flex;
+    gap: 20px;
+}
+
+input[type="number"], select {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+}
+
+#weight-unit, #height-unit {
+    flex-grow: 0;
+    margin-left: 10px;
+}
+
+#height-in {
+    margin-left: 10px;
+    width: 60px;
+}
+
+button[type="submit"] {
+    width: 100%;
+    padding: 15px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button[type="submit"]:hover {
+    background-color: #2980b9;
+}
+
+/* Results Styling */
+#results-container {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #eaf5ff;
+    border: 1px solid #aed6f1;
+    border-radius: 8px;
+}
+
+#results-container h2 {
+    text-align: center;
+    margin-top: 0;
+    color: #2c3e50;
+}
+
+#results-output p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    border-bottom: 1px dashed #ccc;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+}
+
+#results-output p:last-child {
+    border-bottom: none;
+}
+
+#results-output strong {
+    color: #2980b9;
+    font-size: 1.2rem;
+}
+
+/* Utility Classes */
+.hidden {
+    display: none !important;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    .form-group {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .form-group label {
+        margin-bottom: 8px;
+    }
+    input, select, button {
+        width: 100%;
+    }
+    #weight-unit, #height-unit, #height-in {
+        margin-left: 0;
+        margin-top: 5px;
+    }
+}
