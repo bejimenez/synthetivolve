@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synthetivolve - Calorie Calculator</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel=""preconnect" href="https://fonts.googleapis.com">
+    <link rel=""preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Dashboard</a>
+        <header>
+            <h1>Calorie Calculator</h1>
+            <p>Set your goal and calculate initial targets.</p>
+        </header>
+
+        <main>
+            <form id="calorie-form">
+                <div class="form-group">
+                    <label for="age">Age:</label>
+                    <input type="number" id="age" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="weight">Weight:</label>
+                    <input type="number" id="weight" required>
+                    <select id="weight-unit">
+                        <option value="kg">kg</option>
+                        <option value="lbs" selected>lbs</option> <!-- Changed default to lbs -->
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="activity-level">Activity Level:</label>
+                    <select id="activity-level">
+                        <option value="1.2">Sedentary (little or no exercise)</option>
+                        <option value="1.375">Lightly Active (light exercise/sports 1-3 days/week)</option>
+                        <option value="1.55">Moderately Active (moderate exercise/sports 3-5 days/week)</option>
+                        <option value="1.725">Very Active (hard exercise/sports 6-7 days a week)</option>
+                        <option value="1.9">Extra Active (very hard exercise/sports & physical job)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="goal">Your Goal:</label>
+                    <select id="goal">
+                        <option value="lose">Lose Weight</option>
+                        <option value="maintain" selected>Maintain Weight</option>
+                        <option value="gain">Gain Weight</option>
+                    </select>
+                </div>
+                
+                <div id="rate-group" class="form-group hidden">
+                    <label for="rate">Rate:</label>
+                    <select id="rate-type">
+                        <option value="fixed">Fixed Amount/week</option>
+                        <option value="percentage">% of Bodyweight/week</option>
+                    </select>
+                    <input type="number" id="rate" value="1.0" step="0.1"> <!-- Changed default to 1.0 lbs -->
+                    <span id="rate-unit">lbs</span>
+                </div>
+
+                <button type="submit">Calculate</button>
+            </form>
+
+            <div id="results-container" class="hidden">
+                <h2>Your Recommendations</h2>
+                <div id="results-output"></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/calculator.js"></script>
+</body>
+</html>

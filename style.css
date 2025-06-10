@@ -2,12 +2,12 @@
 
 /* 1. Root Variables & Global Styles */
 :root {
-    --bg-dark: #121212; /* Base background - very dark */
-    --surface-dark: #1e1e1e; /* Card/container background */
-    --primary-glow: #00f2ea; /* Neon Cyan/Teal */
-    --secondary-accent: #ff00ff; /* Neon Magenta */
-    --text-primary: #e0e0e0; /* Main text - light gray, not pure white */
-    --text-secondary: #a0a0a0; /* Subdued text */
+    --bg-dark: #121212;
+    --surface-dark: #1e1e1e;
+    --primary-glow: #00f2ea;
+    --secondary-accent: #ff00ff;
+    --text-primary: #e0e0e0;
+    --text-secondary: #a0a0a0;
     --border-color: #333;
     --glow-shadow: 0 0 5px var(--primary-glow), 0 0 10px var(--primary-glow);
 }
@@ -18,23 +18,8 @@ body {
     color: var(--text-primary);
     margin: 0;
     padding: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-}
-
-/* 2. Main Container & Header */
-.container {
-    background-color: var(--surface-dark);
-    padding: 30px 40px;
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-    width: 100%;
-    max-width: 600px;
 }
 
 header {
@@ -59,45 +44,137 @@ header p {
     margin: 0;
 }
 
-/* 3. Form Styling (with layout fixes) */
+/* 2. Dashboard Styles */
+.dashboard-container {
+    width: 100%;
+    max-width: 960px;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.dashboard-card {
+    background-color: var(--surface-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 25px;
+}
+
+.dashboard-card h3 {
+    margin-top: 0;
+    color: var(--primary-glow);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.stats-container {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+}
+
+.stat-item .stat-label {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+
+.stat-item .stat-value {
+    display: block;
+    color: var(--text-primary);
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.nav-buttons, .log-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.nav-button, .log-button {
+    text-decoration: none;
+    text-align: center;
+    padding: 12px;
+    background-color: #2a2a2a;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.nav-button:hover, .log-button:hover {
+    border-color: var(--primary-glow);
+    color: var(--primary-glow);
+}
+
+.nav-button.disabled {
+    color: var(--text-secondary);
+    background-color: #222;
+    cursor: not-allowed;
+}
+.nav-button.disabled:hover {
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+}
+
+.chart-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 150px;
+    border: 2px dashed var(--border-color);
+    border-radius: 6px;
+    color: var(--text-secondary);
+}
+
+/* 3. Calculator & Form Styles */
+.container {
+    background-color: var(--surface-dark);
+    padding: 30px 40px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    width: 100%;
+    max-width: 600px;
+    margin: 20px auto; /* Center the calculator on its page */
+}
+
+.back-link {
+    color: var(--primary-glow);
+    text-decoration: none;
+    display: inline-block;
+    margin-bottom: 25px;
+}
+.back-link:hover {
+    text-decoration: underline;
+}
+
 .form-group {
     margin-bottom: 20px;
     display: flex;
     align-items: center;
-    gap: 15px; /* Consistent gap between label and input */
+    gap: 15px;
 }
 
 .form-group label {
-    flex-basis: 120px; /* Give labels a fixed width */
-    flex-shrink: 0; /* Prevent labels from shrinking */
+    flex-basis: 120px;
+    flex-shrink: 0;
     font-weight: 700;
     color: var(--text-primary);
-    text-align: right; /* Align text to the right for a clean edge */
+    text-align: right;
 }
-
-/* Fix for Radio Button alignment */
-.radio-group {
-    display: flex;
-    align-items: center;
-    gap: 25px; /* Space between Male and Female */
-}
-.radio-group label {
-    flex-basis: auto; /* Override the fixed basis */
-    display: flex; /* This allows aligning the radio circle and its text */
-    align-items: center;
-    gap: 8px; /* Space between radio circle and text */
-    text-align: left; /* Override the right-align */
-    cursor: pointer;
-}
-/* We don't need the text for the "Gender" label itself */
-.form-group > label:first-child:has(+ .radio-group) {
-    /* Hides the "Gender:" text but can be restored if you prefer */
-     /* display: none; */ 
-}
-
 
 input[type="number"], select {
-    flex-grow: 1; /* Allow inputs to fill remaining space */
+    flex-grow: 1;
     padding: 12px;
     background-color: var(--bg-dark);
     color: var(--text-primary);
@@ -111,14 +188,6 @@ input:focus, select:focus {
     outline: none;
     border-color: var(--primary-glow);
     box-shadow: 0 0 8px rgba(0, 242, 234, 0.5);
-}
-
-select {
-    appearance: none; /* Custom dropdown arrow */
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a0a0a0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 1rem center;
-    background-size: 1em;
 }
 
 button[type="submit"] {
@@ -142,28 +211,12 @@ button[type="submit"]:hover {
     transform: translateY(-2px);
 }
 
-/* 4. Results & Warning Styling */
 #results-container {
     margin-top: 30px;
     padding: 20px;
     background-color: #161616;
-    border: 1px solid var(--border-color);
     border-left: 4px solid var(--primary-glow);
     border-radius: 8px;
-}
-
-#results-container h2, #results-container h3, #results-container h4 {
-    color: var(--text-primary);
-}
-
-#results-output p {
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 10px;
-    margin-bottom: 10px;
-}
-
-#results-output p:last-child {
-    border-bottom: none;
 }
 
 #results-output strong {
@@ -171,7 +224,6 @@ button[type="submit"]:hover {
     font-size: 1.2rem;
 }
 
-/* Using magenta for the warning */
 .warning {
     background-color: rgba(255, 0, 255, 0.05);
     border-left: 4px solid var(--secondary-accent);
@@ -183,25 +235,15 @@ button[type="submit"]:hover {
     color: var(--secondary-accent) !important;
 }
 
-
-/* 5. Utility & Responsive Design */
-.hidden {
-    display: none !important;
-}
-
+/* 4. Responsive Design */
 @media (max-width: 600px) {
-    .container {
-        padding: 20px;
-    }
-
     .form-group {
-        flex-direction: column; /* Stack label and input vertically */
-        align-items: stretch; /* Make them full-width */
+        flex-direction: column;
+        align-items: stretch;
         gap: 8px;
     }
-
     .form-group label {
-        flex-basis: auto; /* Reset fixed width */
-        text-align: left; /* Align text to left on mobile */
+        flex-basis: auto;
+        text-align: left;
     }
 }
