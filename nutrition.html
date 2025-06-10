@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synthetivolve - Nutrition Log</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Link to an icon library like Font Awesome for the + symbols -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+</head>
+<body>
+    <div class="nutrition-container">
+        <!-- Main Header & Totals Bar -->
+        <header class="log-header">
+            <a href="index.html" class="back-link">← Dashboard</a>
+            <div class="date-navigator">
+                <button id="prev-day-btn"><i class="fas fa-chevron-left"></i></button>
+                <h2 id="current-date">Today</h2>
+                <button id="next-day-btn"><i class="fas fa-chevron-right"></i></button>
+            </div>
+            <div class="totals-bar">
+                <div class="total-item">
+                    <span>Calories</span>
+                    <strong id="total-calories">----</strong>
+                </div>
+                <div class="total-item">
+                    <span>Protein</span>
+                    <strong id="total-protein">---g</strong>
+                </div>
+                <div class="total-item">
+                    <span>Carbs</span>
+                    <strong id="total-carbs">---g</strong>
+                </div>
+                <div class="total-item">
+                    <span>Fat</span>
+                    <strong id="total-fat">---g</strong>
+                </div>
+            </div>
+        </header>
+
+        <!-- The main timeline where hourly blocks will be injected by JS -->
+        <main id="timeline-container">
+            <!-- 
+                This container will be populated by nutrition.js.
+                It will generate blocks like this for each hour:
+                
+                <div class="time-block" data-hour="8">
+                    <div class="time-header">
+                        <h3>8:00 AM</h3>
+                        <button class="add-food-btn-sm" title="Add food to this hour"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <div class="food-list">
+                         ... logged food items for this hour will go here ...
+                    </div>
+                </div>
+            -->
+        </main>
+
+        <!-- Floating Action Button to Add Food at Current Time -->
+        <button id="fab-add-food" title="Add food at current time">
+            <i class="fas fa-plus"></i>
+        </button>
+
+        <!-- Hidden Paste Bar -->
+        <div id="paste-bar" class="hidden">
+            <span id="paste-item-name">Item Copied!</span>
+            <button id="paste-to-now-btn">Paste to Now</button>
+            <button id="paste-to-today-btn">Paste to Today</button>
+            <button id="cancel-paste-btn"><i class="fas fa-times"></i></button>
+        </div>
+    </div>
+
+    <!-- Modals for adding/creating food would go here (same as before) -->
+    <!-- <div id="add-food-modal" class="modal hidden">...</div> -->
+    <!-- <div id="create-food-modal" class="modal hidden">...</div> -->
+
+    <script src="js/nutrition.js"></script>
+</body>
+</html>

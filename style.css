@@ -235,6 +235,165 @@ button[type="submit"]:hover {
     color: var(--secondary-accent) !important;
 }
 
+/* --- Nutrition Log Specific Styles --- */
+.nutrition-container {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.log-header {
+    background-color: var(--surface-dark);
+    padding: 15px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.date-navigator {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.date-navigator h2 {
+    margin: 0;
+    color: var(--primary-glow);
+}
+.date-navigator button {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+.totals-bar {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+}
+
+.total-item span {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+.total-item strong {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--primary-glow);
+}
+
+/* Timeline Styles */
+#timeline-container {
+    padding: 20px 0;
+}
+
+.time-block {
+    margin-bottom: 25px;
+}
+
+.time-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+    margin-bottom: 15px;
+}
+.time-header h3 {
+    margin: 0;
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+.add-food-btn-sm {
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.add-food-btn-sm:hover {
+    color: var(--primary-glow);
+    border-color: var(--primary-glow);
+}
+
+.food-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+/* You'll need a style for the actual food items inside the list */
+.food-item {
+    background-color: var(--surface-dark);
+    padding: 10px 15px;
+    border-left: 3px solid var(--primary-glow);
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+
+/* Floating Action Button */
+#fab-add-food {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: var(--primary-glow);
+    color: var(--bg-dark);
+    border: none;
+    font-size: 1.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0, 242, 234, 0.4);
+    transition: all 0.3s ease;
+    z-index: 20;
+}
+#fab-add-food:hover {
+    transform: scale(1.1);
+    box-shadow: var(--glow-shadow);
+}
+
+/* Paste Bar */
+#paste-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #2a2a2a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    padding: 15px;
+    z-index: 20;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
+}
+#paste-bar button {
+    /* Basic button styling */
+    background-color: var(--primary-glow);
+    color: var(--bg-dark);
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+#paste-bar button:hover {
+    background-color: var(--primary-glow-dark);
+}
+
 /* 4. Responsive Design */
 @media (max-width: 600px) {
     .form-group {
