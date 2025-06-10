@@ -1,0 +1,14 @@
+# --- Secrets ---
+# Ignore the file containing Supabase keys and other secrets
+garmin_sync/.env
+
+# --- Python ---
+# Ignore Python's cache and virtual environment folders
+__pycache__/
+*.pyc
+venv/
+*.venv/
+
+# --- OS-specific ---
+# Ignore macOS system files
+.DS_Store
