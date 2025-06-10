@@ -279,3 +279,33 @@ button[type="submit"]:hover, .log-button:hover {
     background-color: #2a2a2a;
     color: var(--primary-glow);
 }
+/* --- Modal Tab Styles --- */
+.modal-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.tab-btn.active {
+    color: var(--primary-glow);
+    border-bottom-color: var(--primary-glow);
+}
+
+.tab-content {
+    display: none; /* Hide all tab content by default */
+}
+
+.tab-content.active {
+    display: block; /* Show only the active tab content */
+}
