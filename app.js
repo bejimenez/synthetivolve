@@ -1,43 +1,41 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // --- DOM Element References ---
+  // --- DOM Element References (Simplified) ---
   const form = document.getElementById("calorie-form");
-  const heightUnitSelect = document.getElementById("height-unit");
-  const heightInInput = document.getElementById("height-in");
   const goalSelect = document.getElementById("goal");
   const rateGroup = document.getElementById("rate-group");
   const weightUnitSelect = document.getElementById("weight-unit");
   const rateUnitSpan = document.getElementById("rate-unit");
-  // **NEW**: Reference for the rate type dropdown
   const rateTypeSelect = document.getElementById("rate-type");
   const rateInput = document.getElementById("rate");
   const resultsContainer = document.getElementById("results-container");
   const resultsOutput = document.getElementById("results-output");
 
-  // --- Event Listeners ---
+  // --- Event Listeners (Simplified) ---
 
-  heightUnitSelect.addEventListener("change", () => {
-    heightInInput.classList.toggle("hidden", heightUnitSelect.value !== "ft");
-  });
-
+  // Show/hide the rate of loss/gain input based on goal
   goalSelect.addEventListener("change", () => {
     rateGroup.classList.toggle("hidden", goalSelect.value === "maintain");
   });
 
+  // Update the unit for the rate (kg/lbs) when weight unit changes
   weightUnitSelect.addEventListener("change", () => {
-    rateUnitSpan.textContent = weightUnitSelect.value;
-  });
-
-  // **NEW**: Change the rate unit/symbol when switching between fixed and percentage
-  rateTypeSelect.addEventListener("change", () => {
-    if (rateTypeSelect.value === "percentage") {
-      rateUnitSpan.textContent = "%";
-      rateInput.value = "0.75"; // A sensible default for percentage
-    } else {
+    if (rateTypeSelect.value === "fixed") {
       rateUnitSpan.textContent = weightUnitSelect.value;
-      rateInput.value = "0.5"; // A sensible default for fixed
     }
   });
 
+  // Change the rate unit/symbol when switching between fixed and percentage
+  rateTypeSelect.addEventListener("change", () => {
+    if (rateTypeSelect.value === "percentage") {
+      rateUnitSpan.textContent = "%";
+      rateInput.value = "0.7"; // A sensible default for percentage
+    } else {
+      rateUnitSpan.textContent = weightUnitSelect.value;
+      rateInput.value = "1.0"; // A sensible default for fixed lbs/kg
+    }
+  });
+
+  // Handle form submission
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     calculateAndDisplayResults();
@@ -46,70 +44,62 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Calculation Logic ---
 
   function calculateAndDisplayResults() {
-    // 1. Get User Inputs
-    const sex = document.querySelector('input[name="sex"]:checked').value;
+    // 1. Get User Inputs & Hardcoded Values
+
+    // **MODIFIED**: Hardcoded values for gender and height
+    const gender = "female";
+    const heightInCm = 160.02; // 63 inches is 160.02 cm
+
     const age = parseInt(document.getElementById("age").value);
     let weightInput = parseFloat(document.getElementById("weight").value);
-    let height = parseFloat(document.getElementById("height").value);
     const weightUnit = document.getElementById("weight-unit").value;
-    const heightUnit = document.getElementById("height-unit").value;
     const activityLevel = parseFloat(
       document.getElementById("activity-level").value
     );
     const goal = document.getElementById("goal").value;
     const rate = parseFloat(document.getElementById("rate").value);
-    // **NEW**: Get the selected rate type
     const rateType = document.getElementById("rate-type").value;
 
-    if (isNaN(age) || isNaN(weightInput) || isNaN(height)) {
-      alert("Please fill in all required fields with valid numbers.");
+    // 2. Input Validation (Simplified)
+    if (isNaN(age) || isNaN(weightInput)) {
+      alert("Please fill in Age and Weight with valid numbers.");
       return;
     }
 
-    // 2. Unit Conversion to Metric (kg, cm) & store both units
+    // 3. Unit Conversion for Weight
     let weightInKg = weightInput;
     let weightInLbs = weightInput * 2.20462;
     if (weightUnit === "lbs") {
       weightInKg = weightInput * 0.453592;
-      weightInLbs = weightInput; // It was already in lbs
+      weightInLbs = weightInput;
     }
 
-    if (heightUnit === "ft") {
-      const inches =
-        parseFloat(document.getElementById("height-in").value) || 0;
-      height = (height * 12 + inches) * 2.54;
-    }
-
-    // 3. Calculate BMR (Mifflin-St Jeor)
+    // 4. Calculate BMR (Mifflin-St Jeor)
+    // **MODIFIED**: Now directly uses the hardcoded 'gender' and 'heightInCm' variables
     let bmr;
-    if (sex === "male") {
-      bmr = 10 * weightInKg + 6.25 * height - 5 * age + 5;
+    if (gender === "male") {
+      // Kept logic in case you ever want to switch back
+      bmr = 10 * weightInKg + 6.25 * heightInCm - 5 * age + 5;
     } else {
-      bmr = 10 * weightInKg + 6.25 * height - 5 * age - 161;
+      // female
+      bmr = 10 * weightInKg + 6.25 * heightInCm - 5 * age - 161;
     }
 
-    // 4. Calculate TDEE
+    // 5. Calculate TDEE
     const tdee = bmr * activityLevel;
 
-    // 5. Adjust Calories Based on Goal
+    // 6. Adjust Calories Based on Goal
     const caloriesPerKgFat = 7700;
     let weeklyCaloricAdjustment = 0;
 
-    // **NEW**: Logic to handle both fixed and percentage-based rates
     if (goal === "lose" || goal === "gain") {
       let weeklyWeightChangeInKg = 0;
-
       if (rateType === "percentage") {
-        // Calculate the weight change based on a percentage of total body weight
         weeklyWeightChangeInKg = weightInKg * (rate / 100);
       } else {
-        // 'fixed'
-        // Use the fixed rate, converting to kg if necessary
         weeklyWeightChangeInKg = weightUnit === "lbs" ? rate * 0.453592 : rate;
       }
-
       weeklyCaloricAdjustment = caloriesPerKgFat * weeklyWeightChangeInKg;
-
       if (goal === "lose") {
         weeklyCaloricAdjustment = -weeklyCaloricAdjustment;
       }
@@ -118,30 +108,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const dailyCaloricAdjustment = weeklyCaloricAdjustment / 7;
     let targetCalories = tdee + dailyCaloricAdjustment;
 
-    // **NEW**: Implement the 1100 calorie safety floor
+    // 7. Implement the 1100 calorie safety floor
     let calorieFloorApplied = false;
     if (targetCalories < 1100) {
       targetCalories = 1100;
       calorieFloorApplied = true;
     }
 
-    // 6. **NEW**: Calculate Macronutrients based on your personalized rules
-    // Rule 1: Protein is 1g per lb of body weight
+    // 8. Calculate Personalized Macronutrients
     const proteinGrams = Math.round(weightInLbs * 1);
-
-    // Rule 2: Fat is fixed at a healthy level (e.g., 55g)
     const fatGrams = 55;
-
-    // Rule 3: Carbohydrates are the remaining calories
     const caloriesFromProtein = proteinGrams * 4;
     const caloriesFromFat = fatGrams * 9;
     const remainingCaloriesForCarbs =
       targetCalories - caloriesFromProtein - caloriesFromFat;
-
-    // Ensure carbs don't go below zero if protein/fat needs are very high
     const carbsGrams = Math.max(0, Math.round(remainingCaloriesForCarbs / 4));
 
-    // 7. Display Results
+    // 9. Display Results
     displayResults(
       {
         bmr: Math.round(bmr),
@@ -153,11 +136,10 @@ document.addEventListener("DOMContentLoaded", () => {
         goal: goal,
       },
       calorieFloorApplied
-    ); // Pass the new flag to the display function
+    );
   }
 
   function displayResults(results, calorieFloorApplied) {
-    // **NEW**: Add a warning message if the calorie floor was used
     let floorWarning = "";
     if (calorieFloorApplied) {
       floorWarning = `<p class="warning"><strong>Note:</strong> Your target calories have been adjusted up to a minimum of <strong>1100 kcal</strong> for safety.</p>`;
