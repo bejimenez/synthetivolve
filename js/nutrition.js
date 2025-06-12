@@ -1,10 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   // --- CONFIGURATION ---
-  // Check if config is loaded
   if (!window.APP_CONFIG) {
-    console.error(
-      "Configuration not loaded. Please check that config.js is included before nutrition.js"
-    );
+    console.error("Configuration not loaded. Please check that config.js is included before nutrition.js");
     alert("Configuration error. Please check console.");
     return;
   }
@@ -12,10 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- SUPABASE SETUP & USER ID ---
   const SUPABASE_URL = window.APP_CONFIG.SUPABASE_URL;
   const SUPABASE_ANON_KEY = window.APP_CONFIG.SUPABASE_ANON_KEY;
-  const supabase = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY
-  );
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   const YOUR_USER_ID = window.APP_CONFIG.USER_ID;
 
   // --- USDA FoodData Central API SETUP ---
@@ -24,18 +18,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
   console.log("Supabase client initialized.");
 
+  // --- STATE MANAGEMENT ---
+  let currentDate = new Date();
+  let todaysEntries = [];
+  let foodsCache = new Map(); // Cache food details to reduce DB calls
+
   // --- DOM REFERENCES ---
+  const timelineContainer = document.getElementById("timeline-container");
+  const currentDateDisplay = document.getElementById("current-date");
+  const prevDayBtn = document.getElementById("prev-day-btn");
+  const nextDayBtn = document.getElementById("next-day-btn");
+  const totalCaloriesDisplay = document.getElementById("total-calories");
+  const totalProteinDisplay = document.getElementById("total-protein");
+  const totalCarbsDisplay = document.getElementById("total-carbs");
+  const totalFatDisplay = document.getElementById("total-fat");
+  
   const fabAddFoodBtn = document.getElementById("fab-add-food");
   const addFoodModal = document.getElementById("add-food-modal");
   const createFoodModal = document.getElementById("create-food-modal");
-  const openCreateFoodModalBtn = document.getElementById(
-    "open-create-food-modal-btn"
-  );
+  const openCreateFoodModalBtn = document.getElementById("open-create-food-modal-btn");
   const modalCloseBtns = document.querySelectorAll(".modal-close-btn");
   const createFoodForm = document.getElementById("create-food-form");
-  const logConfirmationSection = document.getElementById(
-    "log-confirmation-section"
-  );
+  const logConfirmationSection = document.getElementById("log-confirmation-section");
   const selectedFoodName = document.getElementById("selected-food-name");
   const logQuantityInput = document.getElementById("log-quantity-input");
   const logFoodBtn = document.getElementById("log-food-btn");
@@ -47,7 +51,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const onlineSearchResults = document.getElementById("online-search-results");
 
   let selectedFoodForLogging = null;
-  let usdaSearchCache = new Map(); // Cache to reduce API calls
+  let selectedHourForLogging = null;
+  let usdaSearchCache = new Map();
 
   // --- HELPER FUNCTIONS ---
   const openModal = (modal) => modal.classList.remove("hidden");
@@ -63,16 +68,223 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
+  function formatDate(date) {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    if (date.toDateString() === today.toDateString()) return "Today";
+    if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
+    if (date.toDateString() === tomorrow.toDateString()) return "Tomorrow";
+    
+    return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  }
+
+  function getDateBounds(date) {
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(date);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
+  }
+
+  // --- TIMELINE GENERATION ---
+  function generateTimeline() {
+    timelineContainer.innerHTML = "";
+    
+    // Generate blocks for each hour from 6 AM to 11 PM
+    for (let hour = 3; hour <= 20; hour++) {
+      const timeBlock = document.createElement("div");
+      timeBlock.className = "time-block";
+      timeBlock.dataset.hour = hour;
+      
+      const hourDisplay = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+      const amPm = hour < 12 ? "AM" : "PM";
+      
+      timeBlock.innerHTML = `
+        <div class="time-header">
+          <h3>${hourDisplay}:00 ${amPm}</h3>
+          <button class="add-food-btn-sm" title="Add food to this hour" data-hour="${hour}">
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+        <div class="food-list" id="food-list-${hour}"></div>
+      `;
+      
+      timelineContainer.appendChild(timeBlock);
+    }
+    
+    // Add event listeners to all the small add buttons
+    document.querySelectorAll('.add-food-btn-sm').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        selectedHourForLogging = parseInt(e.currentTarget.dataset.hour);
+        openModal(addFoodModal);
+      });
+    });
+  }
+
+  // --- DATA FETCHING ---
+  async function fetchTodaysEntries() {
+    const { start, end } = getDateBounds(currentDate);
+    
+    const { data, error } = await supabase
+      .from('logged_entries')
+      .select('*')
+      .eq('user_id', YOUR_USER_ID)
+      .gte('logged_at', start.toISOString())
+      .lte('logged_at', end.toISOString())
+      .order('logged_at', { ascending: true });
+    
+    if (error) {
+      console.error('Error fetching entries:', error);
+      return;
+    }
+    
+    todaysEntries = data || [];
+    
+    // Fetch all unique foods for today's entries
+    const uniqueFoodIds = [...new Set(todaysEntries.map(entry => entry.food_id))];
+    const newFoodIds = uniqueFoodIds.filter(id => !foodsCache.has(id));
+    
+    if (newFoodIds.length > 0) {
+      const { data: foods, error: foodError } = await supabase
+        .from('foods')
+        .select('*')
+        .in('id', newFoodIds);
+      
+      if (!foodError && foods) {
+        foods.forEach(food => foodsCache.set(food.id, food));
+      }
+    }
+    
+    displayEntries();
+    calculateTotals();
+  }
+
+  // --- DISPLAY FUNCTIONS ---
+  function displayEntries() {
+    // Clear all food lists
+    document.querySelectorAll('.food-list').forEach(list => list.innerHTML = '');
+    
+    // Group entries by hour
+    const entriesByHour = {};
+    todaysEntries.forEach(entry => {
+      const hour = new Date(entry.logged_at).getHours();
+      if (!entriesByHour[hour]) entriesByHour[hour] = [];
+      entriesByHour[hour].push(entry);
+    });
+    
+    // Display entries in their respective hours
+    Object.entries(entriesByHour).forEach(([hour, entries]) => {
+      const foodList = document.getElementById(`food-list-${hour}`);
+      if (!foodList) return;
+      
+      entries.forEach(entry => {
+        const food = foodsCache.get(entry.food_id);
+        if (!food) return;
+        
+        const foodItem = document.createElement('div');
+        foodItem.className = 'food-item';
+        
+        const calories = Math.round(food.calories * entry.quantity);
+        const displayQuantity = Math.round(entry.quantity * (food.serving_size_g || 100));
+        
+        foodItem.innerHTML = `
+          <div class="food-info">
+            <span class="food-name">${food.name}</span>
+            <span class="food-details">${displayQuantity}g • ${calories} cal</span>
+          </div>
+          <button class="delete-food-btn" data-entry-id="${entry.id}" title="Delete">
+            <i class="fas fa-trash"></i>
+          </button>
+        `;
+        
+        foodList.appendChild(foodItem);
+      });
+    });
+    
+    // Add delete event listeners
+    document.querySelectorAll('.delete-food-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const entryId = e.currentTarget.dataset.entryId;
+        if (confirm('Delete this entry?')) {
+          await deleteEntry(entryId);
+        }
+      });
+    });
+  }
+
+  function calculateTotals() {
+    let totals = {
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0
+    };
+    
+    todaysEntries.forEach(entry => {
+      const food = foodsCache.get(entry.food_id);
+      if (!food) return;
+      
+      totals.calories += food.calories * entry.quantity;
+      totals.protein += food.protein_g * entry.quantity;
+      totals.carbs += food.carbs_g * entry.quantity;
+      totals.fat += food.fat_g * entry.quantity;
+    });
+    
+    totalCaloriesDisplay.textContent = Math.round(totals.calories);
+    totalProteinDisplay.textContent = `${Math.round(totals.protein)}g`;
+    totalCarbsDisplay.textContent = `${Math.round(totals.carbs)}g`;
+    totalFatDisplay.textContent = `${Math.round(totals.fat)}g`;
+  }
+
+  async function deleteEntry(entryId) {
+    const { error } = await supabase
+      .from('logged_entries')
+      .delete()
+      .eq('id', entryId);
+    
+    if (error) {
+      console.error('Error deleting entry:', error);
+      alert('Failed to delete entry');
+    } else {
+      await fetchTodaysEntries();
+    }
+  }
+
+  // --- DATE NAVIGATION ---
+  function updateDateDisplay() {
+    currentDateDisplay.textContent = formatDate(currentDate);
+  }
+
+  prevDayBtn.addEventListener('click', () => {
+    currentDate.setDate(currentDate.getDate() - 1);
+    updateDateDisplay();
+    fetchTodaysEntries();
+  });
+
+  nextDayBtn.addEventListener('click', () => {
+    currentDate.setDate(currentDate.getDate() + 1);
+    updateDateDisplay();
+    fetchTodaysEntries();
+  });
+
   // --- EVENT LISTENERS ---
-  fabAddFoodBtn.addEventListener("click", () => openModal(addFoodModal));
+  fabAddFoodBtn.addEventListener("click", () => {
+    selectedHourForLogging = new Date().getHours();
+    openModal(addFoodModal);
+  });
+  
   openCreateFoodModalBtn.addEventListener("click", () => {
     closeModal(addFoodModal);
     openModal(createFoodModal);
   });
+  
   modalCloseBtns.forEach((btn) =>
-    btn.addEventListener(
-      "click",
-      () => btn.closest(".modal") && closeModal(btn.closest(".modal"))
+    btn.addEventListener("click", () => 
+      btn.closest(".modal") && closeModal(btn.closest(".modal"))
     )
   );
 
@@ -121,16 +333,14 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // Check cache first
       if (usdaSearchCache.has(searchTerm)) {
         displayUSDAResults(usdaSearchCache.get(searchTerm));
         return;
       }
 
-      // USDA API search request
       const searchData = {
         query: searchTerm,
-        dataType: ["Foundation", "SR Legacy", "Branded"], // All data types for comprehensive results
+        dataType: ["Foundation", "SR Legacy", "Branded"],
         pageSize: 25,
         pageNumber: 1,
         sortBy: "dataType.keyword",
@@ -153,10 +363,7 @@ document.addEventListener("DOMContentLoaded", () => {
           throw new Error(`API responded with status: ${response.status}`);
         }
         const data = await response.json();
-
-        // Cache the results
         usdaSearchCache.set(searchTerm, data.foods);
-
         displayUSDAResults(data.foods);
       } catch (error) {
         console.error("Error fetching from USDA:", error);
@@ -171,7 +378,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (foods && foods.length > 0) {
       foods.forEach((food) => {
         const li = document.createElement("li");
-        // Show data type for clarity
         const dataTypeLabel =
           food.dataType === "Branded"
             ? " (Branded)"
@@ -219,14 +425,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const foodData = await response.json();
-
-        // The transform function now returns an object with two properties:
-        // { basic: { ... }, extended: { ... } }
         const { basic: foodToInsert, extended: extendedNutritionData } =
           await transformUSDAData(foodData);
 
-        // --- STEP 1: Insert into the 'foods' table ---
-        // We use .select().single() to immediately get the new food's data, including its generated 'id'
         const { data: newFood, error: foodError } = await supabase
           .from("foods")
           .insert(foodToInsert)
@@ -234,33 +435,28 @@ document.addEventListener("DOMContentLoaded", () => {
           .single();
 
         if (foodError) {
-          // Check for unique constraint violation (food already exists)
           if (foodError.code === "23505") {
             alert("This food already exists in your database.");
-            // Optionally, you could fetch the existing food and proceed
           } else {
             console.error("Error saving food to DB:", foodError);
             alert("Could not save this food to your database.");
           }
-          e.target.textContent = foodName; // Restore original text
+          e.target.textContent = foodName;
           return;
         }
 
         console.log("Saved new food to 'foods' table:", newFood);
 
-        // --- STEP 2: Insert into the 'extended_nutrition' table ---
-        // Only proceed if there is extended data to save
         if (extendedNutritionData) {
           const { error: extError } = await supabase
             .from("extended_nutrition")
             .insert({
               ...extendedNutritionData,
-              food_id: newFood.id, // Link to the food we just created
+              food_id: newFood.id,
             });
 
           if (extError) {
             console.error("Error saving extended nutrition:", extError);
-            // This is not critical, so we can just log it and continue
           } else {
             console.log("Saved extended nutrition data successfully.");
           }
@@ -271,7 +467,7 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (error) {
         console.error("Error processing USDA food:", error);
         alert("Could not retrieve nutrition information. Please try again.");
-        e.target.textContent = foodName; // Restore original text
+        e.target.textContent = foodName;
       }
     }
   });
@@ -283,7 +479,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function transformUSDAData(usdaFood) {
-    // Helper function to find nutrient by ID
     const findNutrient = (nutrientId) => {
       const nutrient = usdaFood.foodNutrients?.find(
         (n) => n.nutrient.id === nutrientId
@@ -291,22 +486,18 @@ document.addEventListener("DOMContentLoaded", () => {
       return nutrient ? nutrient.amount : 0;
     };
 
-    // Determine serving size - USDA uses 100g standard
     let servingSize = 100;
     if (usdaFood.foodPortions && usdaFood.foodPortions.length > 0) {
-      // Use the first portion as default serving
       const portion = usdaFood.foodPortions[0];
       servingSize = portion.gramWeight || 100;
     }
 
-    // Determine processing level based on data type and ingredients
-    let processingLevel = 3; // default
+    let processingLevel = 3;
     if (usdaFood.dataType === "Foundation") {
-      processingLevel = 1; // Whole foods
+      processingLevel = 1;
     } else if (usdaFood.dataType === "SR Legacy") {
-      processingLevel = 2; // Generic foods, often minimally processed
+      processingLevel = 2;
     } else if (usdaFood.dataType === "Branded") {
-      // For branded foods, estimate based on ingredients count
       const ingredientCount = usdaFood.ingredients
         ? usdaFood.ingredients.split(",").length
         : 0;
@@ -315,42 +506,34 @@ document.addEventListener("DOMContentLoaded", () => {
       else processingLevel = 3;
     }
 
-    // Basic nutrition data for your main foods table
     const basicNutrition = {
       name: usdaFood.description,
       brand_name: usdaFood.brandName || usdaFood.brandOwner || null,
       creator_id: YOUR_USER_ID,
       serving_size_g: servingSize,
-      calories: Math.round(findNutrient(208)), // Energy (kcal)
-      protein_g: findNutrient(203), // Protein
-      carbs_g: findNutrient(205), // Carbohydrate, by difference
-      fat_g: findNutrient(204), // Total lipid (fat)
-      fiber_g: findNutrient(291), // Fiber, total dietary
-      sodium_mg: findNutrient(307), // Sodium
+      calories: Math.round(findNutrient(208)),
+      protein_g: findNutrient(203),
+      carbs_g: findNutrient(205),
+      fat_g: findNutrient(204),
+      fiber_g: findNutrient(291),
+      sodium_mg: findNutrient(307),
       processing_level: processingLevel,
       external_id: usdaFood.fdcId.toString(),
       external_source: "usda_fdc",
       data_type: usdaFood.dataType,
-      // Store UPC if available for future barcode scanning
       barcode_upc: usdaFood.gtinUpc || null,
     };
 
-    // Extended nutrition data (consider creating a separate table for this)
     const extendedNutrition = {
-      // Carbohydrate details
-      sugar_g: findNutrient(269), // Sugars, total
-      added_sugar_g: findNutrient(539), // Sugars, added
-      starch_g: findNutrient(209), // Starch
-
-      // Fat details
-      saturated_fat_g: findNutrient(606), // Fatty acids, total saturated
-      monounsaturated_fat_g: findNutrient(645), // Fatty acids, total monounsaturated
-      polyunsaturated_fat_g: findNutrient(646), // Fatty acids, total polyunsaturated
-      trans_fat_g: findNutrient(605), // Fatty acids, total trans
-      omega3_g: findNutrient(851) + findNutrient(852) + findNutrient(853), // EPA + DPA + DHA
-      omega6_g: findNutrient(618) + findNutrient(619), // LA + ALA
-
-      // Minerals (in mg unless specified)
+      sugar_g: findNutrient(269),
+      added_sugar_g: findNutrient(539),
+      starch_g: findNutrient(209),
+      saturated_fat_g: findNutrient(606),
+      monounsaturated_fat_g: findNutrient(645),
+      polyunsaturated_fat_g: findNutrient(646),
+      trans_fat_g: findNutrient(605),
+      omega3_g: findNutrient(851) + findNutrient(852) + findNutrient(853),
+      omega6_g: findNutrient(618) + findNutrient(619),
       calcium_mg: findNutrient(301),
       iron_mg: findNutrient(303),
       magnesium_mg: findNutrient(304),
@@ -359,24 +542,20 @@ document.addEventListener("DOMContentLoaded", () => {
       zinc_mg: findNutrient(309),
       copper_mg: findNutrient(312),
       manganese_mg: findNutrient(315),
-      selenium_ug: findNutrient(317), // in micrograms
-
-      // Vitamins
-      vitamin_a_ug: findNutrient(320), // Vitamin A, RAE
+      selenium_ug: findNutrient(317),
+      vitamin_a_ug: findNutrient(320),
       vitamin_c_mg: findNutrient(401),
-      vitamin_d_ug: findNutrient(328), // Vitamin D (D2 + D3)
-      vitamin_e_mg: findNutrient(323), // Vitamin E (alpha-tocopherol)
-      vitamin_k_ug: findNutrient(430), // Vitamin K (phylloquinone)
-      thiamin_mg: findNutrient(404), // B1
-      riboflavin_mg: findNutrient(405), // B2
-      niacin_mg: findNutrient(406), // B3
+      vitamin_d_ug: findNutrient(328),
+      vitamin_e_mg: findNutrient(323),
+      vitamin_k_ug: findNutrient(430),
+      thiamin_mg: findNutrient(404),
+      riboflavin_mg: findNutrient(405),
+      niacin_mg: findNutrient(406),
       vitamin_b6_mg: findNutrient(415),
-      folate_ug: findNutrient(417) + findNutrient(431), // Folate, DFE + Folic acid
+      folate_ug: findNutrient(417) + findNutrient(431),
       vitamin_b12_ug: findNutrient(418),
-      pantothenic_acid_mg: findNutrient(410), // B5
+      pantothenic_acid_mg: findNutrient(410),
       choline_mg: findNutrient(421),
-
-      // Amino acids (essential) in grams
       tryptophan_g: findNutrient(501),
       threonine_g: findNutrient(502),
       isoleucine_g: findNutrient(503),
@@ -386,8 +565,6 @@ document.addEventListener("DOMContentLoaded", () => {
       phenylalanine_g: findNutrient(508),
       valine_g: findNutrient(510),
       histidine_g: findNutrient(512),
-
-      // Other important compounds
       cholesterol_mg: findNutrient(601),
       caffeine_mg: findNutrient(262),
       alcohol_g: findNutrient(221),
@@ -400,87 +577,53 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  // Barcode scanning function using USDA
-  async function searchByBarcode(barcode) {
-    // USDA search by UPC/GTIN
-    const searchData = {
-      query: barcode,
-      dataType: ["Branded"], // Barcodes are typically on branded products
-      pageSize: 1,
-    };
-
-    try {
-      const response = await fetch(
-        `${USDA_BASE_URL}/foods/search?api_key=${USDA_API_KEY}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(searchData),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Barcode search failed: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.foods && data.foods.length > 0) {
-        const food = data.foods[0];
-        // Verify the barcode matches
-        if (food.gtinUpc === barcode) {
-          // Get full nutrition data
-          const detailResponse = await fetch(
-            `${USDA_BASE_URL}/food/${food.fdcId}?api_key=${USDA_API_KEY}`,
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-              },
-            }
-          );
-          const detailData = await detailResponse.json();
-          return transformUSDAData(detailData);
-        }
-      }
-
-      throw new Error("Barcode not found in USDA database");
-    } catch (error) {
-      console.error("Error searching by barcode:", error);
-      throw error;
-    }
-  }
-
   logFoodBtn.addEventListener("click", async () => {
     if (!selectedFoodForLogging) return;
     const quantityGrams = parseFloat(logQuantityInput.value);
     const quantityMultiplier =
       quantityGrams / (selectedFoodForLogging.serving_size_g || 100);
 
+    // Create a date with the selected hour
+    const loggedDate = new Date(currentDate);
+    loggedDate.setHours(selectedHourForLogging || new Date().getHours());
+    loggedDate.setMinutes(0);
+    loggedDate.setSeconds(0);
+
     const loggedEntry = {
       user_id: YOUR_USER_ID,
       food_id: selectedFoodForLogging.id,
       quantity: quantityMultiplier,
-      logged_at: new Date().toISOString(),
+      logged_at: loggedDate.toISOString(),
     };
+    
     const { data, error } = await supabase
       .from("logged_entries")
       .insert([loggedEntry])
       .select();
+      
     if (error) {
       console.error("Error logging food:", error);
       alert("Failed to log food.");
     } else {
       console.log("Food logged successfully:", data);
-      alert(`${selectedFoodForLogging.name} logged successfully!`);
+      
+      // Add the food to cache if not already there
+      if (!foodsCache.has(selectedFoodForLogging.id)) {
+        foodsCache.set(selectedFoodForLogging.id, selectedFoodForLogging);
+      }
+      
+      // Refresh the display
+      await fetchTodaysEntries();
+      
+      // Clean up and close modal
       closeModal(addFoodModal);
       logConfirmationSection.classList.add("hidden");
       myFoodSearchInput.value = "";
       myFoodSearchResults.innerHTML = "";
       onlineSearchInput.value = "";
       onlineSearchResults.innerHTML = "";
+      selectedFoodForLogging = null;
+      selectedHourForLogging = null;
     }
   });
 
@@ -513,4 +656,16 @@ document.addEventListener("DOMContentLoaded", () => {
       closeModal(createFoodModal);
     }
   });
+
+  // --- INITIALIZATION ---
+  generateTimeline();
+  updateDateDisplay();
+  fetchTodaysEntries();
+  
+  // Refresh data every 30 seconds if the page is visible
+  setInterval(() => {
+    if (!document.hidden) {
+      fetchTodaysEntries();
+    }
+  }, 30000);
 });
