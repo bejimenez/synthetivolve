@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
     timelineContainer.innerHTML = "";
     
     // Generate blocks for each hour from 6 AM to 11 PM
-    for (let hour = 3; hour <= 20; hour++) {
+    for (let hour = 6; hour <= 23; hour++) {
       const timeBlock = document.createElement("div");
       timeBlock.className = "time-block";
       timeBlock.dataset.hour = hour;
@@ -129,6 +129,8 @@ document.addEventListener("DOMContentLoaded", () => {
   async function fetchTodaysEntries() {
     const { start, end } = getDateBounds(currentDate);
     
+    console.log('Fetching entries for date range:', start, 'to', end);
+    
     const { data, error } = await supabase
       .from('logged_entries')
       .select('*')
@@ -143,10 +145,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     
     todaysEntries = data || [];
+    console.log('Fetched entries:', todaysEntries);
     
     // Fetch all unique foods for today's entries
     const uniqueFoodIds = [...new Set(todaysEntries.map(entry => entry.food_id))];
     const newFoodIds = uniqueFoodIds.filter(id => !foodsCache.has(id));
+    
+    console.log('Need to fetch foods:', newFoodIds);
     
     if (newFoodIds.length > 0) {
       const { data: foods, error: foodError } = await supabase
@@ -155,9 +160,14 @@ document.addEventListener("DOMContentLoaded", () => {
         .in('id', newFoodIds);
       
       if (!foodError && foods) {
+        console.log('Fetched foods:', foods);
         foods.forEach(food => foodsCache.set(food.id, food));
+      } else if (foodError) {
+        console.error('Error fetching foods:', foodError);
       }
     }
+    
+    console.log('Current foodsCache size:', foodsCache.size);
     
     displayEntries();
     calculateTotals();
@@ -224,15 +234,40 @@ document.addEventListener("DOMContentLoaded", () => {
       fat: 0
     };
     
+    console.log('Calculating totals for', todaysEntries.length, 'entries');
+    
     todaysEntries.forEach(entry => {
       const food = foodsCache.get(entry.food_id);
-      if (!food) return;
+      if (!food) {
+        console.warn('Food not found in cache for entry:', entry);
+        return;
+      }
       
-      totals.calories += food.calories * entry.quantity;
-      totals.protein += food.protein_g * entry.quantity;
-      totals.carbs += food.carbs_g * entry.quantity;
-      totals.fat += food.fat_g * entry.quantity;
+      // Debug: Log the actual food object
+      console.log('Food object:', food);
+      console.log('Entry quantity:', entry.quantity);
+      
+      // Check if the nutrition values exist and handle potential null/undefined
+      const calories = (food.calories || 0) * entry.quantity;
+      const protein = (food.protein_g || 0) * entry.quantity;
+      const carbs = (food.carbs_g || 0) * entry.quantity;
+      const fat = (food.fat_g || 0) * entry.quantity;
+      
+      // Log the calculation for debugging
+      console.log('Adding food:', food.name, {
+        calories: calories,
+        protein: protein,
+        carbs: carbs,
+        fat: fat
+      });
+      
+      totals.calories += calories;
+      totals.protein += protein;
+      totals.carbs += carbs;
+      totals.fat += fat;
     });
+    
+    console.log('Final totals:', totals);
     
     totalCaloriesDisplay.textContent = Math.round(totals.calories);
     totalProteinDisplay.textContent = `${Math.round(totals.protein)}g`;
@@ -417,7 +452,8 @@ document.addEventListener("DOMContentLoaded", () => {
       e.target.textContent = "Loading comprehensive nutrition data...";
 
       try {
-        const url = `${USDA_BASE_URL}/food/${fdcId}?api_key=${USDA_API_KEY}&format=full`;
+        const url = `${USDA_BASE_URL}/food/${fdcId}?api_key=${USDA_API_KEY}&format=full&nutrients=203,204,205,208,291,307`;
+        console.log('Fetching USDA food details from:', url);
         const response = await fetch(url);
 
         if (!response.ok) {
@@ -425,6 +461,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const foodData = await response.json();
+        console.log('USDA food data received:', foodData);
         const { basic: foodToInsert, extended: extendedNutritionData } =
           await transformUSDAData(foodData);
 
@@ -607,12 +644,13 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       console.log("Food logged successfully:", data);
       
-      // Add the food to cache if not already there
+      // IMPORTANT: Add the food to cache BEFORE fetching entries
+      // This ensures the food data is available when displayEntries() runs
       if (!foodsCache.has(selectedFoodForLogging.id)) {
         foodsCache.set(selectedFoodForLogging.id, selectedFoodForLogging);
       }
       
-      // Refresh the display
+      // Refresh the display - this will now find the food in the cache
       await fetchTodaysEntries();
       
       // Clean up and close modal
