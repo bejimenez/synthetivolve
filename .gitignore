@@ -1,6 +1,11 @@
 # --- Secrets ---
 # Ignore the file containing Supabase keys and other secrets
 garmin_sync/.env
+.env
+js/config.js
+
+# Keep the template
+!js/config.template.js
 
 # --- Python ---
 # Ignore Python's cache and virtual environment folders

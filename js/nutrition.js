@@ -1,17 +1,25 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // --- CONFIGURATION ---
+  // Check if config is loaded
+  if (!window.APP_CONFIG) {
+    console.error(
+      "Configuration not loaded. Please check that config.js is included before nutrition.js"
+    );
+    alert("Configuration error. Please check console.");
+    return;
+  }
+
   // --- SUPABASE SETUP & USER ID ---
-  const SUPABASE_URL = "https://frhkplqsjpunezggymnp.supabase.co";
-  const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyaGtwbHFzanB1bmV6Z2d5bW5wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMTMzNTAsImV4cCI6MjA2NDc4OTM1MH0.PSLEbhiUGDTJNE3jaZueEHzORYAUqKL9IxBdmbm_HGg";
+  const SUPABASE_URL = window.APP_CONFIG.SUPABASE_URL;
+  const SUPABASE_ANON_KEY = window.APP_CONFIG.SUPABASE_ANON_KEY;
   const supabase = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_ANON_KEY
   );
-  const YOUR_USER_ID = "415733cd-e674-455f-9688-78c8f7334ba8";
+  const YOUR_USER_ID = window.APP_CONFIG.USER_ID;
 
   // --- USDA FoodData Central API SETUP ---
-  // Get your free API key at: https://fdc.nal.usda.gov/api-key-signup.html
-  const USDA_API_KEY = "ifzDOdIg5l5N2pB5CF1h0ODjag0lSHd8V2Np27QN";
+  const USDA_API_KEY = window.APP_CONFIG.USDA_API_KEY;
   const USDA_BASE_URL = "https://api.nal.usda.gov/fdc/v1";
 
   console.log("Supabase client initialized.");

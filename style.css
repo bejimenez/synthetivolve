@@ -174,7 +174,7 @@ header p {
 
 /*
 ================================
-5. MODAL & FORM STYLES (Used by multiple pages)
+5. IMPROVED MODAL & FORM STYLES
 ================================
 */
 .modal {
@@ -188,35 +188,163 @@ header p {
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 20px; /* Add padding for mobile */
+    box-sizing: border-box;
 }
 
 .modal-content {
     background-color: var(--surface-dark);
-    padding: 30px;
     border-radius: 8px;
     border: 1px solid var(--border-color);
-    width: 90%;
-    max-width: 500px;
+    width: 100%;
+    max-width: 600px; /* Increased from 500px */
+    max-height: 90vh; /* Constrain height to viewport */
     position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Prevent content from spilling out */
+}
+
+/* Modal header with close button - always visible */
+.modal-header {
+    padding: 20px 20px 0 20px;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0; /* Prevent shrinking */
+    position: relative;
+}
+
+.modal-header h2 {
+    margin: 0 0 15px 0;
+    color: var(--primary-glow);
+    padding-right: 40px; /* Space for close button */
 }
 
 .modal-close-btn {
     position: absolute;
-    top: 10px;
+    top: 15px;
     right: 15px;
     background: none;
     border: none;
     color: var(--text-secondary);
     font-size: 2rem;
     cursor: pointer;
+    z-index: 10;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
 }
 
+.modal-close-btn:hover {
+    background-color: var(--border-color);
+    color: var(--primary-glow);
+}
+
+/* Scrollable content area */
+.modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex-grow: 1;
+    max-height: calc(90vh - 120px); /* Account for header */
+}
+
+/* Modal tabs - keep at top of scrollable area */
+.modal-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    margin: -20px -20px 20px -20px; /* Extend to edges */
+    position: sticky;
+    top: -20px;
+    background-color: var(--surface-dark);
+    z-index: 5;
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    padding: 15px 20px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s ease;
+    flex: 1;
+}
+
+.tab-btn.active {
+    color: var(--primary-glow);
+    border-bottom-color: var(--primary-glow);
+}
+
+.tab-btn:hover:not(.active) {
+    color: var(--text-primary);
+    background-color: rgba(255,255,255,0.05);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Search results styling */
+#food-search-results,
+#my-food-search-results,
+#online-search-results {
+    list-style: none;
+    padding: 0;
+    margin: 15px 0;
+    max-height: 250px; /* Limit height */
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--bg-dark);
+}
+
+#food-search-results:empty,
+#my-food-search-results:empty,
+#online-search-results:empty {
+    border: none;
+    max-height: none;
+}
+
+#food-search-results li,
+#my-food-search-results li,
+#online-search-results li {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    word-wrap: break-word;
+}
+
+#food-search-results li:last-child,
+#my-food-search-results li:last-child,
+#online-search-results li:last-child {
+    border-bottom: none;
+}
+
+#food-search-results li:hover,
+#my-food-search-results li:hover,
+#online-search-results li:hover {
+    background-color: rgba(0, 242, 234, 0.1);
+    color: var(--primary-glow);
+}
+
+/* Form elements within modals */
 .form-group {
-    margin-bottom: 15px;
+    margin-bottom: 20px; /* Increased spacing */
     display: flex;
     align-items: center;
     gap: 15px;
+    flex-wrap: wrap; /* Allow wrapping on small screens */
 }
+
 .form-group label {
     flex-basis: 120px;
     flex-shrink: 0;
@@ -225,8 +353,13 @@ header p {
     text-align: right;
 }
 
-input[type="number"], input[type="text"], input[type="search"], select {
+/* Better input styling */
+input[type="number"], 
+input[type="text"], 
+input[type="search"], 
+select {
     flex-grow: 1;
+    min-width: 200px; /* Ensure minimum usable width */
     padding: 12px;
     background-color: var(--bg-dark);
     color: var(--text-primary);
@@ -242,10 +375,14 @@ input:focus, select:focus {
     box-shadow: 0 0 8px rgba(0, 242, 234, 0.5);
 }
 
-button[type="submit"], .log-button {
+/* Button improvements */
+button[type="submit"], 
+.log-button,
+#open-create-food-modal-btn,
+#log-food-btn {
     width: 100%;
     padding: 15px;
-    margin-top: 10px;
+    margin-top: 15px;
     background-color: var(--primary-glow);
     color: var(--bg-dark);
     border: none;
@@ -258,54 +395,84 @@ button[type="submit"], .log-button {
     transition: all 0.3s ease;
 }
 
-button[type="submit"]:hover, .log-button:hover {
+button[type="submit"]:hover, 
+.log-button:hover,
+#open-create-food-modal-btn:hover,
+#log-food-btn:hover {
     box-shadow: var(--glow-shadow);
     transform: translateY(-2px);
 }
 
-#food-search-results {
-    list-style: none;
-    padding: 0;
-    margin: 15px 0;
-    max-height: 200px;
-    overflow-y: auto;
+/* Secondary button styling */
+#open-create-food-modal-btn {
+    background-color: var(--border-color);
+    color: var(--text-primary);
+    text-transform: none;
+    font-weight: 400;
+    margin: 20px 0;
 }
-#food-search-results li {
-    padding: 10px;
-    border-bottom: 1px solid var(--border-color);
-    cursor: pointer;
+
+#open-create-food-modal-btn:hover {
+    background-color: var(--text-secondary);
+    color: var(--bg-dark);
+    transform: translateY(-1px);
 }
-#food-search-results li:hover {
-    background-color: #2a2a2a;
+
+/* Log confirmation section */
+#log-confirmation-section {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+#log-confirmation-section h3 {
     color: var(--primary-glow);
-}
-/* --- Modal Tab Styles --- */
-.modal-tabs {
-    display: flex;
-    border-bottom: 1px solid var(--border-color);
-    margin-bottom: 20px;
+    margin-bottom: 15px;
+    text-align: center;
 }
 
-.tab-btn {
-    background: none;
-    border: none;
-    padding: 10px 20px;
-    cursor: pointer;
-    color: var(--text-secondary);
-    font-size: 1rem;
-    border-bottom: 3px solid transparent;
-    transition: all 0.2s ease;
-}
-
-.tab-btn.active {
-    color: var(--primary-glow);
-    border-bottom-color: var(--primary-glow);
-}
-
-.tab-content {
-    display: none; /* Hide all tab content by default */
-}
-
-.tab-content.active {
-    display: block; /* Show only the active tab content */
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .modal {
+        padding: 10px;
+        align-items: flex-start;
+        padding-top: 20px;
+    }
+    
+    .modal-content {
+        max-height: 95vh;
+        width: 100%;
+    }
+    
+    .modal-body {
+        max-height: calc(95vh - 100px);
+    }
+    
+    .form-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    
+    .form-group label {
+        text-align: left;
+        flex-basis: auto;
+    }
+    
+    input[type="number"], 
+    input[type="text"], 
+    input[type="search"], 
+    select {
+        min-width: auto;
+        width: 100%;
+    }
+    
+    .modal-tabs {
+        margin: -20px -20px 15px -20px;
+    }
+    
+    .tab-btn {
+        padding: 12px 15px;
+        font-size: 0.9rem;
+    }
 }
