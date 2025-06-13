@@ -93,15 +93,26 @@
                         <a href="calculator.html" class="nav-button">Set Your Goal</a>
                     </div>
                     <div id="active-goal-state" class="hidden">
+                        <!-- START: This header section is updated -->
                         <div class="goal-header">
-                            <h4 id="goal-name">--</h4>
-                            <div class="goal-progress">
-                                <span id="days-remaining" class="days-counter">-- days remaining</span>
-                                <div class="progress-bar">
-                                    <div class="progress-fill" id="goal-progress-fill"></div>
+                            <!-- Grouping for left-side content -->
+                            <div class="goal-info">
+                                <h4 id="goal-name">--</h4>
+                                <div class="goal-progress">
+                                    <span id="days-remaining" class="days-counter">-- days remaining</span>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" id="goal-progress-fill"></div>
+                                    </div>
                                 </div>
                             </div>
+                            <!-- The "Update Goal" button is now here -->
+                            <button class="log-button" id="update-goal-btn">
+                                <i class="fas fa-edit"></i>
+                                Update
+                            </button>
                         </div>
+                        <!-- END: Header section update -->
+
                         <div class="goal-targets">
                             <div class="target-item">
                                 <span class="target-label">Calories</span>
@@ -120,13 +131,7 @@
                                 <span class="target-value" id="target-fat">---g</span>
                             </div>
                         </div>
-                        <!-- "Update Goal" button moved here -->
-                        <div class="goal-actions">
-                            <button class="log-button" id="update-goal-btn">
-                                <i class="fas fa-target"></i>
-                                Update Goal
-                            </button>
-                        </div>
+                        <!-- The old ".goal-actions" div has been removed from here -->
                     </div>
                 </div>
             </div>
