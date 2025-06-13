@@ -1,4 +1,6 @@
+# filepath: c:\Users\brijim\OneDrive - ASSA ABLOY Group\Documents\Workspace\github.com\bejimenez\synthetivolve\backend\requirements.txt
 fastapi
 uvicorn[standard]
 python-dotenv
 pandas
+supabase
