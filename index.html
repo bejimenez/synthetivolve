@@ -17,8 +17,9 @@
             <p>Your Personalized Health & Wellness Engine</p>
         </header>
 
-        <!-- Weight Logger Section - Prominent placement at top -->
-        <section class="weight-logger-section">
+        <!-- New Top Layout for Weight Tracker & Quick Access -->
+        <section class="top-layout">
+            <!-- Weight Logger Section - Now part of the top layout -->
             <div class="weight-logger-card">
                 <div class="weight-logger-header">
                     <h3>
@@ -64,6 +65,21 @@
                     <canvas id="weight-trend-chart" width="800" height="150"></canvas>
                 </div>
             </div>
+
+            <!-- Quick Access Card - Moved to top layout -->
+            <div class="dashboard-card" id="quick-access-card">
+                <h3>Quick Access</h3>
+                <div class="log-actions">
+                    <a href="nutrition.html" class="log-button">
+                        <i class="fas fa-utensils"></i>
+                        Log Food
+                    </a>
+                    <button class="log-button disabled">
+                        <i class="fas fa-dumbbell"></i>
+                        Log Workout
+                    </button>
+                </div>
+            </div>
         </section>
 
         <main class="dashboard-grid">
@@ -103,6 +119,13 @@
                                 <span class="target-label">Fat</span>
                                 <span class="target-value" id="target-fat">---g</span>
                             </div>
+                        </div>
+                        <!-- "Update Goal" button moved here -->
+                        <div class="goal-actions">
+                            <button class="log-button" id="update-goal-btn">
+                                <i class="fas fa-target"></i>
+                                Update Goal
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -182,28 +205,12 @@
                 </div>
             </div>
 
-            <!-- Quick Actions Card -->
-            <div class="dashboard-card">
-                <h3>Quick Actions</h3>
-                <div class="log-actions">
-                    <a href="nutrition.html" class="log-button">
-                        <i class="fas fa-utensils"></i>
-                        Log Food
-                    </a>
-                    <button class="log-button disabled">
-                        <i class="fas fa-dumbbell"></i>
-                        Log Workout
-                    </button>
-                    <button class="log-button" id="update-goal-btn">
-                        <i class="fas fa-target"></i>
-                        Update Goal
-                    </button>
-                </div>
-            </div>
+            <!-- Quick Actions Card has been moved to the top -->
 
         </main>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
     <script src="js/dashboard.js"></script>
