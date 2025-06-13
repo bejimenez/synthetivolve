@@ -135,6 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function fetchWeightData() {
+    console.log("fetchWeightData() called");
     try {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -147,27 +148,32 @@ document.addEventListener("DOMContentLoaded", () => {
         .order("date", { ascending: true });
 
       if (error) {
+        console.error("fetchWeightData supabase error:", error);
         throw error;
       }
 
+      console.log("fetchWeightData returned data:", data);
+
       weightData = data || [];
-      console.log("Weight data:", weightData);
-
-      // Calculate current weight and 7-day average
       if (weightData.length > 0) {
-        // Get most recent weight
         currentWeight = weightData[weightData.length - 1].weight_lb;
+        console.log("currentWeight set to:", currentWeight);
 
-        // Calculate 7-day average
         const last7Days = weightData.slice(-7);
         sevenDayAverage =
           last7Days.reduce((sum, entry) => sum + entry.weight_lb, 0) /
           last7Days.length;
+        console.log("sevenDayAverage set to:", sevenDayAverage);
+      } else {
+        currentWeight = null;
+        sevenDayAverage = null;
       }
 
       return weightData;
     } catch (error) {
       console.error("Error fetching weight data:", error);
+      currentWeight = null;
+      sevenDayAverage = null;
       return [];
     }
   }
@@ -460,7 +466,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function displayWeightData() {
-    if (!currentWeight) {
+    console.log("displayWeightData called...");
+    console.log("weightData:", weightData);
+    console.log("currentWeight:", currentWeight, "type:", typeof currentWeight);
+    console.log("sevenDayAverage:", sevenDayAverage);
+
+    // Defensive: Only bail if explicitly null/undefined or not a number.
+    if (typeof currentWeight !== "number" || isNaN(currentWeight)) {
+      console.warn("displayWeightData: currentWeight invalid");
       currentWeightDisplay.textContent = "--.- lbs";
       sevenDayAverageEl.textContent = "--.- lbs";
       weekChangeEl.textContent = "-- lbs";
@@ -472,18 +485,19 @@ document.addEventListener("DOMContentLoaded", () => {
     currentWeightDisplay.textContent = `${currentWeight.toFixed(1)} lbs`;
 
     // Display 7-day average
-    if (sevenDayAverage) {
+    if (typeof sevenDayAverage === "number") {
       sevenDayAverageEl.textContent = `${sevenDayAverage.toFixed(1)} lbs`;
+    } else {
+      sevenDayAverageEl.textContent = "--.- lbs";
     }
 
-    // Calculate week change (compare current 7-day avg to previous 7-day avg)
+    // Calculate week change
     if (weightData.length >= 14) {
       const previous7Days = weightData.slice(-14, -7);
       const previousAvg =
         previous7Days.reduce((sum, entry) => sum + entry.weight_lb, 0) /
         previous7Days.length;
       const weekChange = sevenDayAverage - previousAvg;
-
       weekChangeEl.textContent = `${
         weekChange >= 0 ? "+" : ""
       }${weekChange.toFixed(1)} lbs`;
@@ -493,18 +507,19 @@ document.addEventListener("DOMContentLoaded", () => {
           : weekChange < -0.2
           ? "trend-down"
           : "trend-stable";
+    } else {
+      weekChangeEl.textContent = "-- lbs";
     }
 
-    // Calculate goal progress (if there's an active goal)
+    // Calculate goal progress
     if (currentGoal && currentGoal.goal_type !== "maintain") {
       const startWeight = currentGoal.weight_lb;
-      if (startWeight) {
+      if (typeof startWeight === "number") {
         const weightChange = currentWeight - startWeight;
         goalProgressWeightEl.textContent = `${
           weightChange >= 0 ? "+" : ""
         }${weightChange.toFixed(1)} lbs`;
 
-        // Color code based on goal type
         if (currentGoal.goal_type === "lose") {
           goalProgressWeightEl.className =
             weightChange < -0.5
@@ -520,10 +535,13 @@ document.addEventListener("DOMContentLoaded", () => {
               ? "trend-down"
               : "trend-stable";
         }
+      } else {
+        goalProgressWeightEl.textContent = "-- lbs";
       }
+    } else {
+      goalProgressWeightEl.textContent = "-- lbs";
     }
 
-    // Update trend indicator
     updateWeightTrendIndicator();
   }
 
