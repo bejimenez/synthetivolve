@@ -1,13 +1,15 @@
 # backend/main.py
 
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from supabase import create_client, Client
 
 # Load environment variables from .env file
-load_dotenv()
+env_path = Path(__file__).parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 # --- Configuration & Initialization ---
 SUPABASE_URL = os.getenv("SUPABASE_URL")

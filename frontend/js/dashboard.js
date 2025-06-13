@@ -8,6 +8,8 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
+  const API_BASE_URL = "http://127.0.0.1:8000";
+
   const SUPABASE_URL = window.APP_CONFIG.SUPABASE_URL;
   const SUPABASE_ANON_KEY = window.APP_CONFIG.SUPABASE_ANON_KEY;
   const supabase = window.supabase.createClient(
@@ -113,23 +115,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function fetchCurrentGoal() {
     try {
-      const { data, error } = await supabase
-        .from("nutrition_goals")
-        .select("*")
-        .eq("user_id", YOUR_USER_ID)
-        .eq("is_active", true)
-        .single();
+      const response = await fetch(`${API_BASE_URL}/api/goals/current`);
 
-      if (error && error.code !== "PGRST116") {
-        // PGRST116 is "no rows returned"
-        throw error;
+      if (!response.ok) {
+        // The server returned an error (e.g., 500)
+        throw new Error(`API Error: ${response.statusText}`);
       }
 
+      const data = await response.json();
+
       currentGoal = data;
-      console.log("Current goal:", currentGoal);
+      console.log("Current goal (from API):", currentGoal);
       return currentGoal;
     } catch (error) {
-      console.error("Error fetching current goal:", error);
+      console.error("Error fetching current goal from API:", error);
       return null;
     }
   }
