@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
     timelineContainer.innerHTML = "";
     
     // Generate blocks for each hour from 6 AM to 11 PM
-    for (let hour = 6; hour <= 23; hour++) {
+    for (let hour = 2; hour <= 22; hour++) {
       const timeBlock = document.createElement("div");
       timeBlock.className = "time-block";
       timeBlock.dataset.hour = hour;
@@ -195,11 +195,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const food = foodsCache.get(entry.food_id);
         if (!food) return;
         
-        const foodItem = document.createElement('div');
-        foodItem.className = 'food-item';
-        
         const calories = Math.round(food.calories * entry.quantity);
         const displayQuantity = Math.round(entry.quantity * (food.serving_size_g || 100));
+        
+        foodItem = document.createElement('div');
+        foodItem.className = 'food-item';
         
         foodItem.innerHTML = `
           <div class="food-info">
@@ -452,7 +452,8 @@ document.addEventListener("DOMContentLoaded", () => {
       e.target.textContent = "Loading comprehensive nutrition data...";
 
       try {
-        const url = `${USDA_BASE_URL}/food/${fdcId}?api_key=${USDA_API_KEY}&format=full&nutrients=203,204,205,208,291,307`;
+        // Request all nutrients by not specifying the nutrients parameter
+        const url = `${USDA_BASE_URL}/food/${fdcId}?api_key=${USDA_API_KEY}&format=full`;
         console.log('Fetching USDA food details from:', url);
         const response = await fetch(url);
 
@@ -516,13 +517,44 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function transformUSDAData(usdaFood) {
+    // Debug log to see the structure
+    if (usdaFood.foodNutrients && usdaFood.foodNutrients.length > 0) {
+      console.log('Sample nutrient structure:', usdaFood.foodNutrients[0]);
+      console.log('All nutrients:', usdaFood.foodNutrients.map(n => ({
+        id: n.nutrientId || n.nutrient?.id,
+        name: n.nutrientName || n.nutrient?.name,
+        value: n.value || n.amount
+      })));
+    }
+
     const findNutrient = (nutrientId) => {
-    const nutrient = usdaFood.foodNutrients?.find(
-      (n) => n.nutrientId === nutrientId || (n.nutrient && n.nutrient.id === nutrientId)
-    );
-    // USDA API returns value in different properties depending on the endpoint
-    return nutrient ? (nutrient.value || nutrient.amount || 0) : 0;
-  };
+      const nutrient = usdaFood.foodNutrients?.find(
+        (n) => {
+          // For full format, check multiple possible structures
+          // 1. Direct nutrientId property
+          if (n.nutrientId === nutrientId) return true;
+          // 2. Nested nutrient object with id
+          if (n.nutrient && n.nutrient.id === nutrientId) return true;
+          // 3. Nutrient number (USDA uses both number and id)
+          if (n.nutrientNumber === nutrientId.toString()) return true;
+          if (n.nutrient && n.nutrient.number === nutrientId.toString()) return true;
+          // 4. Check nutrient.nutrientId (some endpoints use this)
+          if (n.nutrient && n.nutrient.nutrientId === nutrientId) return true;
+          return false;
+        }
+      );
+      
+      if (nutrient) {
+        // Try different possible value properties
+        const value = nutrient.value !== undefined ? nutrient.value : 
+                     nutrient.amount !== undefined ? nutrient.amount : 
+                     nutrient.nutrientValue !== undefined ? nutrient.nutrientValue : 0;
+        console.log(`Found nutrient ${nutrientId}: ${value}`);
+        return value;
+      }
+      
+      return 0;
+    };
 
     let servingSize = 100;
     if (usdaFood.foodPortions && usdaFood.foodPortions.length > 0) {
@@ -549,12 +581,12 @@ document.addEventListener("DOMContentLoaded", () => {
       brand_name: usdaFood.brandName || usdaFood.brandOwner || null,
       creator_id: YOUR_USER_ID,
       serving_size_g: servingSize,
-      calories: Math.round(findNutrient(208)),
-      protein_g: findNutrient(203),
-      carbs_g: findNutrient(205),
-      fat_g: findNutrient(204),
-      fiber_g: findNutrient(291),
-      sodium_mg: findNutrient(307),
+      calories: Math.round(findNutrient(1008) || findNutrient(208)), // Energy in kcal
+      protein_g: findNutrient(1003) || findNutrient(203), // Protein
+      carbs_g: findNutrient(1005) || findNutrient(205), // Carbohydrate, by difference
+      fat_g: findNutrient(1004) || findNutrient(204), // Total lipid (fat)
+      fiber_g: findNutrient(1079) || findNutrient(291), // Fiber, total dietary
+      sodium_mg: findNutrient(1093) || findNutrient(307), // Sodium
       processing_level: processingLevel,
       external_id: usdaFood.fdcId.toString(),
       external_source: "usda_fdc",
