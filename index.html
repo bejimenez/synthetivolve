@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
 <body>
     <div class="dashboard-container">
@@ -18,24 +19,90 @@
 
         <main class="dashboard-grid">
             
-            <div class="dashboard-card card-large">
-                <h3>Quick Stats</h3>
-                <div class="stats-container">
-                    <div class="stat-item">
-                        <span class="stat-label">Current Weight</span>
-                        <span class="stat-value">--.- lbs</span>
+            <!-- Current Goal Card -->
+            <div class="dashboard-card card-large" id="current-goal-card">
+                <h3>Current Goal</h3>
+                <div id="goal-content">
+                    <div id="no-goal-state" class="empty-state">
+                        <p>No active goal set</p>
+                        <a href="calculator.html" class="nav-button">Set Your Goal</a>
                     </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Target Calories</span>
-                        <span class="stat-value">----</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Protein Target</span>
-                        <span class="stat-value">--- g</span>
+                    <div id="active-goal-state" class="hidden">
+                        <div class="goal-header">
+                            <h4 id="goal-name">--</h4>
+                            <div class="goal-progress">
+                                <span id="days-remaining" class="days-counter">-- days remaining</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="goal-progress-fill"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="goal-targets">
+                            <div class="target-item">
+                                <span class="target-label">Calories</span>
+                                <span class="target-value" id="target-calories">----</span>
+                            </div>
+                            <div class="target-item">
+                                <span class="target-label">Protein</span>
+                                <span class="target-value" id="target-protein">---g</span>
+                            </div>
+                            <div class="target-item">
+                                <span class="target-label">Carbs</span>
+                                <span class="target-value" id="target-carbs">---g</span>
+                            </div>
+                            <div class="target-item">
+                                <span class="target-label">Fat</span>
+                                <span class="target-value" id="target-fat">---g</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Today's Progress Card -->
+            <div class="dashboard-card">
+                <h3>Today's Progress</h3>
+                <div id="today-progress">
+                    <div class="progress-item">
+                        <div class="progress-header">
+                            <span>Calories</span>
+                            <span id="calories-progress">-- / --</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="calories-progress-bar"></div>
+                        </div>
+                    </div>
+                    <div class="progress-item">
+                        <div class="progress-header">
+                            <span>Protein</span>
+                            <span id="protein-progress">-- / --g</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="protein-progress-bar"></div>
+                        </div>
+                    </div>
+                    <div class="progress-item">
+                        <div class="progress-header">
+                            <span>Carbs</span>
+                            <span id="carbs-progress">-- / --g</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="carbs-progress-bar"></div>
+                        </div>
+                    </div>
+                    <div class="progress-item">
+                        <div class="progress-header">
+                            <span>Fat</span>
+                            <span id="fat-progress">-- / --g</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="fat-progress-bar"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modules Card -->
             <div class="dashboard-card">
                 <h3>Modules</h3>
                 <div class="nav-buttons">
@@ -46,25 +113,50 @@
                 </div>
             </div>
 
-            <div class="dashboard-card">
-                <h3>Trends</h3>
-                <div class="chart-placeholder">
-                    [ Chart: Weekly Weight Trend ]
+            <!-- Weekly Adherence Chart -->
+            <div class="dashboard-card card-large">
+                <h3>Weekly Adherence</h3>
+                <div id="adherence-chart">
+                    <div class="chart-container">
+                        <canvas id="adherence-canvas" width="400" height="200"></canvas>
+                    </div>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <div class="legend-color calories-color"></div>
+                            <span>Calories</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color protein-color"></div>
+                            <span>Protein</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
+            <!-- Quick Actions Card -->
             <div class="dashboard-card">
-                <h3>Today's Log</h3>
+                <h3>Quick Actions</h3>
                 <div class="log-actions">
-                    <p>What would you like to log?</p>
-                    <button class="log-button">Log Food</button>
-                    <button class="log-button">Log Workout</button>
+                    <a href="nutrition.html" class="log-button">
+                        <i class="fas fa-utensils"></i>
+                        Log Food
+                    </a>
+                    <button class="log-button disabled">
+                        <i class="fas fa-dumbbell"></i>
+                        Log Workout
+                    </button>
+                    <button class="log-button" id="update-goal-btn">
+                        <i class="fas fa-target"></i>
+                        Update Goal
+                    </button>
                 </div>
             </div>
 
         </main>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
     <script src="js/dashboard.js"></script>
 </body>
 </html>

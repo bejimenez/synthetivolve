@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Synthetivolve - Calorie Calculator</title>
     <link rel="stylesheet" href="style.css">
-    <link rel=""preconnect" href="https://fonts.googleapis.com">
-    <link rel=""preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -29,7 +29,7 @@
                     <input type="number" id="weight" required>
                     <select id="weight-unit">
                         <option value="kg">kg</option>
-                        <option value="lbs" selected>lbs</option> <!-- Changed default to lbs -->
+                        <option value="lbs" selected>lbs</option>
                     </select>
                 </div>
 
@@ -59,8 +59,23 @@
                         <option value="fixed">Fixed Amount/week</option>
                         <option value="percentage">% of Bodyweight/week</option>
                     </select>
-                    <input type="number" id="rate" value="1.0" step="0.1"> <!-- Changed default to 1.0 lbs -->
+                    <input type="number" id="rate" value="1.0" step="0.1">
                     <span id="rate-unit">lbs</span>
+                </div>
+
+                <!-- NEW: Goal Duration Section -->
+                <div id="goal-duration-group" class="form-group hidden">
+                    <label for="goal-name">Goal Name:</label>
+                    <input type="text" id="goal-name" placeholder="e.g., 12 Week Cut, Summer Bulk">
+                </div>
+
+                <div id="duration-group" class="form-group hidden">
+                    <label for="duration">Duration:</label>
+                    <input type="number" id="duration" value="12" min="1" max="52">
+                    <select id="duration-unit">
+                        <option value="weeks" selected>weeks</option>
+                        <option value="months">months</option>
+                    </select>
                 </div>
 
                 <button type="submit">Calculate</button>
@@ -69,10 +84,20 @@
             <div id="results-container" class="hidden">
                 <h2>Your Recommendations</h2>
                 <div id="results-output"></div>
+                
+                <!-- NEW: Save Goal Section -->
+                <div id="save-goal-section" class="hidden">
+                    <hr>
+                    <h3>Save This Goal</h3>
+                    <p>Save this goal to your dashboard to track your progress over time.</p>
+                    <button id="save-goal-btn" type="button">Save Goal & Start Tracking</button>
+                </div>
             </div>
         </main>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
     <script src="js/calculator.js"></script>
 </body>
 </html>
