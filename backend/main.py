@@ -147,7 +147,6 @@ async def log_weight(request: WeightLogRequest):
                     "updated_at": datetime.now().isoformat()
                 }) \
                 .eq("id", existing_entry["id"]) \
-                .select() \
                 .execute()
             
             result = response.data[0] if response.data else None
@@ -160,7 +159,6 @@ async def log_weight(request: WeightLogRequest):
                     "date": today,
                     "weight_lb": request.weight
                 }]) \
-                .select() \
                 .execute()
             
             result = response.data[0] if response.data else None
