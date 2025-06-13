@@ -17,6 +17,9 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentGoal = null;
   let todayNutrition = null;
   let weeklyAdherence = [];
+  let weightData = [];
+  let currentWeight = null;
+  let sevenDayAverage = null;
 
   // --- DOM REFERENCES ---
   const noGoalState = document.getElementById('no-goal-state');
@@ -38,6 +41,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const proteinProgressBar = document.getElementById('protein-progress-bar');
   const carbsProgressBar = document.getElementById('carbs-progress-bar');
   const fatProgressBar = document.getElementById('fat-progress-bar');
+  
+  // Weight Logger Elements
+  const currentWeightDisplay = document.getElementById('current-weight-display');
+  const weightTrendIndicator = document.getElementById('weight-trend-indicator');
+  const sevenDayAverageEl = document.getElementById('seven-day-average');
+  const weekChangeEl = document.getElementById('week-change');
+  const goalProgressWeightEl = document.getElementById('goal-progress-weight');
+  const weightInput = document.getElementById('weight-input');
+  const logWeightBtn = document.getElementById('log-weight-btn');
+  const weightTrendChart = document.getElementById('weight-trend-chart');
+  const weightTrendCtx = weightTrendChart.getContext('2d');
   
   // Chart Elements
   const adherenceCanvas = document.getElementById('adherence-canvas');
@@ -104,6 +118,99 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (error) {
       console.error('Error fetching current goal:', error);
       return null;
+    }
+  }
+
+  async function fetchWeightData() {
+    try {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const { data, error } = await supabase
+        .from('weight_entries')
+        .select('*')
+        .eq('user_id', YOUR_USER_ID)
+        .gte('date', formatDate(thirtyDaysAgo))
+        .order('date', { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      weightData = data || [];
+      console.log('Weight data:', weightData);
+
+      // Calculate current weight and 7-day average
+      if (weightData.length > 0) {
+        // Get most recent weight
+        currentWeight = weightData[weightData.length - 1].weight_lb;
+
+        // Calculate 7-day average
+        const last7Days = weightData.slice(-7);
+        sevenDayAverage = last7Days.reduce((sum, entry) => sum + entry.weight_lb, 0) / last7Days.length;
+      }
+
+      return weightData;
+    } catch (error) {
+      console.error('Error fetching weight data:', error);
+      return [];
+    }
+  }
+
+  async function logWeight(weight) {
+    try {
+      const today = formatDate(new Date());
+      
+      // Check if entry already exists for today
+      const { data: existingEntry, error: checkError } = await supabase
+        .from('weight_entries')
+        .select('*')
+        .eq('user_id', YOUR_USER_ID)
+        .eq('date', today)
+        .single();
+
+      let result;
+      if (existingEntry) {
+        // Update existing entry
+        const { data, error } = await supabase
+          .from('weight_entries')
+          .update({ 
+            weight_lb: weight,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingEntry.id)
+          .select()
+          .single();
+        
+        if (error) throw error;
+        result = data;
+        console.log('Updated weight entry:', result);
+      } else {
+        // Create new entry
+        const { data, error } = await supabase
+          .from('weight_entries')
+          .insert([{
+            user_id: YOUR_USER_ID,
+            date: today,
+            weight_lb: weight
+          }])
+          .select()
+          .single();
+        
+        if (error) throw error;
+        result = data;
+        console.log('Created new weight entry:', result);
+      }
+
+      // Refresh weight data
+      await fetchWeightData();
+      displayWeightData();
+      drawWeightChart();
+
+      return result;
+    } catch (error) {
+      console.error('Error logging weight:', error);
+      throw error;
     }
   }
 
@@ -249,7 +356,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // --- DISPLAY FUNCTIONS ---
+// --- DISPLAY FUNCTIONS ---
   
   function displayCurrentGoal() {
     if (!currentGoal) {
@@ -279,103 +386,185 @@ document.addEventListener("DOMContentLoaded", () => {
     goalProgressFill.style.width = `${progressPercentage}%`;
   }
 
-  function displayTodayProgress() {
-    if (!currentGoal || !todayNutrition) {
-      // Show placeholder values
-      caloriesProgressEl.textContent = '-- / --';
-      proteinProgressEl.textContent = '-- / --g';
-      carbsProgressEl.textContent = '-- / --g';
-      fatProgressEl.textContent = '-- / --g';
+  function displayWeightData() {
+    if (!currentWeight) {
+      currentWeightDisplay.textContent = '--.- lbs';
+      sevenDayAverageEl.textContent = '--.- lbs';
+      weekChangeEl.textContent = '-- lbs';
+      goalProgressWeightEl.textContent = '-- lbs';
       return;
     }
 
-    // Update progress text
-    caloriesProgressEl.textContent = `${Math.round(todayNutrition.calories)} / ${currentGoal.target_calories}`;
-    proteinProgressEl.textContent = `${Math.round(todayNutrition.protein)} / ${currentGoal.target_protein_g}g`;
-    carbsProgressEl.textContent = `${Math.round(todayNutrition.carbs)} / ${currentGoal.target_carbs_g}g`;
-    fatProgressEl.textContent = `${Math.round(todayNutrition.fat)} / ${currentGoal.target_fat_g}g`;
+    // Display current weight
+    currentWeightDisplay.textContent = `${currentWeight.toFixed(1)} lbs`;
 
-    // Update progress bars
-    updateProgressBar(caloriesProgressBar, todayNutrition.calories, currentGoal.target_calories);
-    updateProgressBar(proteinProgressBar, todayNutrition.protein, currentGoal.target_protein_g);
-    updateProgressBar(carbsProgressBar, todayNutrition.carbs, currentGoal.target_carbs_g);
-    updateProgressBar(fatProgressBar, todayNutrition.fat, currentGoal.target_fat_g);
+    // Display 7-day average
+    if (sevenDayAverage) {
+      sevenDayAverageEl.textContent = `${sevenDayAverage.toFixed(1)} lbs`;
+    }
+
+    // Calculate week change (compare current 7-day avg to previous 7-day avg)
+    if (weightData.length >= 14) {
+      const previous7Days = weightData.slice(-14, -7);
+      const previousAvg = previous7Days.reduce((sum, entry) => sum + entry.weight_lb, 0) / previous7Days.length;
+      const weekChange = sevenDayAverage - previousAvg;
+      
+      weekChangeEl.textContent = `${weekChange >= 0 ? '+' : ''}${weekChange.toFixed(1)} lbs`;
+      weekChangeEl.className = weekChange > 0.2 ? 'trend-up' : weekChange < -0.2 ? 'trend-down' : 'trend-stable';
+    }
+
+    // Calculate goal progress (if there's an active goal)
+    if (currentGoal && currentGoal.goal_type !== 'maintain') {
+      const startWeight = currentGoal.weight_lb;
+      if (startWeight) {
+        const weightChange = currentWeight - startWeight;
+        goalProgressWeightEl.textContent = `${weightChange >= 0 ? '+' : ''}${weightChange.toFixed(1)} lbs`;
+        
+        // Color code based on goal type
+        if (currentGoal.goal_type === 'lose') {
+          goalProgressWeightEl.className = weightChange < -0.5 ? 'trend-down' : weightChange > 0.5 ? 'trend-up' : 'trend-stable';
+        } else if (currentGoal.goal_type === 'gain') {
+          goalProgressWeightEl.className = weightChange > 0.5 ? 'trend-up' : weightChange < -0.5 ? 'trend-down' : 'trend-stable';
+        }
+      }
+    }
+
+    // Update trend indicator
+    updateWeightTrendIndicator();
   }
 
-  function drawAdherenceChart() {
-    if (!weeklyAdherence.length) {
-      adherenceCtx.clearRect(0, 0, adherenceCanvas.width, adherenceCanvas.height);
-      adherenceCtx.fillStyle = '#666';
-      adherenceCtx.font = '14px Roboto';
-      adherenceCtx.textAlign = 'center';
-      adherenceCtx.fillText('No data available', adherenceCanvas.width / 2, adherenceCanvas.height / 2);
+  function updateWeightTrendIndicator() {
+    if (weightData.length < 7) {
+      weightTrendIndicator.innerHTML = '<i class="fas fa-minus"></i>';
+      weightTrendIndicator.className = 'weight-trend stable';
+      return;
+    }
+
+    // Compare current 7-day average to previous period
+    const last7Days = weightData.slice(-7);
+    const previous7Days = weightData.slice(-14, -7);
+    
+    if (previous7Days.length < 7) {
+      weightTrendIndicator.innerHTML = '<i class="fas fa-minus"></i>';
+      weightTrendIndicator.className = 'weight-trend stable';
+      return;
+    }
+
+    const currentAvg = last7Days.reduce((sum, entry) => sum + entry.weight_lb, 0) / last7Days.length;
+    const previousAvg = previous7Days.reduce((sum, entry) => sum + entry.weight_lb, 0) / previous7Days.length;
+    const change = currentAvg - previousAvg;
+
+    if (change > 0.3) {
+      weightTrendIndicator.innerHTML = '<i class="fas fa-arrow-trend-up"></i>';
+      weightTrendIndicator.className = 'weight-trend increasing';
+    } else if (change < -0.3) {
+      weightTrendIndicator.innerHTML = '<i class="fas fa-arrow-trend-down"></i>';
+      weightTrendIndicator.className = 'weight-trend decreasing';
+    } else {
+      weightTrendIndicator.innerHTML = '<i class="fas fa-minus"></i>';
+      weightTrendIndicator.className = 'weight-trend stable';
+    }
+  }
+
+  function drawWeightChart() {
+    if (!weightData.length) {
+      weightTrendCtx.clearRect(0, 0, weightTrendChart.width, weightTrendChart.height);
+      weightTrendCtx.fillStyle = '#666';
+      weightTrendCtx.font = '14px Roboto';
+      weightTrendCtx.textAlign = 'center';
+      weightTrendCtx.fillText('No weight data available', weightTrendChart.width / 2, weightTrendChart.height / 2);
       return;
     }
 
     // Clear canvas
-    adherenceCtx.clearRect(0, 0, adherenceCanvas.width, adherenceCanvas.height);
+    weightTrendCtx.clearRect(0, 0, weightTrendChart.width, weightTrendChart.height);
 
-    const width = adherenceCanvas.width;
-    const height = adherenceCanvas.height;
+    const width = weightTrendChart.width;
+    const height = weightTrendChart.height;
     const padding = 40;
     const chartWidth = width - padding * 2;
     const chartHeight = height - padding * 2;
 
-    // Draw grid lines
-    adherenceCtx.strokeStyle = '#333';
-    adherenceCtx.lineWidth = 1;
-    
-    // Horizontal grid lines (25%, 50%, 75%, 100%)
-    for (let i = 0; i <= 4; i++) {
-      const y = padding + (chartHeight / 4) * i;
-      adherenceCtx.beginPath();
-      adherenceCtx.moveTo(padding, y);
-      adherenceCtx.lineTo(width - padding, y);
-      adherenceCtx.stroke();
-      
-      // Y-axis labels
-      adherenceCtx.fillStyle = '#a0a0a0';
-      adherenceCtx.font = '10px Roboto';
-      adherenceCtx.textAlign = 'right';
-      adherenceCtx.fillText(`${100 - (i * 25)}%`, padding - 5, y + 3);
+    // Calculate data ranges
+    const weights = weightData.map(d => d.weight_lb);
+    const minWeight = Math.min(...weights) - 2;
+    const maxWeight = Math.max(...weights) + 2;
+    const weightRange = maxWeight - minWeight;
+
+    // Calculate 7-day moving averages for smooth trend line
+    const movingAverages = [];
+    for (let i = 0; i < weightData.length; i++) {
+      const start = Math.max(0, i - 6);
+      const slice = weightData.slice(start, i + 1);
+      const avg = slice.reduce((sum, entry) => sum + entry.weight_lb, 0) / slice.length;
+      movingAverages.push(avg);
     }
 
-    // Draw data
-    const barWidth = chartWidth / (weeklyAdherence.length * 2); // Two bars per day
-    const barSpacing = 2;
+    // Draw grid lines
+    weightTrendCtx.strokeStyle = '#333';
+    weightTrendCtx.lineWidth = 1;
+    
+    // Horizontal grid lines
+    for (let i = 0; i <= 4; i++) {
+      const y = padding + (chartHeight / 4) * i;
+      const weight = maxWeight - (weightRange / 4) * i;
+      
+      weightTrendCtx.beginPath();
+      weightTrendCtx.moveTo(padding, y);
+      weightTrendCtx.lineTo(width - padding, y);
+      weightTrendCtx.stroke();
+      
+      // Y-axis labels
+      weightTrendCtx.fillStyle = '#a0a0a0';
+      weightTrendCtx.font = '10px Roboto';
+      weightTrendCtx.textAlign = 'right';
+      weightTrendCtx.fillText(`${weight.toFixed(1)}`, padding - 5, y + 3);
+    }
 
-    weeklyAdherence.forEach((day, index) => {
-      const x = padding + (index * chartWidth / weeklyAdherence.length);
+    // Draw individual weight points
+    weightTrendCtx.fillStyle = '#666';
+    weightData.forEach((entry, index) => {
+      const x = padding + (index / (weightData.length - 1)) * chartWidth;
+      const y = padding + ((maxWeight - entry.weight_lb) / weightRange) * chartHeight;
       
-      // Calories bar (left)
-      const caloriesHeight = (day.caloriesAdherence / 100) * chartHeight;
-      adherenceCtx.fillStyle = '#00f2ea';
-      adherenceCtx.fillRect(
-        x + barSpacing, 
-        padding + chartHeight - caloriesHeight, 
-        barWidth - barSpacing, 
-        caloriesHeight
-      );
+      weightTrendCtx.beginPath();
+      weightTrendCtx.arc(x, y, 2, 0, 2 * Math.PI);
+      weightTrendCtx.fill();
+    });
+
+    // Draw 7-day moving average line
+    if (movingAverages.length > 1) {
+      weightTrendCtx.strokeStyle = '#00f2ea';
+      weightTrendCtx.lineWidth = 3;
+      weightTrendCtx.beginPath();
       
-      // Protein bar (right)
-      const proteinHeight = (day.proteinAdherence / 100) * chartHeight;
-      adherenceCtx.fillStyle = '#ff00ff';
-      adherenceCtx.fillRect(
-        x + barWidth + barSpacing, 
-        padding + chartHeight - proteinHeight, 
-        barWidth - barSpacing, 
-        proteinHeight
-      );
+      movingAverages.forEach((avg, index) => {
+        const x = padding + (index / (weightData.length - 1)) * chartWidth;
+        const y = padding + ((maxWeight - avg) / weightRange) * chartHeight;
+        
+        if (index === 0) {
+          weightTrendCtx.moveTo(x, y);
+        } else {
+          weightTrendCtx.lineTo(x, y);
+        }
+      });
       
-      // Day labels
-      adherenceCtx.fillStyle = '#a0a0a0';
-      adherenceCtx.font = '10px Roboto';
-      adherenceCtx.textAlign = 'center';
-      adherenceCtx.fillText(
-        day.day, 
-        x + barWidth, 
-        height - 10
-      );
+      weightTrendCtx.stroke();
+    }
+
+    // Draw date labels (show every few days to avoid crowding)
+    const labelInterval = Math.max(1, Math.floor(weightData.length / 7));
+    weightTrendCtx.fillStyle = '#a0a0a0';
+    weightTrendCtx.font = '9px Roboto';
+    weightTrendCtx.textAlign = 'center';
+    
+    weightData.forEach((entry, index) => {
+      if (index % labelInterval === 0 || index === weightData.length - 1) {
+        const x = padding + (index / (weightData.length - 1)) * chartWidth;
+        const date = new Date(entry.date);
+        const label = `${date.getMonth() + 1}/${date.getDate()}`;
+        weightTrendCtx.fillText(label, x, height - 10);
+      }
     });
   }
 
@@ -391,6 +580,61 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // Weight logging event listeners
+  weightInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      handleWeightSubmission();
+    }
+  });
+
+  logWeightBtn.addEventListener('click', handleWeightSubmission);
+
+  async function handleWeightSubmission() {
+    const weight = parseFloat(weightInput.value);
+    
+    if (!weight || weight < 50 || weight > 500) {
+      alert('Please enter a valid weight between 50 and 500 lbs');
+      weightInput.focus();
+      return;
+    }
+
+    try {
+      logWeightBtn.disabled = true;
+      logWeightBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging...';
+
+      await logWeight(weight);
+      
+      // Success feedback
+      weightInput.value = '';
+      logWeightBtn.classList.add('weight-logged');
+      
+      // Show success message briefly
+      const originalText = logWeightBtn.innerHTML;
+      logWeightBtn.innerHTML = '<i class="fas fa-check"></i> Logged!';
+      logWeightBtn.style.backgroundColor = '#4CAF50';
+      
+      setTimeout(() => {
+        logWeightBtn.innerHTML = '<i class="fas fa-plus"></i> Log';
+        logWeightBtn.style.backgroundColor = '';
+        logWeightBtn.classList.remove('weight-logged');
+      }, 2000);
+
+    } catch (error) {
+      console.error('Error logging weight:', error);
+      alert('Failed to log weight. Please try again.');
+    } finally {
+      logWeightBtn.disabled = false;
+    }
+  }
+
+  // Auto-focus weight input when user starts typing a number
+  document.addEventListener('keypress', (e) => {
+    if (e.key >= '0' && e.key <= '9' && !weightInput.contains(document.activeElement)) {
+      weightInput.focus();
+      weightInput.value = e.key;
+    }
+  });
+
   // --- INITIALIZATION AND DATA LOADING ---
   
   async function loadDashboardData() {
@@ -398,19 +642,24 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log('Loading dashboard data...');
       
       // Show loading state
-      document.querySelectorAll('.target-value, .progress-header span:last-child').forEach(el => {
+      document.querySelectorAll('.target-value, .progress-header span:last-child, .stat-value').forEach(el => {
         el.textContent = 'Loading...';
       });
 
-      // Fetch current goal first
-      await fetchCurrentGoal();
+      // Fetch all data in parallel for better performance
+      const [goalData, nutritionData, weightDataResult] = await Promise.all([
+        fetchCurrentGoal(),
+        fetchTodayNutrition(),
+        fetchWeightData()
+      ]);
+
+      // Display data
       displayCurrentGoal();
-
-      // Fetch today's nutrition
-      await fetchTodayNutrition();
       displayTodayProgress();
+      displayWeightData();
+      drawWeightChart();
 
-      // Fetch weekly adherence data
+      // Fetch weekly adherence data (this can take longer)
       await fetchWeeklyAdherence();
       drawAdherenceChart();
 
@@ -419,7 +668,7 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error('Error loading dashboard data:', error);
       
       // Show error state
-      document.querySelectorAll('.target-value').forEach(el => {
+      document.querySelectorAll('.target-value, .stat-value').forEach(el => {
         el.textContent = 'Error';
       });
     }
@@ -428,13 +677,22 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- AUTO-REFRESH ---
   
   function startAutoRefresh() {
-    // Refresh today's progress every 2 minutes
+    // Refresh nutrition progress every 2 minutes
     setInterval(async () => {
       if (!document.hidden) {
         await fetchTodayNutrition();
         displayTodayProgress();
       }
     }, 2 * 60 * 1000); // 2 minutes
+
+    // Refresh weight data every 5 minutes (in case of updates from other devices)
+    setInterval(async () => {
+      if (!document.hidden) {
+        await fetchWeightData();
+        displayWeightData();
+        drawWeightChart();
+      }
+    }, 5 * 60 * 1000); // 5 minutes
 
     // Refresh all data every 10 minutes
     setInterval(async () => {
@@ -458,4 +716,11 @@ document.addEventListener("DOMContentLoaded", () => {
       loadDashboardData();
     }
   });
+
+  // Set focus to weight input on page load for quick logging
+  setTimeout(() => {
+    if (weightInput && !weightInput.value) {
+      weightInput.focus();
+    }
+  }, 1000);
 });

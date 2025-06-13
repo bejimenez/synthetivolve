@@ -17,6 +17,55 @@
             <p>Your Personalized Health & Wellness Engine</p>
         </header>
 
+        <!-- Weight Logger Section - Prominent placement at top -->
+        <section class="weight-logger-section">
+            <div class="weight-logger-card">
+                <div class="weight-logger-header">
+                    <h3>
+                        <i class="fas fa-weight"></i>
+                        Weight Tracker
+                    </h3>
+                    <div class="current-weight-display">
+                        <span class="weight-label">Current:</span>
+                        <span class="current-weight" id="current-weight-display">--.- lbs</span>
+                        <span class="weight-trend" id="weight-trend-indicator">
+                            <i class="fas fa-minus"></i>
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="weight-input-section">
+                    <div class="weight-input-group">
+                        <input type="number" id="weight-input" step="0.1" min="50" max="500" 
+                               placeholder="Enter today's weight">
+                        <span class="weight-unit">lbs</span>
+                        <button id="log-weight-btn" type="button">
+                            <i class="fas fa-plus"></i>
+                            Log
+                        </button>
+                    </div>
+                    <div class="weight-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">7-Day Avg</span>
+                            <span class="stat-value" id="seven-day-average">--.- lbs</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">This Week</span>
+                            <span class="stat-value" id="week-change">-- lbs</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Goal Progress</span>
+                            <span class="stat-value" id="goal-progress-weight">-- lbs</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="weight-chart-container">
+                    <canvas id="weight-trend-chart" width="800" height="150"></canvas>
+                </div>
+            </div>
+        </section>
+
         <main class="dashboard-grid">
             
             <!-- Current Goal Card -->
