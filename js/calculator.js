@@ -250,7 +250,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // For maintenance goals, use default duration if not specified
     let duration, durationUnit;
     if (lastCalculationResults.goal === "maintain") {
-      duration = 4; // Default 4 weeks for maintenance
+      duration = 2; // Default 2 weeks for maintenance
       durationUnit = "weeks";
     } else {
       duration = parseInt(durationInput.value);
