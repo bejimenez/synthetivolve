@@ -136,37 +136,21 @@ document.addEventListener("DOMContentLoaded", () => {
   async function fetchWeightData() {
     console.log("fetchWeightData() called");
     try {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-      const { data, error } = await supabase
-        .from("weight_entries")
-        .select("*")
-        .eq("user_id", YOUR_USER_ID)
-        .gte("date", formatDate(thirtyDaysAgo))
-        .order("date", { ascending: true });
-
-      if (error) {
-        console.error("fetchWeightData supabase error:", error);
-        throw error;
+      const response = await fetch(`${API_BASE_URL}/api/weight/data`);
+      
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.statusText}`);
       }
-
+      
+      const data = await response.json();
       console.log("fetchWeightData returned data:", data);
 
-      weightData = data || [];
-      if (weightData.length > 0) {
-        currentWeight = weightData[weightData.length - 1].weight_lb;
-        console.log("currentWeight set to:", currentWeight);
-
-        const last7Days = weightData.slice(-7);
-        sevenDayAverage =
-          last7Days.reduce((sum, entry) => sum + entry.weight_lb, 0) /
-          last7Days.length;
-        console.log("sevenDayAverage set to:", sevenDayAverage);
-      } else {
-        currentWeight = null;
-        sevenDayAverage = null;
-      }
+      weightData = data.weight_data || [];
+      currentWeight = data.current_weight;
+      sevenDayAverage = data.seven_day_average;
+      
+      console.log("currentWeight set to:", currentWeight);
+      console.log("sevenDayAverage set to:", sevenDayAverage);
 
       return weightData;
     } catch (error) {
@@ -179,50 +163,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function logWeight(weight) {
     try {
-      const today = formatDate(new Date());
-
-      // Check if entry already exists for today
-      const { data: existingEntry, error: checkError } = await supabase
-        .from("weight_entries")
-        .select("*")
-        .eq("user_id", YOUR_USER_ID)
-        .eq("date", today)
-        .single();
-
-      let result;
-      if (existingEntry) {
-        // Update existing entry
-        const { data, error } = await supabase
-          .from("weight_entries")
-          .update({
-            weight_lb: weight,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", existingEntry.id)
-          .select()
-          .single();
-
-        if (error) throw error;
-        result = data;
-        console.log("Updated weight entry:", result);
-      } else {
-        // Create new entry
-        const { data, error } = await supabase
-          .from("weight_entries")
-          .insert([
-            {
-              user_id: YOUR_USER_ID,
-              date: today,
-              weight_lb: weight,
-            },
-          ])
-          .select()
-          .single();
-
-        if (error) throw error;
-        result = data;
-        console.log("Created new weight entry:", result);
+      const response = await fetch(`${API_BASE_URL}/api/weight/log`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ weight: weight })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.statusText}`);
       }
+      
+      const result = await response.json();
+      console.log("Weight logged successfully:", result);
 
       // Refresh weight data
       await fetchWeightData();
@@ -238,60 +192,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function fetchTodayNutrition() {
     try {
-      const today = new Date();
-      const startOfDay = new Date(today);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(today);
-      endOfDay.setHours(23, 59, 59, 999);
-
-      console.log("Fetching nutrition for:", startOfDay, "to", endOfDay);
-
-      const { data: entries, error } = await supabase
-        .from("logged_entries")
-        .select(
-          `
-          *,
-          foods (
-            calories,
-            protein_g,
-            carbs_g,
-            fat_g,
-            serving_size_g
-          )
-        `
-        )
-        .eq("user_id", YOUR_USER_ID)
-        .gte("logged_at", startOfDay.toISOString())
-        .lte("logged_at", endOfDay.toISOString());
-
-      if (error) {
-        throw error;
+      const response = await fetch(`${API_BASE_URL}/api/nutrition/today`);
+      
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.statusText}`);
       }
-
-      console.log("Today's entries:", entries);
-
-      // Calculate totals
-      let totals = {
-        calories: 0,
-        protein: 0,
-        carbs: 0,
-        fat: 0,
-      };
-
-      if (entries && entries.length > 0) {
-        entries.forEach((entry) => {
-          const food = entry.foods;
-          if (food) {
-            totals.calories += (food.calories || 0) * entry.quantity;
-            totals.protein += (food.protein_g || 0) * entry.quantity;
-            totals.carbs += (food.carbs_g || 0) * entry.quantity;
-            totals.fat += (food.fat_g || 0) * entry.quantity;
-          }
-        });
-      }
-
+      
+      const totals = await response.json();
+      console.log("Today's nutrition totals (from API):", totals);
+      
       todayNutrition = totals;
-      console.log("Today's nutrition totals:", todayNutrition);
       return todayNutrition;
     } catch (error) {
       console.error("Error fetching today's nutrition:", error);
@@ -303,77 +213,16 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!currentGoal) return [];
 
     try {
-      const today = new Date();
-      const weekAgo = new Date();
-      weekAgo.setDate(today.getDate() - 6);
-      weekAgo.setHours(0, 0, 0, 0); // Start of the day, 7 days ago
-
-      // Fetch all entries for the last 7 days in ONE query
-      const { data: entries, error } = await supabase
-        .from("logged_entries")
-        .select(`*, foods (calories, protein_g)`)
-        .eq("user_id", YOUR_USER_ID)
-        .gte("logged_at", weekAgo.toISOString());
-
-      if (error) throw error;
-
-      // Create a map to store totals for each day
-      const dailyTotals = new Map();
-
-      // Initialize the map with all 7 days to ensure days with no logs are included
-      for (let i = 0; i < 7; i++) {
-        const date = new Date(weekAgo);
-        date.setDate(weekAgo.getDate() + i);
-        const dateString = formatDate(date);
-        dailyTotals.set(dateString, {
-          day: date.toLocaleDateString("en-US", { weekday: "short" }),
-          calories: 0,
-          protein: 0,
-        });
+      const response = await fetch(`${API_BASE_URL}/api/nutrition/weekly-adherence`);
+      
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.statusText}`);
       }
-
-      // Process the fetched entries and add to the daily totals
-      entries.forEach((entry) => {
-        const entryDate = formatDate(new Date(entry.logged_at));
-        if (dailyTotals.has(entryDate)) {
-          const dayData = dailyTotals.get(entryDate);
-          const food = entry.foods;
-          if (food) {
-            dayData.calories += (food.calories || 0) * entry.quantity;
-            dayData.protein += (food.protein_g || 0) * entry.quantity;
-          }
-        }
-      });
-
-      // Convert the map to the final adherence array
-      const adherenceData = Array.from(dailyTotals.entries()).map(
-        ([date, totals]) => {
-          const caloriesAdherence =
-            currentGoal.target_calories > 0
-              ? Math.min(
-                  (totals.calories / currentGoal.target_calories) * 100,
-                  120
-                )
-              : 0;
-          const proteinAdherence =
-            currentGoal.target_protein_g > 0
-              ? Math.min(
-                  (totals.protein / currentGoal.target_protein_g) * 100,
-                  120
-                )
-              : 0;
-
-          return {
-            date,
-            day: totals.day,
-            caloriesAdherence,
-            proteinAdherence,
-          };
-        }
-      );
-
+      
+      const adherenceData = await response.json();
+      console.log("Weekly adherence data (from API):", adherenceData);
+      
       weeklyAdherence = adherenceData;
-      console.log("Weekly adherence data (optimized):", weeklyAdherence);
       return weeklyAdherence;
     } catch (error) {
       console.error("Error fetching weekly adherence:", error);
