@@ -2,9 +2,10 @@
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import date
+from uuid import UUID
 
 class Goal(BaseModel):
-    id: int
+    id: UUID
     user_id: str
     goal_name: str
     start_date: date
