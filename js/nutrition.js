@@ -517,11 +517,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function transformUSDAData(usdaFood) {
     const findNutrient = (nutrientId) => {
-      const nutrient = usdaFood.foodNutrients?.find(
-        (n) => n.nutrient.id === nutrientId
-      );
-      return nutrient ? nutrient.amount : 0;
-    };
+    const nutrient = usdaFood.foodNutrients?.find(
+      (n) => n.nutrientId === nutrientId || (n.nutrient && n.nutrient.id === nutrientId)
+    );
+    // USDA API returns value in different properties depending on the endpoint
+    return nutrient ? (nutrient.value || nutrient.amount || 0) : 0;
+  };
 
     let servingSize = 100;
     if (usdaFood.foodPortions && usdaFood.foodPortions.length > 0) {
