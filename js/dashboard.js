@@ -279,82 +279,73 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!currentGoal) return [];
 
     try {
-      const today = new Date();
-      const weekAgo = new Date(today);
-      weekAgo.setDate(today.getDate() - 6); // Last 7 days including today
+        const today = new Date();
+        const weekAgo = new Date();
+        weekAgo.setDate(today.getDate() - 6);
+        weekAgo.setHours(0, 0, 0, 0); // Start of the day, 7 days ago
 
-      const adherenceData = [];
-
-      for (let i = 0; i < 7; i++) {
-        const date = new Date(weekAgo);
-        date.setDate(weekAgo.getDate() + i);
-        
-        const startOfDay = new Date(date);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(date);
-        endOfDay.setHours(23, 59, 59, 999);
-
+        // Fetch all entries for the last 7 days in ONE query
         const { data: entries, error } = await supabase
-          .from('logged_entries')
-          .select(`
-            *,
-            foods (
-              calories,
-              protein_g,
-              carbs_g,
-              fat_g
-            )
-          `)
-          .eq('user_id', YOUR_USER_ID)
-          .gte('logged_at', startOfDay.toISOString())
-          .lte('logged_at', endOfDay.toISOString());
+            .from('logged_entries')
+            .select(`*, foods (calories, protein_g)`)
+            .eq('user_id', YOUR_USER_ID)
+            .gte('logged_at', weekAgo.toISOString());
 
-        if (error) {
-          console.error('Error fetching data for', date, error);
-          adherenceData.push({
-            date: formatDate(date),
-            caloriesAdherence: 0,
-            proteinAdherence: 0
-          });
-          continue;
-        }
-
-        let dayTotals = { calories: 0, protein: 0 };
+        if (error) throw error;
         
-        if (entries && entries.length > 0) {
-          entries.forEach(entry => {
-            const food = entry.foods;
-            if (food) {
-              dayTotals.calories += (food.calories || 0) * entry.quantity;
-              dayTotals.protein += (food.protein_g || 0) * entry.quantity;
-            }
-          });
+        // Create a map to store totals for each day
+        const dailyTotals = new Map();
+
+        // Initialize the map with all 7 days to ensure days with no logs are included
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(weekAgo);
+            date.setDate(weekAgo.getDate() + i);
+            const dateString = formatDate(date);
+            dailyTotals.set(dateString, { 
+                day: date.toLocaleDateString('en-US', { weekday: 'short' }),
+                calories: 0, 
+                protein: 0 
+            });
         }
-
-        // Calculate adherence percentages
-        const caloriesAdherence = currentGoal.target_calories > 0 
-          ? Math.min((dayTotals.calories / currentGoal.target_calories) * 100, 120) // Cap at 120%
-          : 0;
-        const proteinAdherence = currentGoal.target_protein_g > 0 
-          ? Math.min((dayTotals.protein / currentGoal.target_protein_g) * 100, 120) // Cap at 120%
-          : 0;
-
-        adherenceData.push({
-          date: formatDate(date),
-          day: date.toLocaleDateString('en-US', { weekday: 'short' }),
-          caloriesAdherence,
-          proteinAdherence
+        
+        // Process the fetched entries and add to the daily totals
+        entries.forEach(entry => {
+            const entryDate = formatDate(new Date(entry.logged_at));
+            if (dailyTotals.has(entryDate)) {
+                const dayData = dailyTotals.get(entryDate);
+                const food = entry.foods;
+                if (food) {
+                    dayData.calories += (food.calories || 0) * entry.quantity;
+                    dayData.protein += (food.protein_g || 0) * entry.quantity;
+                }
+            }
         });
-      }
 
-      weeklyAdherence = adherenceData;
-      console.log('Weekly adherence data:', weeklyAdherence);
-      return adherenceData;
+        // Convert the map to the final adherence array
+        const adherenceData = Array.from(dailyTotals.entries()).map(([date, totals]) => {
+            const caloriesAdherence = currentGoal.target_calories > 0 
+                ? Math.min((totals.calories / currentGoal.target_calories) * 100, 120)
+                : 0;
+            const proteinAdherence = currentGoal.target_protein_g > 0 
+                ? Math.min((totals.protein / currentGoal.target_protein_g) * 100, 120)
+                : 0;
+            
+            return {
+                date,
+                day: totals.day,
+                caloriesAdherence,
+                proteinAdherence
+            };
+        });
+
+        weeklyAdherence = adherenceData;
+        console.log('Weekly adherence data (optimized):', weeklyAdherence);
+        return weeklyAdherence;
     } catch (error) {
-      console.error('Error fetching weekly adherence:', error);
-      return [];
+        console.error('Error fetching weekly adherence:', error);
+        return [];
     }
-  }
+}
 
 // --- DISPLAY FUNCTIONS ---
   
@@ -755,42 +746,52 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- INITIALIZATION AND DATA LOADING ---
   
-  async function loadDashboardData() {
+  // --- INITIALIZATION AND DATA LOADING ---
+  
+async function loadDashboardData() {
     try {
-      console.log('Loading dashboard data...');
-      
-      // Show loading state
-      document.querySelectorAll('.target-value, .progress-header span:last-child, .stat-value').forEach(el => {
-        el.textContent = 'Loading...';
-      });
+        console.log('Loading dashboard data...');
 
-      // Fetch all data in parallel for better performance
-      const [goalData, nutritionData, weightDataResult] = await Promise.all([
-        fetchCurrentGoal(),
-        fetchTodayNutrition(),
-        fetchWeightData()
-      ]);
+        // Show a global loading state
+        document.querySelectorAll('.target-value, .progress-header span:last-child, .stat-value').forEach(el => {
+            el.textContent = 'Loading...';
+        });
 
-      // Display data
-      displayCurrentGoal();
-      displayTodayProgress();
-      displayWeightData();
-      drawWeightChart();
+        // 1. Fetch the current goal first, as many other calls depend on it.
+        const goal = await fetchCurrentGoal();
+        displayCurrentGoal(); // We can display this immediately.
 
-      // Fetch weekly adherence data (this can take longer)
-      await fetchWeeklyAdherence();
-      drawAdherenceChart();
+        // 2. Now, fetch the remaining data in parallel.
+        const [nutritionData, weightDataResult] = await Promise.all([
+            fetchTodayNutrition(),
+            fetchWeightData()
+        ]);
 
-      console.log('Dashboard data loaded successfully');
+        // 3. Display the data that depended on the goal.
+        // By now, `currentGoal`, `todayNutrition`, and `weightData` global variables are all set.
+        displayTodayProgress();
+        displayWeightData();
+        drawWeightChart();
+
+        // 4. Fetch and display weekly adherence, which also depends on the goal.
+        // This is last as it's the most intensive query.
+        await fetchWeeklyAdherence();
+        drawAdherenceChart();
+
+        console.log('Dashboard data loaded successfully');
+
     } catch (error) {
-      console.error('Error loading dashboard data:', error);
-      
-      // Show error state
-      document.querySelectorAll('.target-value, .stat-value').forEach(el => {
-        el.textContent = 'Error';
-      });
+        console.error('Error loading dashboard data:', error);
+        // Show error state
+        document.querySelectorAll('.target-value, .stat-value').forEach(el => {
+            el.textContent = 'Error';
+        });
+        // Also clear the progress values
+         document.querySelectorAll('.progress-header span:last-child').forEach(el => {
+            el.textContent = 'Error';
+        });
     }
-  }
+}
 
   // --- AUTO-REFRESH ---
   
