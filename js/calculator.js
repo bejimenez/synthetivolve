@@ -37,14 +37,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Show/hide rate and duration inputs based on goal
   goalSelect.addEventListener("change", () => {
-    const isNotMaintain = goalSelect.value !== "maintain";
+    const goal = goalSelect.value;
+    const isNotMaintain = goal !== "maintain";
+    
+    // Show/hide rate inputs only for lose/gain goals
     rateGroup.classList.toggle("hidden", !isNotMaintain);
-    goalDurationGroup.classList.toggle("hidden", !isNotMaintain);
-    durationGroup.classList.toggle("hidden", !isNotMaintain);
+    
+    // Always show duration and goal name inputs for tracking purposes
+    goalDurationGroup.classList.remove("hidden");
+    durationGroup.classList.remove("hidden");
     
     // Auto-populate goal name based on selection
-    if (isNotMaintain) {
-      const goalType = goalSelect.value === "lose" ? "Cut" : "Bulk";
+    if (goal === "maintain") {
+      goalNameInput.value = "Maintenance Phase";
+      durationInput.value = "4"; // Default 4 weeks for maintenance
+      durationUnitSelect.value = "weeks";
+    } else {
+      const goalType = goal === "lose" ? "Cut" : "Bulk";
       const duration = durationInput.value || 12;
       const unit = durationUnitSelect.value === "weeks" ? "Week" : "Month";
       goalNameInput.value = `${duration} ${unit} ${goalType}`;
@@ -56,8 +65,11 @@ document.addEventListener("DOMContentLoaded", () => {
   durationUnitSelect.addEventListener("change", updateGoalName);
 
   function updateGoalName() {
-    if (goalSelect.value !== "maintain") {
-      const goalType = goalSelect.value === "lose" ? "Cut" : "Bulk";
+    const goal = goalSelect.value;
+    if (goal === "maintain") {
+      goalNameInput.value = "Maintenance Phase";
+    } else {
+      const goalType = goal === "lose" ? "Cut" : "Bulk";
       const duration = durationInput.value || 12;
       const unit = durationUnitSelect.value === "weeks" ? "Week" : "Month";
       const unitText = duration === "1" ? unit.slice(0, -1) : unit; // Remove 's' for singular
@@ -215,11 +227,13 @@ document.addEventListener("DOMContentLoaded", () => {
     
     resultsContainer.classList.remove("hidden");
     
-    // Show save goal section if not maintaining
-    if (results.goal !== "maintain") {
-      saveGoalSection.classList.remove("hidden");
-    } else {
-      saveGoalSection.classList.add("hidden");
+    // FIXED: Always show save goal section for any goal type
+    // This allows users to save maintenance goals too
+    saveGoalSection.classList.remove("hidden");
+    
+    // Update goal name for maintenance goals
+    if (results.goal === "maintain") {
+      goalNameInput.value = "Maintenance Phase";
     }
   }
 
@@ -232,8 +246,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const goalName = goalNameInput.value.trim();
-    const duration = parseInt(durationInput.value);
-    const durationUnit = durationUnitSelect.value;
+    
+    // For maintenance goals, use default duration if not specified
+    let duration, durationUnit;
+    if (lastCalculationResults.goal === "maintain") {
+      duration = 4; // Default 4 weeks for maintenance
+      durationUnit = "weeks";
+    } else {
+      duration = parseInt(durationInput.value);
+      durationUnit = durationUnitSelect.value;
+    }
 
     if (!goalName) {
       alert("Please enter a goal name.");
@@ -243,7 +265,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!duration || duration < 1) {
       alert("Please enter a valid duration.");
-      durationInput.focus();
+      if (durationInput) durationInput.focus();
       return;
     }
 
@@ -287,8 +309,8 @@ document.addEventListener("DOMContentLoaded", () => {
       weight_lb: lastCalculationInputs.weight_lb,
       weight_unit: lastCalculationInputs.weight_unit,
       activity_level: lastCalculationInputs.activity_level,
-      rate: lastCalculationInputs.rate,
-      rate_type: lastCalculationInputs.rate_type,
+      rate: lastCalculationInputs.rate || 0, // Default to 0 for maintenance
+      rate_type: lastCalculationInputs.rate_type || 'fixed',
       bmr: lastCalculationResults.bmr,
       tdee: lastCalculationResults.tdee,
     };

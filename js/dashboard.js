@@ -386,6 +386,33 @@ document.addEventListener("DOMContentLoaded", () => {
     goalProgressFill.style.width = `${progressPercentage}%`;
   }
 
+  function displayTodayProgress() {
+    if (!todayNutrition || !currentGoal) {
+      // Clear or show loading state if data is not available
+      caloriesProgressEl.textContent = '... / ... kcal';
+      proteinProgressEl.textContent = '... / ... g';
+      carbsProgressEl.textContent = '... / ... g';
+      fatProgressEl.textContent = '... / ... g';
+      updateProgressBar(caloriesProgressBar, 0, 1);
+      updateProgressBar(proteinProgressBar, 0, 1);
+      updateProgressBar(carbsProgressBar, 0, 1);
+      updateProgressBar(fatProgressBar, 0, 1);
+      return;
+    }
+
+    // Update the text showing current vs. target values
+    caloriesProgressEl.textContent = `${Math.round(todayNutrition.calories)} / ${currentGoal.target_calories} kcal`;
+    proteinProgressEl.textContent = `${Math.round(todayNutrition.protein)} / ${currentGoal.target_protein_g}g`;
+    carbsProgressEl.textContent = `${Math.round(todayNutrition.carbs)} / ${currentGoal.target_carbs_g}g`;
+    fatProgressEl.textContent = `${Math.round(todayNutrition.fat)} / ${currentGoal.target_fat_g}g`;
+
+    // Update the visual progress bars
+    updateProgressBar(caloriesProgressBar, todayNutrition.calories, currentGoal.target_calories);
+    updateProgressBar(proteinProgressBar, todayNutrition.protein, currentGoal.target_protein_g);
+    updateProgressBar(carbsProgressBar, todayNutrition.carbs, currentGoal.target_carbs_g);
+    updateProgressBar(fatProgressBar, todayNutrition.fat, currentGoal.target_fat_g);
+  }
+
   function displayWeightData() {
     if (!currentWeight) {
       currentWeightDisplay.textContent = '--.- lbs';
@@ -566,6 +593,97 @@ document.addEventListener("DOMContentLoaded", () => {
         weightTrendCtx.fillText(label, x, height - 10);
       }
     });
+  }
+
+    function drawAdherenceChart() {
+    if (!adherenceCtx) return;
+
+    // Clear previous chart
+    adherenceCtx.clearRect(0, 0, adherenceCanvas.width, adherenceCanvas.height);
+
+    if (!weeklyAdherence || weeklyAdherence.length === 0) {
+      adherenceCtx.fillStyle = '#666';
+      adherenceCtx.font = '14px Roboto';
+      adherenceCtx.textAlign = 'center';
+      adherenceCtx.fillText('No adherence data to display', adherenceCanvas.width / 2, adherenceCanvas.height / 2);
+      return;
+    }
+
+    const width = adherenceCanvas.width;
+    const height = adherenceCanvas.height;
+    const padding = 35;
+    const chartWidth = width - padding * 2;
+    const chartHeight = height - padding * 1.5;
+    const barGroupWidth = chartWidth / weeklyAdherence.length;
+    const barWidth = barGroupWidth * 0.35;
+    const maxAdherence = 120; // Capped at 120% in the fetch function
+
+    // Draw grid lines and labels (0%, 50%, 100%)
+    adherenceCtx.strokeStyle = '#333';
+    adherenceCtx.lineWidth = 1;
+    adherenceCtx.fillStyle = '#a0a0a0';
+    adherenceCtx.font = '10px Roboto';
+    adherenceCtx.textAlign = 'right';
+
+    for (let i = 0; i <= 2; i++) {
+        const percentage = i * 50;
+        const y = padding + chartHeight - (percentage / 100) * chartHeight;
+
+        adherenceCtx.beginPath();
+        adherenceCtx.moveTo(padding, y);
+        adherenceCtx.lineTo(width - padding, y);
+        adherenceCtx.stroke();
+
+        adherenceCtx.fillText(`${percentage}%`, padding - 8, y + 3);
+    }
+
+
+    // Draw bars for each day
+    weeklyAdherence.forEach((dayData, index) => {
+      const x = padding + index * barGroupWidth;
+
+      // Calculate bar heights
+      const calHeight = (dayData.caloriesAdherence / maxAdherence) * chartHeight;
+      const proHeight = (dayData.proteinAdherence / maxAdherence) * chartHeight;
+
+      // Draw Calorie Bar (primary color)
+      adherenceCtx.fillStyle = '#00f2ea';
+      adherenceCtx.fillRect(
+        x + barGroupWidth * 0.1, 
+        padding + chartHeight - calHeight, 
+        barWidth, 
+        calHeight
+      );
+
+      // Draw Protein Bar (secondary color)
+      adherenceCtx.fillStyle = '#ff9800';
+      adherenceCtx.fillRect(
+        x + barGroupWidth * 0.1 + barWidth + 5, 
+        padding + chartHeight - proHeight, 
+        barWidth, 
+        proHeight
+      );
+      
+      // Draw Day Label
+      adherenceCtx.fillStyle = '#a0a0a0';
+      adherenceCtx.font = '11px Roboto';
+      adherenceCtx.textAlign = 'center';
+      adherenceCtx.fillText(dayData.day, x + barGroupWidth / 2, height - 10);
+    });
+    
+    // Draw Legend
+    adherenceCtx.textAlign = 'left';
+    adherenceCtx.font = '12px Roboto';
+    // Calorie Legend
+    adherenceCtx.fillStyle = '#00f2ea';
+    adherenceCtx.fillRect(padding, 5, 10, 10);
+    adherenceCtx.fillStyle = '#ccc';
+    adherenceCtx.fillText('Calories', padding + 15, 14);
+    // Protein Legend
+    adherenceCtx.fillStyle = '#ff9800';
+    adherenceCtx.fillRect(padding + 90, 5, 10, 10);
+    adherenceCtx.fillStyle = '#ccc';
+    adherenceCtx.fillText('Protein', padding + 105, 14);
   }
 
   // --- EVENT LISTENERS ---

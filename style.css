@@ -307,6 +307,17 @@ header p {
     font-size: 1.1rem;
 }
 
+.log-button,
+#update-goal-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 15px; /* Consistent padding */
+    min-height: 20px; /* Ensure consistent height */
+    font-family: inherit; /* Inherit font family */
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .dashboard-grid {
