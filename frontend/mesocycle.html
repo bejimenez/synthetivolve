@@ -24,35 +24,67 @@
             </div>
         </header>
 
-        <main>
-            <!-- Mesocycle Settings -->
-            <section class="mesocycle-settings">
-                <div class="settings-grid">
-                    <div class="form-group">
-                        <label for="mesocycle-name">Mesocycle Name</label>
-                        <input type="text" id="mesocycle-name" placeholder="e.g., Hypertrophy Phase 1">
+        <main class="planner-layout">
+            <!-- Planner Main Content -->
+            <div class="planner-main-content">
+                <!-- Mesocycle Settings -->
+                <section class="mesocycle-settings">
+                    <div class="settings-grid">
+                        <div class="form-group">
+                            <label for="mesocycle-name">Mesocycle Name</label>
+                            <input type="text" id="mesocycle-name" placeholder="e.g., Hypertrophy Phase 1">
+                        </div>
+                        <div class="form-group">
+                            <label for="duration-weeks">Duration (weeks)</label>
+                            <input type="number" id="duration-weeks" min="2" max="16" value="8">
+                        </div>
+                        <div class="form-group">
+                            <label for="start-date">Start Date (optional)</label>
+                            <input type="date" id="start-date">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="duration-weeks">Duration (weeks)</label>
-                        <input type="number" id="duration-weeks" min="2" max="16" value="8">
-                    </div>
-                    <div class="form-group">
-                        <label for="start-date">Start Date (optional)</label>
-                        <input type="date" id="start-date">
+                </section>
+
+                <!-- Days Container -->
+                <section id="days-container" class="days-container">
+                    <!-- Days will be dynamically added here -->
+                </section>
+
+                <!-- Add Day Button -->
+                <button id="add-day-btn" class="add-day-btn">
+                    <i class="fas fa-plus"></i> ADD A DAY
+                </button>
+            </div>
+
+            <!-- Muscle Distribution Panel -->
+            <aside id="distribution-panel" class="distribution-panel">
+                <div class="panel-header">
+                    <h3>Weekly Set Distribution</h3>
+                    <p>Counts secondary muscles as 0.5 sets.</p>
+                </div>
+                <div id="distribution-list" class="distribution-list">
+                    <!-- Distribution will be dynamically added here -->
+                    <div class="empty-state">
+                        <p>Add exercises to see the breakdown.</p>
                     </div>
                 </div>
-            </section>
-
-            <!-- Days Container -->
-            <section id="days-container" class="days-container">
-                <!-- Days will be dynamically added here -->
-            </section>
-
-            <!-- Add Day Button -->
-            <button id="add-day-btn" class="add-day-btn">
-                <i class="fas fa-plus"></i> ADD A DAY
-            </button>
+            </aside>
         </main>
+    </div>
+
+    <!-- Add Muscle Group Modal -->
+    <div id="add-muscle-group-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Select Muscle Group</h2>
+                <button class="modal-close-btn">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="muscle-group-selection-list" class="muscle-group-selection-grid">
+                    <!-- Muscle group buttons will be injected here by JS -->
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Exercise Selection Modal -->
@@ -178,7 +210,8 @@
                     </div>
                     <div class="form-group">
                         <label for="secondary-muscles">Secondary Muscles (comma-separated)</label>
-                        <input type="text" id="secondary-muscles" placeholder="e.g., Triceps, Front Delts">
+                        <input type="text" id="secondary-muscles" placeholder="e.g., Triceps, Shoulders">
+                        <small class="form-hint">Use standard group names like: chest, back, shoulders, biceps, triceps, etc.</small>
                     </div>
                     <div class="form-group">
                         <label for="movement-type">Movement Type</label>

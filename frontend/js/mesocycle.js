@@ -1,5 +1,3 @@
-// synthetivolve/frontend/js/mesocycles.js
-
 document.addEventListener("DOMContentLoaded", () => {
   // --- CONFIGURATION & SUPABASE SETUP ---
   if (!window.APP_CONFIG) {
@@ -13,6 +11,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   const YOUR_USER_ID = window.APP_CONFIG.USER_ID;
 
+  // --- CONSTANTS ---
+  const MUSCLE_GROUPS = ['chest', 'back', 'shoulders', 'biceps', 'triceps', 'legs', 'glutes', 'abs', 'calves', 'forearms'];
+  // for the selection modal
+  const PRIMARY_MUSCLE_GROUPS = ['chest', 'back', 'shoulders', 'biceps', 'triceps', 'legs', 'abs'];
+
   // --- STATE MANAGEMENT ---
   let currentMesocycle = {
     name: '',
@@ -22,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
   let exercises = [];
   let selectedExercise = null;
-  let targetMuscleGroup = null;
+  // let targetMuscleGroup = null;
   let targetSessionId = null;
 
   // --- DOM REFERENCES ---
@@ -33,8 +36,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const mesocycleNameInput = document.getElementById("mesocycle-name");
   const durationWeeksInput = document.getElementById("duration-weeks");
   const startDateInput = document.getElementById("start-date");
-  
+  const distributionList = document.getElementById("distribution-list");
+
   // Modal elements
+  const addMuscleGroupModal = document.getElementById("add-muscle-group-modal");
   const exerciseModal = document.getElementById("exercise-modal");
   const exerciseCreatorModal = document.getElementById("exercise-creator-modal");
   const modalCloseBtns = document.querySelectorAll(".modal-close-btn");
@@ -68,15 +73,85 @@ document.addEventListener("DOMContentLoaded", () => {
   repTypeSelect.addEventListener("change", toggleRepInputs);
   addExerciseBtn.addEventListener("click", addExerciseToWorkout);
   createExerciseForm.addEventListener("submit", createNewExercise);
+  
+  // Distribution Calculation
+  function calculateAndRenderDistribution() {
+    const weeklySets = {};
+    MUSCLE_GROUPS.forEach(m => weeklySets[m] = 0);
+
+    currentMesocycle.days.forEach(day => {
+        day.sessions.forEach(session => {
+            session.muscle_groups.forEach(mg => {
+                mg.exercises.forEach(exConfig => {
+                    const fullExercise = exercises.find(e => e.id === exConfig.exercise_id);
+                    if (!fullExercise) return;
+
+                    const sets = exConfig.sets || 0;
+                    
+                    // Add 1 for primary muscle
+                    const primary = fullExercise.primary_muscle_group;
+                    if (weeklySets.hasOwnProperty(primary)) {
+                        weeklySets[primary] += sets;
+                    }
+
+                    // Add 0.5 for each secondary muscle
+                    if (fullExercise.secondary_muscles && Array.isArray(fullExercise.secondary_muscles)) {
+                        fullExercise.secondary_muscles.forEach(secondaryMuscle => {
+                            const sm = secondaryMuscle.toLowerCase().trim();
+                            if (weeklySets.hasOwnProperty(sm)) {
+                                weeklySets[sm] += sets * 0.5;
+                            }
+                        });
+                    }
+                });
+            });
+        });
+    });
+
+    renderDistribution(weeklySets);
+  }
+  
+  function renderDistribution(weeklySets) {
+      distributionList.innerHTML = ''; // Clear previous content
+
+      const sortedMuscles = Object.entries(weeklySets)
+          .filter(([_, sets]) => sets > 0) // Only show muscles being worked
+          .sort((a, b) => b[1] - a[1]); // Sort by set count descending
+
+      if (sortedMuscles.length === 0) {
+          distributionList.innerHTML = `
+              <div class="empty-state">
+                  <p>Add exercises to see the breakdown.</p>
+              </div>`;
+          return;
+      }
+
+      const maxSets = Math.max(...sortedMuscles.map(([_, sets]) => sets), 10); // Find max sets for progress bar scaling, with a minimum of 10
+
+      sortedMuscles.forEach(([muscle, sets]) => {
+          const percentage = (sets / maxSets) * 100;
+          const item = document.createElement('div');
+          item.className = 'distribution-item';
+          item.innerHTML = `
+              <div class="distribution-label">${muscle}</div>
+              <div class="distribution-bar-container">
+                  <div class="distribution-bar" style="width: ${percentage}%"></div>
+              </div>
+              <div class="distribution-value">${sets.toFixed(1)}</div>
+          `;
+          distributionList.appendChild(item);
+      });
+  }
 
   // --- FUNCTIONS ---
   function initializeMesocycle() {
-    // Create initial 4 days
-    for (let i = 1; i <= 4; i++) {
+    // Create initial 3 days
+    for (let i = 1; i <= 3; i++) {
       addNewDay();
     }
+    calculateAndRenderDistribution();
   }
-
+  
   function addNewDay() {
     const dayNumber = currentMesocycle.days.length + 1;
     const dayData = {
@@ -93,6 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
     currentMesocycle.days.push(dayData);
     renderDay(dayData);
+    calculateAndRenderDistribution();
   }
 
   function renderDay(dayData) {
@@ -153,14 +229,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function renderSession(session, title) {
+    function renderSession(session, title) {
     return `
       <div class="workout-session" data-session-id="${session.id}">
         <h4 class="session-title">${title}</h4>
         <div class="muscle-groups-container">
           ${session.muscle_groups.map(mg => renderMuscleGroup(mg)).join('')}
         </div>
-        <button class="add-muscle-group-btn" onclick="window.addMuscleGroup('${session.id}')">
+        <button class="add-muscle-group-btn" onclick="window.openMuscleGroupModal('${session.id}')">
           <i class="fas fa-plus"></i> ADD A MUSCLE GROUP
         </button>
       </div>
@@ -240,12 +316,14 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
     renderDays();
+    // No need to call distribution here, as order doesn't change totals
   }
 
   function deleteDay(dayNumber) {
     if (confirm("Are you sure you want to delete this day?")) {
       currentMesocycle.days = currentMesocycle.days.filter(d => d.day_number !== dayNumber);
       updateDayNumbers();
+      calculateAndRenderDistribution();
     }
   }
 
@@ -267,9 +345,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     
     exercises = data || [];
+    calculateAndRenderDistribution();
   }
-
-  function filterExercises() {
+  
+    function filterExercises() {
     const searchTerm = exerciseSearch.value.toLowerCase();
     const muscleFilterValue = muscleFilter.value;
     const equipmentFilterValue = equipmentFilter.value;
@@ -330,7 +409,7 @@ document.addEventListener("DOMContentLoaded", () => {
       primary_muscle_group: document.getElementById('primary-muscle').value,
       target_muscle: document.getElementById('target-muscle').value,
       secondary_muscles: document.getElementById('secondary-muscles').value
-        .split(',').map(m => m.trim()).filter(m => m),
+        .split(',').map(m => m.trim().toLowerCase()).filter(m => m && MUSCLE_GROUPS.includes(m)), // Sanitize and filter
       movement_type: document.getElementById('movement-type').value,
       equipment: document.getElementById('equipment').value,
       unilateral: document.getElementById('unilateral').checked,
@@ -358,7 +437,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function addExerciseToWorkout() {
-    if (!selectedExercise || !targetMuscleGroup || !targetSessionId) return;
+    if (!selectedExercise || !targetSessionId) return;
+
+    const muscleGroupName = selectedExercise.primary_muscle_group.toUpperCase();
     
     const repType = repTypeSelect.value;
     const exerciseConfig = {
@@ -388,11 +469,11 @@ document.addEventListener("DOMContentLoaded", () => {
       day.sessions.forEach(session => {
         if (session.id === targetSessionId) {
           targetSession = session;
-          targetMuscleGroupObj = session.muscle_groups.find(mg => mg.name === targetMuscleGroup);
+          targetMuscleGroupObj = session.muscle_groups.find(mg => mg.name === muscleGroupName);
           if (!targetMuscleGroupObj) {
             targetMuscleGroupObj = {
               id: generateTempId(),
-              name: targetMuscleGroup,
+              name: muscleGroupName,
               exercises: []
             };
             session.muscle_groups.push(targetMuscleGroupObj);
@@ -406,10 +487,11 @@ document.addEventListener("DOMContentLoaded", () => {
       renderDays();
       closeModal(exerciseModal);
       resetExerciseModal();
+      calculateAndRenderDistribution();
     }
   }
 
-  function resetExerciseModal() {
+    function resetExerciseModal() {
     selectedExercise = null;
     targetMuscleGroup = null;
     targetSessionId = null;
@@ -528,8 +610,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Helper functions
-  function generateTempId() {
+    function generateTempId() {
     return 'temp-' + Math.random().toString(36).substr(2, 9);
   }
 
@@ -547,14 +628,37 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Global functions for onclick handlers
-  window.addMuscleGroup = (sessionId) => {
-    const muscleGroups = ['CHEST', 'BACK', 'SHOULDERS', 'BICEPS', 'TRICEPS', 'LEGS', 'GLUTES', 'ABS', 'CALVES'];
-    const muscleGroup = prompt('Enter muscle group name:', 'CHEST');
+  // window.addMuscleGroup = (sessionId) => {
+  //   const muscleGroups = ['CHEST', 'BACK', 'SHOULDERS', 'BICEPS', 'TRICEPS', 'LEGS', 'GLUTES', 'ABS', 'CALVES'];
+  //   const muscleGroup = prompt('Enter muscle group name:', 'CHEST');
     
-    if (!muscleGroup) return;
+  //   if (!muscleGroup) return;
     
+  //   targetSessionId = sessionId;
+  //   targetMuscleGroup = muscleGroup.toUpperCase();
+  //   openModal(exerciseModal);
+  //   filterExercises();
+  // };
+
+  window.openMuscleGroupModal = (sessionId) => {
     targetSessionId = sessionId;
-    targetMuscleGroup = muscleGroup.toUpperCase();
+    const selectionGrid = document.getElementById("muscle-group-selection-list");
+    selectionGrid.innerHTML = '';
+
+    PRIMARY_MUSCLE_GROUPS.forEach(muscle => {
+      const btn = document.createElement("button");
+      btn.className = "btn btn-secondary";
+      btn.textContent = muscle;
+      btn.onclick = () => window.selectMuscleGroupAndOpenExercises(muscle);
+      selectionGrid.appendChild(btn);
+  });
+
+  openModal(addMuscleGroupModal);
+  };
+
+  window.selectMuscleGroupAndOpenExercises = (muscle) => {
+    closeModal(addMuscleGroupModal);
+    muscleFilter.value = muscle;
     openModal(exerciseModal);
     filterExercises();
   };
@@ -569,6 +673,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     
     renderDays();
+    calculateAndRenderDistribution();
   };
 
   window.deleteExercise = (exerciseId) => {
@@ -581,9 +686,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     
     renderDays();
+    calculateAndRenderDistribution();
   };
-
-  window.selectExercise = (exerciseId) => {
+  
+    window.selectExercise = (exerciseId) => {
     selectedExercise = exercises.find(ex => ex.id === exerciseId);
     if (!selectedExercise) return;
     
