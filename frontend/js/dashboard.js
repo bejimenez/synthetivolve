@@ -1,9 +1,41 @@
 // synthetivolve/frontend/js/dashboard.js (DEBUGGING VERSION)
+console.log("🔄 [RELOAD CHECK] dashboard.js loaded at:", new Date().toISOString());
+
 import { api } from "./api.js";
 import { ui } from "./ui.js";
 
-document.addEventListener("DOMContentLoaded", () => {
-  console.log("▶️ Synthetivolve Dashboard Initialized.");
+window.addEventListener('beforeunload', (event) => {
+    console.error("⚠️ [RELOAD] Page is reloading/unloading!");
+    console.trace("Reload stack trace:");
+});
+
+// Wait for all external libraries to load
+function waitForLibraries() {
+    return new Promise((resolve) => {
+        const checkLibraries = () => {
+            if (
+                typeof Chart !== 'undefined' &&
+                typeof dateFns !== 'undefined' &&
+                typeof supabase !== 'undefined'
+            ) {
+                console.log("✅ All libraries loaded successfully");
+                resolve();
+            } else {
+                console.log("⏳ Waiting for libraries...", {
+                    chart: typeof Chart !== 'undefined',
+                    dateFns: typeof dateFns !== 'undefined',
+                    supabase: typeof supabase !== 'undefined'
+                });
+                setTimeout(checkLibraries, 50);
+            }
+        };
+        checkLibraries();
+    });
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  await waitForLibraries();
+  console.log("🎉 All libraries loaded. Initializing dashboard...");
 
   // --- STATE ---
   let state = {
@@ -16,6 +48,15 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- DATA LOADING ---
   async function loadDashboardData() {
     console.group("🚀 [ACTION] loadDashboardData");
+    console.log("🔄 [RELOAD CHECK] loadDashboardData called at:", new Date().toISOString());
+
+    // Add recursion check
+    if (window._loadingData) {
+        console.error("⚠️ [ERROR] loadDashboardData called while already loading!");
+        return;
+    }
+    window._loadingData = true;
+
     ui.setLoadingState(true);
     try {
       console.log("  - Fetching current goal...");
@@ -48,6 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
       ui.showError(`[ERROR] Failed to load dashboard: ${error.message}`);
     } finally {
       ui.setLoadingState(false);
+      window._loadingData = false; // Reset loading state
       console.groupEnd();
     }
   }

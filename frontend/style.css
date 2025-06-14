@@ -355,7 +355,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .weight-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center; }
 .stat-item .stat-label { font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; display: block; }
 .stat-item .stat-value { font-size: 1.2rem; font-weight: 600; color: var(--accent-primary); }
-.weight-chart-container canvas { background-color: transparent; border-radius: 6px; margin-top: 10px; width: 100%; }
+.weight-chart-container { position: relative; height: 150px; width: 100%; margin-top: 10px; }
+.weight-chart-container canvas { position: absolute !important; top: 0; left: 0; width: 100% !important; height: 100% !important; }
 #quick-access-card .log-actions { display: flex; flex-direction: column; gap: 15px; flex-grow: 1; justify-content: center; }
 .empty-state { text-align: center; padding: 40px 20px; color: var(--text-secondary); }
 .empty-state p { margin-bottom: 20px; font-size: 1.1rem; }

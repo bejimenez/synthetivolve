@@ -1,6 +1,8 @@
 // synthetivolve/frontend/js/ui.js
 import { calculateDaysRemaining, calculateGoalProgress } from "./utils.js";
 
+console.log("🔄 [RELOAD CHECK] ui.js loaded at:", new Date().toISOString());
+
 // A single object to hold all DOM element references
 const elements = {
   noGoalState: document.getElementById("no-goal-state"),
@@ -140,6 +142,22 @@ export const ui = {
   drawWeightChart(weightData) {
     console.group("🖌️ [CHART] drawWeightChart");
     console.log("  - Drawing with data:", weightData);
+    console.log("🔍 [DEBUG] Chart.js availability:", typeof Chart !== 'undefined' ? 'LOADED' : 'NOT LOADED');
+    console.log("🔍 [DEBUG] weightChartInstance:", weightChartInstance);
+
+    console.log("🔄 [RELOAD CHECK] drawWeightChart called at:", new Date().toISOString());
+
+    // Track canvas state
+    const canvas = elements.weightTrendCtx.canvas;
+    console.log("🔍 [DEBUG] Canvas state:", {
+        width: canvas.width,
+        height: canvas.height,
+        clientWidth: canvas.clientWidth,
+        clientHeight: canvas.clientHeight,
+        parentElement: canvas.parentElement?.tagName,
+        isConnected: canvas.isConnected
+    });
+
     // 1. Destroy any existing chart instance to prevent memory leaks on refresh
     if (weightChartInstance) {
       console.log("  - Destroying existing weight chart instance.");
@@ -186,79 +204,100 @@ export const ui = {
     }
 
     // 4. Create the new chart using Chart.js
+    console.log("🔍 [DEBUG] About to create Chart with context:", elements.weightTrendCtx);
+    console.log("🔍 [DEBUG] Canvas dimensions:", elements.weightTrendCtx.canvas.width, elements.weightTrendCtx.canvas.height);
     weightChartInstance = new Chart(elements.weightTrendCtx, {
-      type: 'line', // We will use a line chart and overlay scatter points
-      data: {
-        // We don't need top-level labels if we provide {x, y} data
+    type: 'line',
+    data: {
         datasets: [
-          {
-            label: '7-Day Average',
-            data: movingAverages,
-            borderColor: '#00f2ea', // The teal color from your old chart
-            borderWidth: 3,
-            tension: 0.4, // This makes the line smooth and curved
-            pointRadius: 0, // Hide points on the trend line itself
-          },
-          {
-            label: 'Daily Weight',
-            data: weightPoints,
-            backgroundColor: '#666', // The grey color for points
-            showLine: false, // This makes it act like a scatter plot
-            pointRadius: 3,
-            pointHoverRadius: 5,
-          },
-        ],
-      },
-      options: {
+            {
+                label: '7-Day Average',
+                data: movingAverages,
+                borderColor: '#00f2ea',
+                borderWidth: 3,
+                tension: 0.4,
+                pointRadius: 0,
+                fill: false  // Add this to prevent fill issues
+            },
+            {
+                label: 'Daily Weight',
+                data: weightPoints,
+                backgroundColor: '#666',
+                borderColor: '#666',  // Add explicit border color
+                showLine: false,
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                fill: false  // Add this
+            }
+        ]
+    },
+    options: {
         responsive: true,
         maintainAspectRatio: false,
+        onResize: (chart, size) => {
+            console.log("📏 [CHART RESIZE] Weight chart resized:", size);
+        },
+        animation: {
+            onComplete: () => {
+                console.log("✅ [CHART ANIMATION] Weight chart animation complete");
+            }
+        },
         interaction: {
-          intersect: false,
-          mode: 'index',
+            intersect: false,
+            mode: 'index'
         },
         plugins: {
-          legend: {
-            labels: {
-              color: '#fff', // White text for legend in dark mode
+            legend: {
+                display: true,  // Ensure legend is displayed
+                labels: {
+                    color: '#fff',
+                    usePointStyle: true  // Add this for better legend
+                }
             },
-          },
-          tooltip: {
-            callbacks: {
-              label: function (context) {
-                return `${context.dataset.label}: ${context.parsed.y.toFixed(1)} lbs`;
-              },
-            },
-          },
+            tooltip: {
+                enabled: true,  // Explicitly enable tooltips
+                callbacks: {
+                    label: function (context) {
+                        return `${context.dataset.label}: ${context.parsed.y.toFixed(1)} lbs`;
+                    }
+                }
+            }
         },
         scales: {
-          x: {
-            type: 'time', // CRITICAL: This enables the date adapter
-            time: {
-              unit: 'day',
-              tooltipFormat: 'MMM d, yyyy', // e.g., Jun 15, 2025
+            x: {
+                type: 'time',
+                time: {
+                    unit: 'day',
+                    tooltipFormat: 'MMM d, yyyy',
+                    displayFormats: {
+                        day: 'MMM d'  // Add display format
+                    }
+                },
+                ticks: {
+                    color: '#ccc',
+                    maxRotation: 0,  // Prevent label rotation
+                    autoSkip: true   // Allow automatic skipping
+                },
+                grid: {
+                    display: false
+                }
             },
-            ticks: {
-              color: '#ccc', // Light grey text for X-axis
-            },
-            grid: {
-              display: false, // Hide vertical grid lines for a cleaner look
-            },
-          },
-          y: {
-            beginAtZero: false, // Weight charts should not start at 0
-            ticks: {
-              color: '#ccc', // Light grey text for Y-axis
-              callback: function (value) {
-                return `${value.toFixed(1)} lbs`; // Add 'lbs' to Y-axis labels
-              },
-            },
-            grid: {
-              color: 'rgba(255, 255, 255, 0.1)', // Faint horizontal grid lines
-            },
-          },
-        },
-      },
-    });
+            y: {
+                beginAtZero: false,
+                ticks: {
+                    color: '#ccc',
+                    callback: function (value) {
+                        return `${value.toFixed(1)} lbs`;
+                    }
+                },
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.1)'
+                }
+            }
+        }
+    }
+});
+
     console.log("  - ✅ New weight chart instance created.");
     console.groupEnd();
   },
