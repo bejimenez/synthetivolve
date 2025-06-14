@@ -1,11 +1,5 @@
 # synthetivolve/backend/app/core/config.py
 import os
-from pathlib import Path
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-env_path = Path(__file__).resolve().parent.parent.parent / '.env'
-load_dotenv(dotenv_path=env_path)
 
 API_V1_STR = "/api"
 
@@ -20,4 +14,6 @@ if not all([SUPABASE_URL, SUPABASE_KEY, USER_ID]):
 ORIGINS = [
     "http://localhost",
     "http://127.0.0.1:5500",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
 ]

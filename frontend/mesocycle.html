@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synthetivolve - Mesocycle Planner</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+</head>
+<body>
+    <div class="mesocycle-container">
+        <header class="planner-header">
+            <a href="index.html" class="back-link">← Dashboard</a>
+            <h1>Mesocycle Planner</h1>
+            <div class="header-actions">
+                <button id="save-mesocycle-btn" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save Mesocycle
+                </button>
+                <button id="manage-exercises-btn" class="btn btn-secondary">
+                    <i class="fas fa-dumbbell"></i> Manage Exercises
+                </button>
+            </div>
+        </header>
+
+        <main>
+            <!-- Mesocycle Settings -->
+            <section class="mesocycle-settings">
+                <div class="settings-grid">
+                    <div class="form-group">
+                        <label for="mesocycle-name">Mesocycle Name</label>
+                        <input type="text" id="mesocycle-name" placeholder="e.g., Hypertrophy Phase 1">
+                    </div>
+                    <div class="form-group">
+                        <label for="duration-weeks">Duration (weeks)</label>
+                        <input type="number" id="duration-weeks" min="2" max="16" value="8">
+                    </div>
+                    <div class="form-group">
+                        <label for="start-date">Start Date (optional)</label>
+                        <input type="date" id="start-date">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Days Container -->
+            <section id="days-container" class="days-container">
+                <!-- Days will be dynamically added here -->
+            </section>
+
+            <!-- Add Day Button -->
+            <button id="add-day-btn" class="add-day-btn">
+                <i class="fas fa-plus"></i> ADD A DAY
+            </button>
+        </main>
+    </div>
+
+    <!-- Exercise Selection Modal -->
+    <div id="exercise-modal" class="modal hidden">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Add Exercise</h2>
+                <button class="modal-close-btn">×</button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- Exercise Search and Filters -->
+                <div class="exercise-filters">
+                    <input type="search" id="exercise-search" placeholder="Search exercises...">
+                    <select id="muscle-filter">
+                        <option value="">All Muscles</option>
+                        <option value="chest">Chest</option>
+                        <option value="back">Back</option>
+                        <option value="shoulders">Shoulders</option>
+                        <option value="biceps">Biceps</option>
+                        <option value="triceps">Triceps</option>
+                        <option value="legs">Legs</option>
+                        <option value="glutes">Glutes</option>
+                        <option value="abs">Abs</option>
+                        <option value="calves">Calves</option>
+                    </select>
+                    <select id="equipment-filter">
+                        <option value="">All Equipment</option>
+                        <option value="barbell">Barbell</option>
+                        <option value="dumbbell">Dumbbell</option>
+                        <option value="cable">Cable</option>
+                        <option value="machine">Machine</option>
+                        <option value="bodyweight">Bodyweight</option>
+                        <option value="bands">Bands</option>
+                    </select>
+                </div>
+
+                <!-- Exercise List -->
+                <div id="exercise-list" class="exercise-list">
+                    <!-- Exercises will be loaded here -->
+                </div>
+
+                <!-- Exercise Details Form -->
+                <div id="exercise-details" class="exercise-details hidden">
+                    <h3 id="selected-exercise-name"></h3>
+                    <div class="exercise-config-grid">
+                        <div class="form-group">
+                            <label for="sets-input">Sets</label>
+                            <input type="number" id="sets-input" min="1" max="10" value="3">
+                        </div>
+                        <div class="form-group">
+                            <label for="rep-type">Rep Type</label>
+                            <select id="rep-type">
+                                <option value="range">Rep Range</option>
+                                <option value="fixed">Fixed Reps</option>
+                                <option value="percentage">% Based</option>
+                            </select>
+                        </div>
+                        <div id="rep-range-inputs" class="form-group rep-inputs">
+                            <label>Rep Range</label>
+                            <div class="range-inputs">
+                                <input type="number" id="reps-min" min="1" max="50" value="8" placeholder="Min">
+                                <span>-</span>
+                                <input type="number" id="reps-max" min="1" max="50" value="12" placeholder="Max">
+                            </div>
+                        </div>
+                        <div id="fixed-reps-inputs" class="form-group rep-inputs hidden">
+                            <label for="reps-fixed">Reps</label>
+                            <input type="number" id="reps-fixed" min="1" max="50" value="10">
+                        </div>
+                        <div id="percentage-inputs" class="form-group rep-inputs hidden">
+                            <label for="percentage-1rm">% of 1RM</label>
+                            <input type="number" id="percentage-1rm" min="10" max="100" value="80">
+                        </div>
+                        <div class="form-group">
+                            <label for="rir-input">RIR (Reps in Reserve)</label>
+                            <input type="number" id="rir-input" min="0" max="5" value="2">
+                        </div>
+                        <div class="form-group">
+                            <label for="rest-input">Rest (seconds)</label>
+                            <input type="number" id="rest-input" min="0" max="600" value="120" step="30">
+                        </div>
+                    </div>
+                    <button id="add-exercise-btn" class="btn btn-primary">Add to Workout</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exercise Creator Modal -->
+    <div id="exercise-creator-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Exercise</h2>
+                <button class="modal-close-btn">×</button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="create-exercise-form">
+                    <div class="form-group">
+                        <label for="new-exercise-name">Exercise Name</label>
+                        <input type="text" id="new-exercise-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="primary-muscle">Primary Muscle Group</label>
+                        <select id="primary-muscle" required>
+                            <option value="">Select...</option>
+                            <option value="chest">Chest</option>
+                            <option value="back">Back</option>
+                            <option value="shoulders">Shoulders</option>
+                            <option value="biceps">Biceps</option>
+                            <option value="triceps">Triceps</option>
+                            <option value="legs">Legs</option>
+                            <option value="glutes">Glutes</option>
+                            <option value="abs">Abs</option>
+                            <option value="calves">Calves</option>
+                            <option value="forearms">Forearms</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="target-muscle">Target Muscle</label>
+                        <input type="text" id="target-muscle" placeholder="e.g., Upper Pecs, Quads" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="secondary-muscles">Secondary Muscles (comma-separated)</label>
+                        <input type="text" id="secondary-muscles" placeholder="e.g., Triceps, Front Delts">
+                    </div>
+                    <div class="form-group">
+                        <label for="movement-type">Movement Type</label>
+                        <select id="movement-type" required>
+                            <option value="compound">Compound</option>
+                            <option value="isolation">Isolation</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="equipment">Equipment</label>
+                        <select id="equipment" required>
+                            <option value="">Select...</option>
+                            <option value="barbell">Barbell</option>
+                            <option value="dumbbell">Dumbbell</option>
+                            <option value="cable">Cable</option>
+                            <option value="machine">Machine</option>
+                            <option value="bodyweight">Bodyweight</option>
+                            <option value="bands">Bands</option>
+                            <option value="kettlebell">Kettlebell</option>
+                            <option value="trap-bar">Trap Bar</option>
+                            <option value="smith-machine">Smith Machine</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="unilateral">
+                            Unilateral Exercise
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label for="force-type">Force Type</label>
+                        <select id="force-type">
+                            <option value="">Select...</option>
+                            <option value="push">Push</option>
+                            <option value="pull">Pull</option>
+                            <option value="static">Static</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="difficulty">Difficulty</label>
+                        <select id="difficulty">
+                            <option value="beginner">Beginner</option>
+                            <option value="intermediate" selected>Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="exercise-notes">Notes</label>
+                        <textarea id="exercise-notes" rows="3" placeholder="Form cues, variations, etc."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Exercise</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/mesocycle.js"></script>
+</body>
+</html>

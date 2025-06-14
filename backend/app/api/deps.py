@@ -1,8 +1,9 @@
-# synthetivolve/backend/app/api/deps.py
+# backend/app/api/deps.py
 from fastapi import Depends, HTTPException, status
 from supabase import create_client, Client
 from app.core import config
 from app.services.data_service import DataService
+from app.services.fitness_service import FitnessService
 
 # Create a single Supabase client instance
 if config.SUPABASE_URL is None or config.SUPABASE_KEY is None:
@@ -21,3 +22,6 @@ def get_user_id() -> str:
 
 def get_data_service(db: Client = Depends(get_db)) -> DataService:
     return DataService(db)
+
+def get_fitness_service(db: Client = Depends(get_db)) -> FitnessService:
+    return FitnessService(db)
