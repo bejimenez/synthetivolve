@@ -335,7 +335,6 @@ document.addEventListener("DOMContentLoaded", () => {
       equipment: document.getElementById('equipment').value,
       unilateral: document.getElementById('unilateral').checked,
       force_type: document.getElementById('force-type').value || null,
-      difficulty: document.getElementById('difficulty').value,
       notes: document.getElementById('exercise-notes').value || null
     };
     
