@@ -61,7 +61,9 @@ class DataService:
         response = self.db.rpc('get_weekly_adherence_for_user', {
              'p_user_id': user_id,
              'p_target_calories': goal.get('target_calories', 0),
-             'p_target_protein': goal.get('target_protein_g', 0)
+             'p_target_protein': goal.get('target_protein_g', 0),
+             'p_target_carbs': goal.get('target_carbs_g', 0),
+             'p_target_fat': goal.get('target_fat_g', 0)
         }).execute()
         
         return response.data or []

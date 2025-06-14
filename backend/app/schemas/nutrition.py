@@ -1,7 +1,12 @@
 # synthetivolve/backend/app/schemas/nutrition.py
-from pydantic import BaseModel
-from typing import List, Optional
+from pydantic import BaseModel, ConfigDict
+from typing import List
 from datetime import date
+
+# Helper function to convert snake_case to camelCase
+def to_camel(snake_str: str) -> str:
+    components = snake_str.split('_')
+    return components[0] + ''.join(x.title() for x in components[1:])
 
 class TodayNutritionResponse(BaseModel):
     calories: float = 0
@@ -12,8 +17,13 @@ class TodayNutritionResponse(BaseModel):
 class AdherenceDay(BaseModel):
     date: date
     day: str
-    caloriesAdherence: float
-    proteinAdherence: float
+    calories_adherence: float
+    protein_adherence: float
+    carbs_adherence: float
+    fat_adherence: float
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(
+        from_attributes=True,
+        alias_generator=to_camel,
+        populate_by_name=True,
+    )

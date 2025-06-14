@@ -1,12 +1,11 @@
-// synthetivolve/frontend/js/dashboard.js
+// synthetivolve/frontend/js/dashboard.js (DEBUGGING VERSION)
 import { api } from "./api.js";
 import { ui } from "./ui.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("Synthetivolve Dashboard Initialized.");
+  console.log("▶️ Synthetivolve Dashboard Initialized.");
 
   // --- STATE ---
-  // We manage state more explicitly now
   let state = {
     currentGoal: null,
     todayNutrition: null,
@@ -16,18 +15,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- DATA LOADING ---
   async function loadDashboardData() {
+    console.group("🚀 [ACTION] loadDashboardData");
     ui.setLoadingState(true);
     try {
-      // Fetch goal first as it's needed by other components
+      console.log("  - Fetching current goal...");
       state.currentGoal = await api.fetchCurrentGoal();
+      console.log("  - ✅ Goal data received:", state.currentGoal);
       ui.renderGoal(state.currentGoal);
 
-      // Fetch remaining data in parallel
+      console.log("  - Fetching remaining data in parallel...");
       const [nutrition, weight, adherence] = await Promise.all([
         api.fetchTodayNutrition(),
         api.fetchWeightData(),
         api.fetchWeeklyAdherence(),
       ]);
+
+      console.log("  - ✅ Today Nutrition received:", nutrition);
+      console.log("  - ✅ Weight Data received:", weight);
+      console.log("  - ✅ Adherence Data received:", adherence);
 
       // Update state
       state.todayNutrition = nutrition;
@@ -35,21 +40,26 @@ document.addEventListener("DOMContentLoaded", () => {
       state.weeklyAdherence = adherence;
 
       // Render components with the new state
+      console.log("  - Rendering all components with new state...");
       ui.renderTodayProgress(state.todayNutrition, state.currentGoal);
       ui.renderWeightData(state.weightSummary, state.currentGoal);
       ui.drawAdherenceChart(state.weeklyAdherence);
     } catch (error) {
-      ui.showError(`Failed to load dashboard: ${error.message}`);
+      ui.showError(`[ERROR] Failed to load dashboard: ${error.message}`);
     } finally {
       ui.setLoadingState(false);
+      console.groupEnd();
     }
   }
 
   // --- EVENT HANDLERS ---
   async function handleWeightSubmission() {
+    console.group("🚀 [ACTION] handleWeightSubmission");
     const weight = parseFloat(ui.elements.weightInput.value);
     if (!weight || weight < 50 || weight > 500) {
       ui.showError("Please enter a valid weight between 50 and 500 lbs");
+      console.warn("  - Invalid weight input. Aborting.");
+      console.groupEnd();
       return;
     }
 
@@ -58,33 +68,43 @@ document.addEventListener("DOMContentLoaded", () => {
       '<i class="fas fa-spinner fa-spin"></i>';
 
     try {
+      console.log(`  - Logging weight: ${weight}`);
       await api.logWeight(weight);
+      console.log("  - ✅ Weight logged successfully.");
       ui.elements.weightInput.value = "";
 
       // Refresh weight data after logging
+      console.log("  - Refreshing weight data...");
       state.weightSummary = await api.fetchWeightData();
+      console.log("  - ✅ Refreshed weight data received:", state.weightSummary);
       ui.renderWeightData(state.weightSummary, state.currentGoal);
     } catch (error) {
-      ui.showError(`Failed to log weight: ${error.message}`);
+      ui.showError(`[ERROR] Failed to log weight: ${error.message}`);
     } finally {
       ui.elements.logWeightBtn.disabled = false;
       ui.elements.logWeightBtn.innerHTML = '<i class="fas fa-plus"></i> Log';
+      console.groupEnd();
     }
   }
 
   // --- EVENT LISTENERS ---
+  console.log("🎧 Attaching event listeners...");
   ui.elements.updateGoalBtn.addEventListener("click", () => {
+    console.log("  - 'Update Goal' clicked. Navigating...");
     window.location.href = "calculator.html";
   });
 
   ui.elements.logWeightBtn.addEventListener("click", handleWeightSubmission);
+
   ui.elements.weightInput.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") handleWeightSubmission();
+    if (e.key === "Enter") {
+      console.log("  - 'Enter' key pressed in weight input.");
+      e.preventDefault(); // THE FIX
+      handleWeightSubmission();
+    }
   });
+  console.log("  - ✅ Event listeners attached.");
 
   // --- INITIALIZATION ---
   loadDashboardData();
-
-  // Optional: Set up auto-refresh intervals that call the specific load functions
-  // setInterval(loadNutrition, 2 * 60 * 1000);
 });

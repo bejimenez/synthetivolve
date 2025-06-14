@@ -664,30 +664,40 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   window.deleteMuscleGroup = (muscleGroupId) => {
-    if (!confirm('Delete this muscle group and all its exercises?')) return;
+        if (!confirm('Delete this muscle group and all its exercises?')) return;
     
-    currentMesocycle.days.forEach(day => {
-      day.sessions.forEach(session => {
-        session.muscle_groups = session.muscle_groups.filter(mg => mg.id !== muscleGroupId);
-      });
-    });
-    
-    renderDays();
-    calculateAndRenderDistribution();
-  };
-
-  window.deleteExercise = (exerciseId) => {
-    currentMesocycle.days.forEach(day => {
-      day.sessions.forEach(session => {
-        session.muscle_groups.forEach(mg => {
-          mg.exercises = mg.exercises.filter(ex => ex.id !== exerciseId);
+        currentMesocycle.days.forEach(day => {
+            day.sessions.forEach(session => {
+                session.muscle_groups = session.muscle_groups.filter(mg => mg.id !== muscleGroupId);
+            });
         });
-      });
-    });
-    
-    renderDays();
-    calculateAndRenderDistribution();
-  };
+        
+        renderDays();
+        calculateAndRenderDistribution();
+    };
+
+    window.deleteExercise = (exerciseId) => {
+        // Step 1: Remove the exercise from its muscle group
+        currentMesocycle.days.forEach(day => {
+            day.sessions.forEach(session => {
+                session.muscle_groups.forEach(mg => {
+                    mg.exercises = mg.exercises.filter(ex => ex.id !== exerciseId);
+                });
+            });
+        });
+
+        // Step 2: Clean up any muscle groups that are now empty
+        currentMesocycle.days.forEach(day => {
+            day.sessions.forEach(session => {
+                // Re-filter the muscle_groups array, keeping only those with exercises
+                session.muscle_groups = session.muscle_groups.filter(mg => mg.exercises.length > 0);
+            });
+        });
+
+        // Step 3: Re-render the UI and update the distribution panel
+        renderDays();
+        calculateAndRenderDistribution();
+    };
   
     window.selectExercise = (exerciseId) => {
     selectedExercise = exercises.find(ex => ex.id === exerciseId);

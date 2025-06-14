@@ -49,6 +49,7 @@ export const ui = {
   elements, // Expose elements for event listeners in dashboard.js
 
   renderGoal(goal) {
+    console.log("🎨 [UI] renderGoal", goal);
     if (!goal) {
       elements.noGoalState.classList.remove("hidden");
       elements.activeGoalState.classList.add("hidden");
@@ -72,6 +73,7 @@ export const ui = {
   },
 
   renderTodayProgress(nutrition, goal) {
+    console.log("🎨 [UI] renderTodayProgress", { nutrition, goal });
     if (!nutrition || !goal) return;
     elements.caloriesProgress.textContent = `${Math.round(
       nutrition.calories
@@ -109,6 +111,8 @@ export const ui = {
   },
 
   renderWeightData(weightSummary, goal) {
+    console.group("🎨 [UI] renderWeightData");
+    console.log("  - Data received:", { weightSummary, goal });
     const { current_weight, seven_day_average, weight_data } = weightSummary;
 
     elements.currentWeightDisplay.textContent = current_weight
@@ -130,41 +134,253 @@ export const ui = {
     }
 
     this.drawWeightChart(weight_data);
+    console.groupEnd();
   },
 
   drawWeightChart(weightData) {
-    if (weightChartInstance) weightChartInstance.destroy();
-    if (!weightData || weightData.length < 2) return;
-
-    const movingAverages = []; // Calculate moving averages
-    for (let i = 0; i < weightData.length; i++) {
-      const slice = weightData.slice(Math.max(0, i - 6), i + 1);
-      const avg =
-        slice.reduce((sum, entry) => sum + entry.weight_lb, 0) / slice.length;
-      movingAverages.push(avg);
+    console.group("🖌️ [CHART] drawWeightChart");
+    console.log("  - Drawing with data:", weightData);
+    // 1. Destroy any existing chart instance to prevent memory leaks on refresh
+    if (weightChartInstance) {
+      console.log("  - Destroying existing weight chart instance.");
+      weightChartInstance.destroy();
     }
 
-    const labels = weightData.map((d) => new Date(d.date));
-    const weightPoints = weightData.map((d) => d.weight_lb);
+    // 2. Handle the "no data" or "not enough data" case
+    if (!weightData || weightData.length < 2) {
+      console.warn("  - Not enough data for weight chart. Displaying message.");
+      // You can display a message directly on the canvas if you want
+      const ctx = elements.weightTrendCtx;
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      ctx.font = "14px Roboto";
+      ctx.fillStyle = "#666";
+      ctx.textAlign = "center";
+      ctx.fillText(
+        "Log at least two entries to see your weight trend.",
+        ctx.canvas.width / 2,
+        ctx.canvas.height / 2
+      );
+      console.groupEnd();
+      return;
+    }
 
-    // Chart.js configuration... (identical to your original, just using passed data)
+    // 3. Prepare the data for Chart.js
+    // Chart.js's time scale works best with data in {x, y} format
+    const labels = weightData.map((d) => new Date(d.date));
+    const weightPoints = weightData.map((d) => ({
+      x: new Date(d.date),
+      y: d.weight_lb,
+    }));
+
+    // Calculate the 7-day moving average, same logic as your old code
+    const movingAverages = [];
+    for (let i = 0; i < weightData.length; i++) {
+      const start = Math.max(0, i - 6);
+      const slice = weightData.slice(start, i + 1);
+      const avg =
+        slice.reduce((sum, entry) => sum + entry.weight_lb, 0) / slice.length;
+      movingAverages.push({
+        x: new Date(weightData[i].date),
+        y: avg,
+      });
+    }
+
+    // 4. Create the new chart using Chart.js
     weightChartInstance = new Chart(elements.weightTrendCtx, {
-      /* ... config ... */
+      type: 'line', // We will use a line chart and overlay scatter points
+      data: {
+        // We don't need top-level labels if we provide {x, y} data
+        datasets: [
+          {
+            label: '7-Day Average',
+            data: movingAverages,
+            borderColor: '#00f2ea', // The teal color from your old chart
+            borderWidth: 3,
+            tension: 0.4, // This makes the line smooth and curved
+            pointRadius: 0, // Hide points on the trend line itself
+          },
+          {
+            label: 'Daily Weight',
+            data: weightPoints,
+            backgroundColor: '#666', // The grey color for points
+            showLine: false, // This makes it act like a scatter plot
+            pointRadius: 3,
+            pointHoverRadius: 5,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          intersect: false,
+          mode: 'index',
+        },
+        plugins: {
+          legend: {
+            labels: {
+              color: '#fff', // White text for legend in dark mode
+            },
+          },
+          tooltip: {
+            callbacks: {
+              label: function (context) {
+                return `${context.dataset.label}: ${context.parsed.y.toFixed(1)} lbs`;
+              },
+            },
+          },
+        },
+        scales: {
+          x: {
+            type: 'time', // CRITICAL: This enables the date adapter
+            time: {
+              unit: 'day',
+              tooltipFormat: 'MMM d, yyyy', // e.g., Jun 15, 2025
+            },
+            ticks: {
+              color: '#ccc', // Light grey text for X-axis
+            },
+            grid: {
+              display: false, // Hide vertical grid lines for a cleaner look
+            },
+          },
+          y: {
+            beginAtZero: false, // Weight charts should not start at 0
+            ticks: {
+              color: '#ccc', // Light grey text for Y-axis
+              callback: function (value) {
+                return `${value.toFixed(1)} lbs`; // Add 'lbs' to Y-axis labels
+              },
+            },
+            grid: {
+              color: 'rgba(255, 255, 255, 0.1)', // Faint horizontal grid lines
+            },
+          },
+        },
+      },
     });
+    console.log("  - ✅ New weight chart instance created.");
+    console.groupEnd();
   },
 
   drawAdherenceChart(adherenceData) {
-    if (adherenceChartInstance) adherenceChartInstance.destroy();
-    if (!adherenceData || adherenceData.length === 0) return;
+    console.group("🖌️ [CHART] drawAdherenceChart");
+    console.log("  - Drawing with data:", adherenceData);
+    // Destroy the old chart instance if it exists
+    if (adherenceChartInstance) {
+      console.log("  - Destroying existing adherence chart instance.");
+      adherenceChartInstance.destroy();
+    }
 
+    // Guard clause: if no data, do nothing.
+    // Your SQL function always returns 7 days, so this is a good safety check.
+    if (!adherenceData || adherenceData.length === 0) {
+      const ctx = elements.adherenceCtx;
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); // Clear previous drawings
+      ctx.font = "14px Roboto";
+      ctx.fillStyle = "#666";
+      ctx.textAlign = "center";
+      ctx.fillText(
+        "Not enough data to display weekly adherence.",
+        ctx.canvas.width / 2,
+        ctx.canvas.height / 2
+      );
+      return; // Exit the function
+    }
+    // The keys (e.g., 'caloriesAdherence') match the camelCase aliases from Pydantic
     const labels = adherenceData.map((d) => d.day);
     const calorieData = adherenceData.map((d) => d.caloriesAdherence);
     const proteinData = adherenceData.map((d) => d.proteinAdherence);
+    const carbData = adherenceData.map((d) => d.carbsAdherence);
+    const fatData = adherenceData.map((d) => d.fatAdherence);
 
-    // Chart.js configuration... (identical to your original)
+    // --- FIX: Provide the complete Chart.js configuration ---
     adherenceChartInstance = new Chart(elements.adherenceCtx, {
-      /* ... config ... */
+      type: 'bar', // A bar chart is great for this kind of comparison
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Calories %',
+            data: calorieData,
+            backgroundColor: 'rgba(255, 99, 132, 0.6)', // Red
+            borderColor: 'rgba(255, 99, 132, 1)',
+            borderWidth: 1,
+          },
+          {
+            label: 'Protein %',
+            data: proteinData,
+            backgroundColor: 'rgba(54, 162, 235, 0.6)', // Blue
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1,
+          },
+          {
+            label: 'Carbs %',
+            data: carbData,
+            backgroundColor: 'rgba(255, 206, 86, 0.6)', // Yellow
+            borderColor: 'rgba(255, 206, 86, 1)',
+            borderWidth: 1,
+          },
+          {
+            label: 'Fat %',
+            data: fatData,
+            backgroundColor: 'rgba(75, 192, 192, 0.6)', // Green
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: {
+              color: '#fff', // White text for legend
+            },
+          },
+          tooltip: {
+            callbacks: {
+              label: function (context) {
+                let label = context.dataset.label || '';
+                if (label) {
+                  label += ': ';
+                }
+                if (context.parsed.y !== null) {
+                  label += `${context.parsed.y.toFixed(0)}%`;
+                }
+                return label;
+              },
+            },
+          },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 120, // Match the 120% cap from your SQL function
+            ticks: {
+              color: '#ccc', // Light grey text for Y-axis
+              callback: function (value) {
+                return value + '%'; // Add a '%' sign to the Y-axis numbers
+              },
+            },
+            grid: {
+              color: 'rgba(255, 255, 255, 0.1)', // Faint grid lines
+            },
+          },
+          x: {
+            ticks: {
+              color: '#ccc', // Light grey text for X-axis
+            },
+            grid: {
+              display: false, // Hide vertical grid lines
+            },
+          },
+        },
+      },
     });
+    console.log("  - ✅ New adherence chart instance created.");
+    console.groupEnd();
   },
 
   setLoadingState(isLoading) {
@@ -173,6 +389,7 @@ export const ui = {
   },
 
   showError(message) {
+    console.error(`🚨 [UI] showError: ${message}`);
     // Logic to display a user-friendly error message, e.g., using a toast notification
     console.error(message);
     alert(message);
