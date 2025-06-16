@@ -1,0 +1,3 @@
+garmindb
+psycopg2-binary
+python-dotenv
