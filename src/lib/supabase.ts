@@ -12,7 +12,7 @@ export const createSupabaseClient = () => {
 // Server-side Supabase client (for API routes)
 export const createSupabaseServerClient = (cookieStore: {
   getAll: () => Array<{ name: string; value: string }>;
-  set: (name: string, value: string, options?: any) => void;
+  set: (name: string, value: string, options?: Record<string, unknown>) => void;
 }) => {
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
