@@ -1,4 +1,3 @@
-// src/components/weight/WeightHistory.tsx
 'use client'
 
 import { useMemo } from 'react'
@@ -166,40 +165,52 @@ export function WeightHistory() {
         {/* Chart */}
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
+            <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis 
                 dataKey="date" 
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: '#9CA3AF' }}
+                axisLine={{ stroke: '#6B7280' }}
+                tickLine={{ stroke: '#6B7280' }}
                 interval="preserveStartEnd"
               />
               <YAxis 
                 domain={['dataMin - 2', 'dataMax + 2']}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: '#9CA3AF' }}
+                axisLine={{ stroke: '#6B7280' }}
+                tickLine={{ stroke: '#6B7280' }}
               />
               <Tooltip 
                 labelFormatter={(label) => `Date: ${label}`}
                 formatter={(value: number, name: string) => [
                   `${value} lbs`,
-                  name === 'weight_lbs' ? 'Weight' : '7-Day Average'
+                  name === 'weight_lbs' ? 'Daily Weight' : '7-Day Average'
                 ]}
+                contentStyle={{
+                  backgroundColor: '#1F2937',
+                  border: '1px solid #374151',
+                  borderRadius: '6px',
+                  color: '#F3F4F6'
+                }}
               />
               <Line 
                 type="monotone" 
                 dataKey="weight_lbs" 
-                stroke="#8884d8" 
-                strokeWidth={2}
-                dot={{ r: 4 }}
+                stroke="#3B82F6" 
+                strokeWidth={3}
+                dot={{ r: 5, fill: '#3B82F6', strokeWidth: 2, stroke: '#FFFFFF' }}
+                activeDot={{ r: 6, fill: '#3B82F6', strokeWidth: 2, stroke: '#FFFFFF' }}
                 name="weight_lbs"
               />
               {chartData.length >= 7 && (
                 <Line 
                   type="monotone" 
                   dataKey="rollingAverage" 
-                  stroke="#82ca9d" 
+                  stroke="#10B981" 
                   strokeWidth={2}
-                  strokeDasharray="5 5"
+                  strokeDasharray="8 4"
                   dot={false}
+                  activeDot={{ r: 4, fill: '#10B981', strokeWidth: 2, stroke: '#FFFFFF' }}
                   name="rollingAverage"
                 />
               )}
@@ -207,18 +218,19 @@ export function WeightHistory() {
           </ResponsiveContainer>
         </div>
 
-        {chartData.length >= 7 && (
-          <div className="flex items-center justify-center gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-0.5 bg-[#8884d8]"></div>
-              <span>Daily Weight</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-0.5 bg-[#82ca9d] border-dashed border-t-2"></div>
-              <span>7-Day Average</span>
-            </div>
+        {/* Legend */}
+        <div className="flex items-center justify-center gap-6 text-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-1 bg-blue-500 rounded"></div>
+            <span className="text-gray-300">Daily Weight</span>
           </div>
-        )}
+          {chartData.length >= 7 && (
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-1 bg-green-500 rounded border-dashed border-t-2"></div>
+              <span className="text-gray-300">7-Day Average</span>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   )
