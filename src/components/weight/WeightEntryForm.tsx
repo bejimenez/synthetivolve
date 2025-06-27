@@ -34,7 +34,12 @@ interface WeightEntryFormProps {
 
 export function WeightEntryForm({ onSuccess }: WeightEntryFormProps) {
   const [submitting, setSubmitting] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const { createWeightEntry, error } = useWeightEntries()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const {
     register,
@@ -45,9 +50,16 @@ export function WeightEntryForm({ onSuccess }: WeightEntryFormProps) {
   } = useForm<WeightEntryFormData>({
     resolver: zodResolver(weightEntrySchema),
     defaultValues: {
-      entry_date: format(new Date(), 'yyyy-MM-dd'),
+      entry_date: '', // Set empty initially to prevent hydration mismatch
     },
   })
+
+  // Set today's date after component mounts
+  useEffect(() => {
+    if (mounted) {
+      setValue('entry_date', format(new Date(), 'yyyy-MM-dd'))
+    }
+  }, [mounted, setValue])
 
   const onSubmit = async (data: WeightEntryFormData) => {
     setSubmitting(true)
@@ -76,6 +88,25 @@ export function WeightEntryForm({ onSuccess }: WeightEntryFormProps) {
 
   const setToday = () => {
     setValue('entry_date', format(new Date(), 'yyyy-MM-dd'))
+  }
+
+  // Don't render form until mounted
+  if (!mounted) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Scale className="h-5 w-5" />
+            Log Weight
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center h-32">
+            <p className="text-muted-foreground">Loading form...</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (

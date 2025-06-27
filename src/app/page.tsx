@@ -1,7 +1,7 @@
 // src/app/page.tsx
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { Loader2 } from 'lucide-react'
@@ -9,18 +9,24 @@ import { Loader2 } from 'lucide-react'
 export default function HomePage() {
   const { user, loading } = useAuth()
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    if (!loading) {
-      if (user) {
-        router.push('/dashboard')
-      } else {
-        router.push('/auth')
-      }
-    }
-  }, [user, loading, router])
+    setMounted(true)
+  }, [])
 
-  if (loading) {
+  useEffect(() => {
+    if (!mounted || loading) return
+
+    if (user) {
+      router.push('/dashboard')
+    } else {
+      router.push('/auth')
+    }
+  }, [user, loading, router, mounted])
+
+  // Show loading state until mounted and auth is resolved
+  if (!mounted || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
         <div className="text-center">

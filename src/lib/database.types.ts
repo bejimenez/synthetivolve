@@ -1,23 +1,5 @@
-// src/lib/supabase.ts
-import { createClientComponentClient, createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
-import { Database } from './database.types'
-
-// For client-side operations
-export const createSupabaseClient = () => {
-  return createClientComponentClient<Database>()
-}
-
-// For server-side operations
-export const createSupabaseServerClient = () => {
-  return createServerComponentClient<Database>({ cookies })
-}
-
-// Export the Database type for use in other files
-export type { Database }
-
-// Type definitions for our database
-export type Database = {
+// src/lib/database.types.ts
+export interface Database {
   public: {
     Tables: {
       profiles: {
