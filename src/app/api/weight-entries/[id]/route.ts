@@ -1,5 +1,6 @@
 // src/app/api/weight-entries/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { createSupabaseServerClient } from '@/lib/supabase'
 import { z } from 'zod'
 
@@ -17,7 +18,8 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = createSupabaseServerClient()
+    const cookieStore = await cookies()
+    const supabase = createSupabaseServerClient(cookieStore)
     
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -66,7 +68,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = createSupabaseServerClient()
+    const cookieStore = await cookies()
+    const supabase = createSupabaseServerClient(cookieStore)
     
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser()

@@ -1,35 +1,8 @@
 /** @type {import('next').NextConfig} */
-interface ExperimentalConfig {
-  serverActions: boolean;
-}
-
-interface WebpackConfig {
-  resolve: {
-    fallback: {
-      fs: boolean;
-      net: boolean;
-      tls: boolean;
-    };
-  };
-}
-
-interface NextConfig {
-  experimental: ExperimentalConfig;
-  reactStrictMode: boolean;
-  webpack: (config: WebpackConfig) => WebpackConfig;
-}
-
-const nextConfig: NextConfig = {
-  experimental: {
-    serverActions: true,
-  },
-  // Suppress hydration warnings in development
+const nextConfig = {
   reactStrictMode: true,
-  // Handle dynamic imports properly
-  webpack: (config: WebpackConfig): WebpackConfig => {
-    config.resolve.fallback = { fs: false, net: false, tls: false };
-    return config;
-  },
+  // Remove experimental serverActions as it's not needed in Next.js 15
+  // Remove webpack config that conflicts with Turbopack
 }
 
 module.exports = nextConfig

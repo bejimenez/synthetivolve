@@ -1,5 +1,6 @@
 // src/app/api/weight-entries/route.ts
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { createSupabaseServerClient } from '@/lib/supabase'
 import { z } from 'zod'
 
@@ -15,7 +16,8 @@ const weightEntrySchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createSupabaseServerClient()
+    const cookieStore = await cookies()
+    const supabase = createSupabaseServerClient(cookieStore)
     
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -50,7 +52,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createSupabaseServerClient()
+    const cookieStore = await cookies()
+    const supabase = createSupabaseServerClient(cookieStore)
     
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser()
