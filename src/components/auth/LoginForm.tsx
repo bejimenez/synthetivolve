@@ -1,4 +1,3 @@
-// src/components/auth/LoginForm.tsx
 'use client'
 
 import { useState } from 'react'
@@ -56,7 +55,7 @@ export function LoginForm({ onToggleMode, mode }: LoginFormProps) {
         setSuccess('Check your email for the confirmation link!')
         reset()
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred')
     } finally {
       setLoading(false)

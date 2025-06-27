@@ -1,7 +1,5 @@
-// src/lib/supabase.ts
 import { createBrowserClient } from '@supabase/ssr'
 import { createServerClient } from '@supabase/ssr'
-import { type Database } from './database.types'
 
 // Client-side Supabase client
 export const createSupabaseClient = () => {
@@ -12,7 +10,10 @@ export const createSupabaseClient = () => {
 }
 
 // Server-side Supabase client (for API routes)
-export const createSupabaseServerClient = (cookieStore: any) => {
+export const createSupabaseServerClient = (cookieStore: {
+  getAll: () => Array<{ name: string; value: string }>;
+  set: (name: string, value: string, options?: any) => void;
+}) => {
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -38,7 +39,6 @@ export const createSupabaseServerClient = (cookieStore: any) => {
 }
 
 // Export the Database type for use in other files
-export type { Database }
 
 // Type definitions for our database
 export type Database = {

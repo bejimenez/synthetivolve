@@ -1,4 +1,3 @@
-// src/app/dashboard/page.tsx
 'use client'
 
 import { useAuth } from '@/components/auth/AuthProvider'
@@ -65,7 +64,7 @@ export default function DashboardPage() {
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium text-gray-600">
-                  Today's Goal
+                  Today&apos;s Goal
                 </CardTitle>
               </CardHeader>
               <CardContent>
