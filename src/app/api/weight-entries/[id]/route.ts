@@ -1,4 +1,3 @@
-// src/app/api/weight-entries/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createSupabaseServerClient } from '@/lib/supabase'
@@ -15,9 +14,10 @@ const weightEntryUpdateSchema = z.object({
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const cookieStore = await cookies()
     const supabase = createSupabaseServerClient(cookieStore)
     
@@ -35,7 +35,7 @@ export async function PUT(
     const { data: weightEntry, error } = await supabase
       .from('weight_entries')
       .update(validatedData)
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id) // Ensure user can only update their own entries
       .select()
       .single()
@@ -65,9 +65,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const cookieStore = await cookies()
     const supabase = createSupabaseServerClient(cookieStore)
     
@@ -81,7 +82,7 @@ export async function DELETE(
     const { error } = await supabase
       .from('weight_entries')
       .delete()
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id) // Ensure user can only delete their own entries
 
     if (error) {
