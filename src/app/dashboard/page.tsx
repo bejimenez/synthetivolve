@@ -1,7 +1,7 @@
 // src/app/dashboard/page.tsx
 'use client'
 
-import { useAuth } from '@/hooks/useAuth'
+import { useAuth } from '@/components/auth/AuthProvider'
 import { useProfile } from '@/hooks/useProfile'
 import { WeightEntryForm } from '@/components/weight/WeightEntryForm'
 import { WeightHistory } from '@/components/weight/WeightHistory'
