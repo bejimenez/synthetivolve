@@ -1,44 +1,53 @@
+// src/app/dashboard/page.tsx
 'use client'
 
-import { useAuth } from '@/components/auth/AuthProvider'
+import { useAuth } from '@/hooks/useAuth'
+import { useProfile } from '@/hooks/useProfile'
 import { WeightEntryForm } from '@/components/weight/WeightEntryForm'
 import { WeightHistory } from '@/components/weight/WeightHistory'
-import { Button } from '@/components/ui/button'
+import { ProfileSettings } from '@/components/profile/ProfileSettings'
+import { CalorieCalculator } from '@/components/calories/CalorieCalculator'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { LogOut, User } from 'lucide-react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { LogOut, Settings, AlertTriangle } from 'lucide-react'
+import { useState } from 'react'
 
 export default function DashboardPage() {
   const { user, signOut } = useAuth()
+  const { isProfileComplete } = useProfile()
+  const [showProfileSettings, setShowProfileSettings] = useState(false)
 
   const handleSignOut = async () => {
-    await signOut()
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">S</span>
-              </div>
-              <h1 className="text-xl font-semibold text-gray-900">Synthetivolve</h1>
+            <div className="flex items-center">
+              <h1 className="text-xl font-semibold text-gray-900">
+                Health & Wellness Dashboard
+              </h1>
             </div>
-            
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <User className="h-4 w-4" />
-                <span>{user?.email}</span>
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleSignOut}
-                className="flex items-center gap-2"
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowProfileSettings(!showProfileSettings)}
               >
-                <LogOut className="h-4 w-4" />
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleSignOut}>
+                <LogOut className="mr-2 h-4 w-4" />
                 Sign Out
               </Button>
             </div>
@@ -46,63 +55,39 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-8">
           {/* Welcome Section */}
           <div className="text-center">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              Welcome to Your Health Dashboard
+              Welcome back{user?.email ? `, ${user.email.split('@')[0]}` : ''}!
             </h2>
             <p className="text-gray-600">
-              Track your progress, log your weight, and achieve your goals
+              Track your health journey with personalized insights and recommendations.
             </p>
           </div>
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-gray-600">
-                  Today&apos;s Goal
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-gray-900">Log Weight</p>
-                <p className="text-sm text-gray-600 mt-1">
-                  Stay consistent with daily tracking
-                </p>
-              </CardContent>
-            </Card>
+          {/* Profile Completion Alert */}
+          {!isProfileComplete && (
+            <Alert className="border-amber-200 bg-amber-50">
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-amber-800">
+                Complete your profile settings below to unlock personalized calorie and macro recommendations.
+              </AlertDescription>
+            </Alert>
+          )}
 
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-gray-600">
-                  Current Status
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-gray-900">Building Habits</p>
-                <p className="text-sm text-gray-600 mt-1">
-                  Focus on consistency first
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-gray-600">
-                  Next Step
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-gray-900">Set Goals</p>
-                <p className="text-sm text-gray-600 mt-1">
-                  Coming in the next phase
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Profile Settings Section (Conditional) */}
+          {(showProfileSettings || !isProfileComplete) && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <ProfileSettings 
+                onSuccess={() => {
+                  setShowProfileSettings(false)
+                }}
+              />
+              <CalorieCalculator />
+            </div>
+          )}
 
           {/* Main Dashboard Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -116,6 +101,11 @@ export default function DashboardPage() {
               <WeightHistory />
             </div>
           </div>
+
+          {/* Calorie Calculator (when profile is complete and not in settings mode) */}
+          {isProfileComplete && !showProfileSettings && (
+            <CalorieCalculator />
+          )}
 
           {/* Coming Soon Section */}
           <Card>
