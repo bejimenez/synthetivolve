@@ -1,4 +1,3 @@
-// src/hooks/useWeightEntries.ts
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 
@@ -79,8 +78,16 @@ export function useWeightEntries(): UseWeightEntriesReturn {
       const result = await response.json()
       const newEntry = result.data
 
-      // Add to local state
-      setWeightEntries(prev => [newEntry, ...prev.filter(e => e.entry_date !== newEntry.entry_date)])
+      // Optimistically update local state
+      setWeightEntries(prev => {
+        // Remove any existing entry with the same date, then add the new one
+        const filtered = prev.filter(e => e.entry_date !== newEntry.entry_date)
+        // Insert the new entry in the correct chronological position
+        const updated = [newEntry, ...filtered].sort((a, b) => 
+          new Date(b.entry_date).getTime() - new Date(a.entry_date).getTime()
+        )
+        return updated
+      })
       
       return newEntry
     } catch (err) {

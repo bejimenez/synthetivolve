@@ -34,7 +34,8 @@ interface WeightEntryFormProps {
 export function WeightEntryForm({ onSuccess }: WeightEntryFormProps) {
   const [submitting, setSubmitting] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const { createWeightEntry, error } = useWeightEntries()
+  const [justSubmitted, setJustSubmitted] = useState(false)
+  const { createWeightEntry, error, refreshEntries } = useWeightEntries()
 
   useEffect(() => {
     setMounted(true)
@@ -62,6 +63,7 @@ export function WeightEntryForm({ onSuccess }: WeightEntryFormProps) {
 
   const onSubmit = async (data: WeightEntryFormData) => {
     setSubmitting(true)
+    setJustSubmitted(false)
     
     try {
       const entry = await createWeightEntry({
@@ -76,6 +78,13 @@ export function WeightEntryForm({ onSuccess }: WeightEntryFormProps) {
           weight_lbs: undefined,
           notes: '',
         })
+        
+        // Show success feedback
+        setJustSubmitted(true)
+        setTimeout(() => setJustSubmitted(false), 2000)
+        
+        // Refresh the entries to ensure chart updates
+        await refreshEntries()
         onSuccess?.()
       }
     } catch {
@@ -121,6 +130,12 @@ export function WeightEntryForm({ onSuccess }: WeightEntryFormProps) {
           {error && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {justSubmitted && (
+            <Alert className="border-green-200 bg-green-50 text-green-800">
+              <AlertDescription>Weight logged successfully! 🎉</AlertDescription>
             </Alert>
           )}
 
@@ -180,7 +195,7 @@ export function WeightEntryForm({ onSuccess }: WeightEntryFormProps) {
 
           <Button type="submit" className="w-full" disabled={submitting}>
             {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Log Weight
+            {submitting ? 'Logging Weight...' : 'Log Weight'}
           </Button>
         </form>
       </CardContent>
