@@ -1,5 +1,5 @@
 // src/hooks/useProfile.ts
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createSupabaseClient } from '@/lib/supabase'
 import type { Database } from '@/lib/supabase'
 
@@ -13,7 +13,7 @@ export function useProfile() {
   
   const supabase = createSupabaseClient()
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -64,7 +64,7 @@ export function useProfile() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [supabase])
 
   const updateProfile = async (updates: Omit<ProfileUpdate, 'id' | 'updated_at'>) => {
     try {
@@ -130,7 +130,7 @@ export function useProfile() {
   // Load profile on mount
   useEffect(() => {
     fetchProfile()
-  }, [])
+  }, [fetchProfile])
 
   return {
     profile,
