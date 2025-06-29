@@ -2,31 +2,28 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { Loader2 } from 'lucide-react'
 
 export default function HomePage() {
   const { user, loading } = useAuth()
-  const router = useRouter()
   const [mounted, setMounted] = useState(false)
+  const [redirected, setRedirected] = useState(false)
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
   useEffect(() => {
-    if (!mounted || loading) return
+    if (!mounted || loading || redirected) return
 
-    if (user) {
-      router.push('/dashboard')
-    } else {
-      router.push('/auth')
-    }
-  }, [user, loading, router, mounted])
+    // Let AuthProvider handle navigation automatically
+    // This component just shows loading state
+    setRedirected(true)
+  }, [user, loading, mounted, redirected])
 
-  // Show loading state until mounted and auth is resolved
-  if (!mounted || loading) {
+  // Show loading state until auth resolves and navigation occurs
+  if (!mounted || loading || !redirected) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
         <div className="text-center">
