@@ -215,10 +215,10 @@ export function CalorieCalculator() {
         {/* Activity Level Info */}
         <div className="text-center">
           <Badge variant="outline" className="text-sm">
-            {profile.activity_level?.replace('_', ' ').toUpperCase()}
+            {profile!.activity_level?.replace('_', ' ').toUpperCase()}
           </Badge>
           <p className="text-sm text-muted-foreground mt-1">
-            {getActivityDescription(profile.activity_level!)}
+            {getActivityDescription(profile!.activity_level!)}
           </p>
         </div>
 
