@@ -1,3 +1,4 @@
+// src/components/weight/WeightEntryForm.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -5,13 +6,13 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { format } from 'date-fns'
-import { useWeightEntries } from '@/hooks/useWeightEntries'
+import { useWeightData } from '@/components/weight/WeightDataProvider'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Scale } from 'lucide-react'
+import { Loader2, Scale, CheckCircle } from 'lucide-react'
 
 const weightEntrySchema = z.object({
   weight_lbs: z.coerce.number()
@@ -35,7 +36,7 @@ export function WeightEntryForm({ onSuccess }: WeightEntryFormProps) {
   const [submitting, setSubmitting] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [justSubmitted, setJustSubmitted] = useState(false)
-  const { createWeightEntry, error, refreshEntries } = useWeightEntries()
+  const { createWeightEntry, error } = useWeightData()
 
   useEffect(() => {
     setMounted(true)
@@ -81,40 +82,15 @@ export function WeightEntryForm({ onSuccess }: WeightEntryFormProps) {
         
         // Show success feedback
         setJustSubmitted(true)
-        setTimeout(() => setJustSubmitted(false), 2000)
+        setTimeout(() => setJustSubmitted(false), 3000)
         
-        // Refresh the entries to ensure chart updates
-        await refreshEntries()
         onSuccess?.()
       }
-    } catch {
-      // Error handling is managed by the hook
+    } catch (error) {
+      console.error('Error creating weight entry:', error)
     } finally {
       setSubmitting(false)
     }
-  }
-
-  const setToday = () => {
-    setValue('entry_date', format(new Date(), 'yyyy-MM-dd'))
-  }
-
-  // Don't render form until mounted
-  if (!mounted) {
-    return (
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Scale className="h-5 w-5" />
-            Log Weight
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center h-32">
-            <p className="text-muted-foreground">Loading form...</p>
-          </div>
-        </CardContent>
-      </Card>
-    )
   }
 
   return (
@@ -122,7 +98,7 @@ export function WeightEntryForm({ onSuccess }: WeightEntryFormProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Scale className="h-5 w-5" />
-          Log Weight
+          Log Today's Weight
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -134,8 +110,11 @@ export function WeightEntryForm({ onSuccess }: WeightEntryFormProps) {
           )}
 
           {justSubmitted && (
-            <Alert className="border-green-200 bg-green-50 text-green-800">
-              <AlertDescription>Weight logged successfully! 🎉</AlertDescription>
+            <Alert className="border-green-200 bg-green-50">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">
+                Weight entry saved successfully! 🎉
+              </AlertDescription>
             </Alert>
           )}
 
@@ -146,7 +125,7 @@ export function WeightEntryForm({ onSuccess }: WeightEntryFormProps) {
                 id="weight_lbs"
                 type="number"
                 step="0.1"
-                placeholder="150.5"
+                placeholder="Enter your weight"
                 {...register('weight_lbs')}
                 disabled={submitting}
               />
@@ -156,18 +135,7 @@ export function WeightEntryForm({ onSuccess }: WeightEntryFormProps) {
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="entry_date">Date</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={setToday}
-                  disabled={submitting}
-                >
-                  Today
-                </Button>
-              </div>
+              <Label htmlFor="entry_date">Date</Label>
               <Input
                 id="entry_date"
                 type="date"
@@ -184,7 +152,7 @@ export function WeightEntryForm({ onSuccess }: WeightEntryFormProps) {
             <Label htmlFor="notes">Notes (optional)</Label>
             <Input
               id="notes"
-              placeholder="How are you feeling today?"
+              placeholder="Any notes about your weight today..."
               {...register('notes')}
               disabled={submitting}
             />
@@ -195,7 +163,7 @@ export function WeightEntryForm({ onSuccess }: WeightEntryFormProps) {
 
           <Button type="submit" className="w-full" disabled={submitting}>
             {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {submitting ? 'Logging Weight...' : 'Log Weight'}
+            {submitting ? 'Saving...' : 'Log Weight'}
           </Button>
         </form>
       </CardContent>

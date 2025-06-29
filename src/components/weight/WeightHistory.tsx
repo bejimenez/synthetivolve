@@ -1,8 +1,9 @@
+// src/components/weight/WeightHistory.tsx
 'use client'
 
 import { useMemo } from 'react'
 import { format, parseISO } from 'date-fns'
-import { useWeightEntries } from '@/hooks/useWeightEntries'
+import { useWeightData } from '@/components/weight/WeightDataProvider'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
@@ -26,7 +27,7 @@ function calculateRollingAverage(entries: Array<{ weight_lbs: number; entry_date
 }
 
 export function WeightHistory() {
-  const { weightEntries, loading, error } = useWeightEntries()
+  const { entries: weightEntries, loading, error } = useWeightData()
 
   const chartData = useMemo(() => {
     if (!weightEntries.length) return []
@@ -221,12 +222,12 @@ export function WeightHistory() {
         <div className="flex items-center justify-center gap-6 text-sm">
           <div className="flex items-center gap-2">
             <div className="w-6 h-1 bg-blue-500 rounded"></div>
-            <span className="text-gray-300">Daily Weight</span>
+            <span className="text-gray-600">Daily Weight</span>
           </div>
           {chartData.length >= 7 && (
             <div className="flex items-center gap-2">
               <div className="w-6 h-1 bg-green-500 rounded border-dashed border-t-2"></div>
-              <span className="text-gray-300">7-Day Average</span>
+              <span className="text-gray-600">7-Day Average</span>
             </div>
           )}
         </div>
