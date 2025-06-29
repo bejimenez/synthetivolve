@@ -98,7 +98,7 @@ export function WeightEntryForm({ onSuccess }: WeightEntryFormProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Scale className="h-5 w-5" />
-          Log Today's Weight
+          Log Today&apos;s Weight
         </CardTitle>
       </CardHeader>
       <CardContent>
