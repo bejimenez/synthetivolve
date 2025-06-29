@@ -1,6 +1,8 @@
+// src/components/auth/AuthProvider.tsx
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { User } from '@supabase/supabase-js'
 import { createSupabaseClient } from '@/lib/supabase'
 
@@ -18,6 +20,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
+  const router = useRouter()
   const supabase = createSupabaseClient()
 
   useEffect(() => {
@@ -45,13 +48,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setUser(session?.user ?? null)
+        const newUser = session?.user ?? null
+        setUser(newUser)
         setLoading(false)
+
+        // Handle navigation after auth state changes
+        if (event === 'SIGNED_IN' && newUser) {
+          // Add small delay to ensure state is fully updated
+          setTimeout(() => {
+            router.push('/dashboard')
+            router.refresh() // Force a refresh to update middleware state
+          }, 100)
+        } else if (event === 'SIGNED_OUT') {
+          setTimeout(() => {
+            router.push('/auth')
+            router.refresh()
+          }, 100)
+        }
       }
     )
 
     return () => subscription.unsubscribe()
-  }, [mounted, supabase.auth])
+  }, [mounted, supabase.auth, router])
 
   // Don't render anything until mounted to prevent hydration mismatch
   if (!mounted) {
