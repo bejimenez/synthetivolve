@@ -1,7 +1,9 @@
-// src/lib/goal-calculations.ts
+// src/lib/goal_calculations.ts
 import type { Database } from './database.types'
+import { startOfWeek, addWeeks, parseISO, isAfter, isBefore, format } from 'date-fns'
 
 type Goal = Database['public']['Tables']['goals']['Row']
+type Profile = Database['public']['Tables']['profiles']['Row']
 
 export interface CalorieAdjustment {
   adjustedCalories: number
@@ -17,6 +19,16 @@ export interface GoalProgress {
   expectedWeightChange: number
   currentWeightChange: number | null
   onTrack: boolean | null
+  weeklyProgress?: WeeklyProgress[]
+}
+
+export interface WeeklyProgress {
+  weekNumber: number
+  weekLabel: string
+  expectedWeight: number
+  actualWeight?: number
+  variance?: number
+  isCurrentWeek: boolean
 }
 
 /**
@@ -123,11 +135,12 @@ export function calculateGoalMacros(
 }
 
 /**
- * Calculate goal progress metrics
+ * Calculate goal progress metrics with weekly breakdown
  */
 export function calculateGoalProgress(
   goal: Goal,
-  currentWeight: number | null
+  currentWeight: number | null,
+  weightEntries?: Array<{ weight_lbs: number; entry_date: string }>
 ): GoalProgress {
   const startDate = new Date(goal.start_date)
   const endDate = new Date(goal.end_date)
@@ -164,6 +177,12 @@ export function calculateGoalProgress(
     onTrack = variance <= 0.2
   }
 
+  // Calculate weekly progress if weight entries provided
+  let weeklyProgress: WeeklyProgress[] | undefined
+  if (weightEntries && weightEntries.length > 0) {
+    weeklyProgress = calculateWeeklyProgress(goal, weightEntries)
+  }
+
   return {
     daysElapsed,
     daysRemaining,
@@ -171,8 +190,85 @@ export function calculateGoalProgress(
     progressPercent,
     expectedWeightChange,
     currentWeightChange,
-    onTrack
+    onTrack,
+    weeklyProgress
   }
+}
+
+/**
+ * Calculate weekly progress breakdown for Sunday check-ins
+ */
+export function calculateWeeklyProgress(
+  goal: Goal,
+  weightEntries: Array<{ weight_lbs: number; entry_date: string }>
+): WeeklyProgress[] {
+  const startDate = parseISO(goal.start_date)
+  const endDate = parseISO(goal.end_date)
+  const now = new Date()
+
+  // Find the first Sunday on or after the goal start date
+  const firstSunday = startOfWeek(startDate, { weekStartsOn: 0 })
+  const effectiveStartSunday = isBefore(firstSunday, startDate) ? addWeeks(firstSunday, 1) : firstSunday
+
+  // Calculate weekly weight change
+  let weeklyWeightChange = 0
+  if (goal.goal_type === 'fat_loss') {
+    if (goal.rate_type === 'absolute' && goal.target_rate_lbs) {
+      weeklyWeightChange = -goal.target_rate_lbs
+    } else if (goal.rate_type === 'percentage' && goal.target_rate_percent) {
+      weeklyWeightChange = -(goal.start_weight * goal.target_rate_percent) / 100
+    }
+  } else if (goal.goal_type === 'muscle_gain') {
+    weeklyWeightChange = 0.5 // Assume 0.5 lbs per week
+  }
+
+  const weeklyProgress: WeeklyProgress[] = []
+  let currentSunday = effectiveStartSunday
+  let weekNumber = 0
+
+  while (isBefore(currentSunday, endDate) || currentSunday.getTime() === endDate.getTime()) {
+    const expectedWeight = goal.start_weight + (weeklyWeightChange * weekNumber)
+    const weekLabel = format(currentSunday, 'MMM d')
+    const isCurrentWeek = isBefore(currentSunday, addWeeks(now, 1)) && isAfter(currentSunday, addWeeks(now, -1))
+
+    // Find actual weight for this week
+    let actualWeight: number | undefined
+    if (!isAfter(currentSunday, now)) {
+      const weekStart = addWeeks(currentSunday, -1)
+      const weekEntries = weightEntries.filter(entry => {
+        const entryDate = parseISO(entry.entry_date)
+        return isAfter(entryDate, weekStart) && 
+               (isBefore(entryDate, currentSunday) || entryDate.getTime() === currentSunday.getTime())
+      })
+
+      if (weekEntries.length > 0) {
+        const sortedEntries = weekEntries.sort((a, b) => {
+          const aDate = parseISO(a.entry_date)
+          const bDate = parseISO(b.entry_date)
+          const aDiff = Math.abs(currentSunday.getTime() - aDate.getTime())
+          const bDiff = Math.abs(currentSunday.getTime() - bDate.getTime())
+          return aDiff - bDiff
+        })
+        actualWeight = sortedEntries[0].weight_lbs
+      }
+    }
+
+    const variance = actualWeight !== undefined ? actualWeight - expectedWeight : undefined
+
+    weeklyProgress.push({
+      weekNumber,
+      weekLabel,
+      expectedWeight: Math.round(expectedWeight * 10) / 10,
+      actualWeight: actualWeight ? Math.round(actualWeight * 10) / 10 : undefined,
+      variance: variance ? Math.round(variance * 10) / 10 : undefined,
+      isCurrentWeek
+    })
+
+    currentSunday = addWeeks(currentSunday, 1)
+    weekNumber++
+  }
+
+  return weeklyProgress
 }
 
 /**

@@ -8,6 +8,7 @@ import { WeightHistory } from '@/components/weight/WeightHistory'
 import { ProfileSettings } from '@/components/profile/ProfileSettings'
 import { EnhancedCalorieCalculator } from '@/components/calories/EnhancedCalorieCalculator'
 import { GoalProgressWidget } from '@/components/goals/GoalProgressWidget'
+import { GoalProgressChart } from '@/components/goals/GoalProgressChart'
 import { GoalCreationForm } from '@/components/goals/GoalCreationForm'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -114,6 +115,9 @@ export default function DashboardPage() {
                 />
                 <WeightEntryForm />
               </div>
+
+              {/* Middle Row: Goal Progress Chart */}
+              <GoalProgressChart />
 
               {/* Weight History Chart */}
               <WeightHistory />
