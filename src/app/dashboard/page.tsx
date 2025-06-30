@@ -1,101 +1,73 @@
 // src/app/dashboard/page.tsx
 'use client'
 
-import { useState, useEffect } from 'react'
-import { createSupabaseClient } from '@/lib/supabase'
+import { useAuth } from '@/components/auth/AuthProvider'
 import { useProfile } from '@/hooks/useProfile'
-import type { User } from '@supabase/supabase-js'
-import { ProfileSettings } from '@/components/profile/ProfileSettings'
 import { WeightEntryForm } from '@/components/weight/WeightEntryForm'
 import { WeightHistory } from '@/components/weight/WeightHistory'
+import { ProfileSettings } from '@/components/profile/ProfileSettings'
 import { EnhancedCalorieCalculator } from '@/components/calories/EnhancedCalorieCalculator'
 import { GoalProgressWidget } from '@/components/goals/GoalProgressWidget'
 import { GoalCreationForm } from '@/components/goals/GoalCreationForm'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { AlertTriangle, Settings } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { LogOut, Settings, AlertTriangle } from 'lucide-react'
+import { useState } from 'react'
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<User | null>(null)
-  const [userLoading, setUserLoading] = useState(true)
+  const { user, signOut } = useAuth()
   const { isProfileComplete } = useProfile()
   const [showProfileSettings, setShowProfileSettings] = useState(false)
   const [showGoalCreation, setShowGoalCreation] = useState(false)
 
-  const supabase = createSupabaseClient()
-
-  // Get current user
-  useEffect(() => {
-    const getUser = async () => {
-      try {
-        const { data: { user }, error } = await supabase.auth.getUser()
-        if (error) {
-          console.error('Error getting user:', error)
-          return
-        }
-        setUser(user)
-      } catch (error) {
-        console.error('Error in getUser:', error)
-      } finally {
-        setUserLoading(false)
-      }
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('Error signing out:', error)
     }
-
-    getUser()
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: import('@supabase/auth-js').AuthChangeEvent, session: import('@supabase/auth-js').Session | null) => {
-      setUser(session?.user ?? null)
-      setUserLoading(false)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [supabase.auth])
-
-  if (userLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-600">Loading dashboard...</p>
-      </div>
-    )
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-600">Please sign in to access your dashboard.</p>
-      </div>
-    )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="container mx-auto px-4 py-8">
-        <div className="space-y-8">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Dashboard
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <h1 className="text-xl font-semibold text-gray-900">
+                Health & Wellness Dashboard
               </h1>
-              <h2 className="text-xl text-gray-600">
-                Welcome back{user.email ? `, ${user.email.split('@')[0]}` : ''}!
-              </h2>
-              <p className="text-gray-600">
-                Track your health journey with personalized insights and recommendations.
-              </p>
             </div>
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowProfileSettings(!showProfileSettings)}
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleSignOut}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign Out
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
 
-            {/* Settings Button */}
-            <Button
-              variant="outline"
-              onClick={() => setShowProfileSettings(true)}
-              className="sm:self-start"
-            >
-              <Settings className="h-4 w-4 mr-2" />
-              Settings
-            </Button>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="space-y-8">
+          {/* Welcome Section */}
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              Welcome back{user?.email ? `, ${user.email.split('@')[0]}` : ''}!
+            </h2>
+            <p className="text-gray-600">
+              Track your health journey with personalized insights and recommendations.
+            </p>
           </div>
 
           {/* Profile Completion Alert */}
@@ -103,7 +75,7 @@ export default function DashboardPage() {
             <Alert className="border-amber-200 bg-amber-50">
               <AlertTriangle className="h-4 w-4 text-amber-600" />
               <AlertDescription className="text-amber-800">
-                Complete your profile settings to unlock personalized calorie and macro recommendations.
+                Complete your profile settings below to unlock personalized calorie and macro recommendations.
               </AlertDescription>
             </Alert>
           )}
@@ -120,29 +92,20 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Profile Settings Modal */}
-          {showProfileSettings && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="p-6">
-                  <ProfileSettings 
-                    onSuccess={() => setShowProfileSettings(false)}
-                  />
-                  <div className="flex justify-end mt-6">
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowProfileSettings(false)}
-                    >
-                      Close
-                    </Button>
-                  </div>
-                </div>
-              </div>
+          {/* Profile Settings Section (Conditional) */}
+          {(showProfileSettings || !isProfileComplete) && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <ProfileSettings 
+                onSuccess={() => {
+                  setShowProfileSettings(false)
+                }}
+              />
+              <EnhancedCalorieCalculator />
             </div>
           )}
 
-          {/* Main Dashboard Grid */}
-          {isProfileComplete ? (
+          {/* Main Dashboard Content - Only show when profile is complete and not in settings mode */}
+          {isProfileComplete && !showProfileSettings && (
             <>
               {/* Top Row: Goal Progress and Weight Entry */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -152,23 +115,25 @@ export default function DashboardPage() {
                 <WeightEntryForm />
               </div>
 
-              {/* Middle Row: Weight History */}
+              {/* Weight History Chart */}
               <WeightHistory />
 
-              {/* Bottom Row: Calorie Calculator */}
+              {/* Enhanced Calorie Calculator */}
               <EnhancedCalorieCalculator />
             </>
-          ) : (
-            /* Profile Incomplete Layout */
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <ProfileSettings 
-                onSuccess={() => {
-                  setShowProfileSettings(false)
-                }}
-              />
-              <div className="space-y-8">
+          )}
+
+          {/* Show basic layout when profile incomplete but not in settings mode */}
+          {!isProfileComplete && !showProfileSettings && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Weight Entry Form */}
+              <div className="lg:col-span-1">
                 <WeightEntryForm />
-                <EnhancedCalorieCalculator />
+              </div>
+
+              {/* Weight History Chart */}
+              <div className="lg:col-span-2">
+                <WeightHistory />
               </div>
             </div>
           )}

@@ -2,7 +2,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createSupabaseClient } from '@/lib/supabase'
 import type { Database } from '@/lib/database.types'
 
 type Goal = Database['public']['Tables']['goals']['Row']
@@ -15,7 +15,7 @@ export function useGoals() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const supabase = createClientComponentClient<Database>()
+  const supabase = createSupabaseClient()
 
   // Fetch all goals for the user
   const fetchGoals = useCallback(async () => {
@@ -39,7 +39,7 @@ export function useGoals() {
       setGoals(data || [])
       
       // Set active goal
-      const active = data?.find((goal: Goal) => goal.is_active) || null
+      const active = data?.find(goal => goal.is_active) || null
       setActiveGoal(active)
     } catch (err) {
       console.error('Error fetching goals:', err)
