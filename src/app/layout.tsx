@@ -5,6 +5,7 @@ import "./globals.css";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { WeightDataProvider } from "@/components/weight/WeightDataProvider";
 import { GoalsDataProvider } from "@/components/goals/GoalsDataProvider";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,15 +20,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <AuthProvider>
-          <WeightDataProvider>
-            <GoalsDataProvider>
-              {children}
-            </GoalsDataProvider>
-          </WeightDataProvider>
-        </AuthProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AuthProvider>
+            <WeightDataProvider>
+              <GoalsDataProvider>
+                {children}
+              </GoalsDataProvider>
+            </WeightDataProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

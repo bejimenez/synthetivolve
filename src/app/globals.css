@@ -76,6 +76,9 @@
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
+  --chart-weight-loss: 34 197 94; /* green-500 */
+  --chart-weight-gain: 239 68 68; /* red-500 */
+  --chart-maintenance: 59 130 246; /* blue-500 */
 }
 
 .dark {
@@ -110,6 +113,9 @@
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
+  --chart-weight-loss: 34 197 94; /* Keep same in dark mode */
+  --chart-weight-gain: 248 113 113; /* Lighter red for dark mode */
+  --chart-maintenance: 96 165 250; /* Lighter blue for dark mode */
 }
 
 @layer base {

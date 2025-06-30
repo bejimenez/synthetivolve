@@ -166,19 +166,23 @@ export function WeightHistory() {
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <CartesianGrid 
+                strokeDasharray="3 3" 
+                stroke="hsl(var(--muted-foreground))" 
+                opacity={0.3}
+              />
               <XAxis 
                 dataKey="date" 
-                tick={{ fontSize: 12, fill: '#9CA3AF' }}
-                axisLine={{ stroke: '#6B7280' }}
-                tickLine={{ stroke: '#6B7280' }}
+                tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                axisLine={{ stroke: 'hsl(var(--border))' }}
+                tickLine={{ stroke: 'hsl(var(--border))' }}
                 interval="preserveStartEnd"
               />
               <YAxis 
                 domain={['dataMin - 2', 'dataMax + 2']}
-                tick={{ fontSize: 12, fill: '#9CA3AF' }}
-                axisLine={{ stroke: '#6B7280' }}
-                tickLine={{ stroke: '#6B7280' }}
+                tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                axisLine={{ stroke: 'hsl(var(--border))' }}
+                tickLine={{ stroke: 'hsl(var(--border))' }}
               />
               <Tooltip 
                 labelFormatter={(label) => `Date: ${label}`}
@@ -187,30 +191,30 @@ export function WeightHistory() {
                   name === 'weight_lbs' ? 'Daily Weight' : '7-Day Average'
                 ]}
                 contentStyle={{
-                  backgroundColor: '#1F2937',
-                  border: '1px solid #374151',
+                  backgroundColor: 'hsl(var(--popover))',
+                  border: '1px solid hsl(var(--border))',
                   borderRadius: '6px',
-                  color: '#F3F4F6'
+                  color: 'hsl(var(--popover-foreground))'
                 }}
               />
               <Line 
                 type="monotone" 
                 dataKey="weight_lbs" 
-                stroke="#3B82F6" 
+                stroke="hsl(var(--primary))" 
                 strokeWidth={3}
-                dot={{ r: 5, fill: '#3B82F6', strokeWidth: 2, stroke: '#FFFFFF' }}
-                activeDot={{ r: 6, fill: '#3B82F6', strokeWidth: 2, stroke: '#FFFFFF' }}
+                dot={{ r: 5, fill: 'hsl(var(--primary))', strokeWidth: 2, stroke: 'hsl(var(--background))' }}
+                activeDot={{ r: 6, fill: 'hsl(var(--primary))', strokeWidth: 2, stroke: 'hsl(var(--background))' }}
                 name="weight_lbs"
               />
               {chartData.length >= 7 && (
                 <Line 
                   type="monotone" 
                   dataKey="rollingAverage" 
-                  stroke="#10B981" 
+                  stroke="hsl(var(--secondary))" 
                   strokeWidth={2}
                   strokeDasharray="8 4"
                   dot={false}
-                  activeDot={{ r: 4, fill: '#10B981', strokeWidth: 2, stroke: '#FFFFFF' }}
+                  activeDot={{ r: 4, fill: 'hsl(var(--secondary))', strokeWidth: 2, stroke: 'hsl(var(--background))' }}
                   name="rollingAverage"
                 />
               )}
@@ -221,13 +225,13 @@ export function WeightHistory() {
         {/* Legend */}
         <div className="flex items-center justify-center gap-6 text-sm">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-1 bg-blue-500 rounded"></div>
-            <span className="text-gray-600">Daily Weight</span>
+            <div className="w-6 h-1 bg-primary rounded"></div>
+            <span className="text-muted-foreground">Daily Weight</span>
           </div>
           {chartData.length >= 7 && (
             <div className="flex items-center gap-2">
-              <div className="w-6 h-1 bg-green-500 rounded border-dashed border-t-2"></div>
-              <span className="text-gray-600">7-Day Average</span>
+              <div className="w-6 h-1 bg-secondary rounded border-dashed border-t-2"></div>
+              <span className="text-muted-foreground">7-Day Average</span>
             </div>
           )}
         </div>

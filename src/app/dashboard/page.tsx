@@ -15,6 +15,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { LogOut, Settings, AlertTriangle } from 'lucide-react'
 import { useState } from 'react'
+import { ModeToggle } from '@/components/ui/mode-toggle'
 
 export default function DashboardPage() {
   const { user, signOut } = useAuth()
@@ -31,17 +32,18 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-background border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <h1 className="text-xl font-semibold text-gray-900">
+              <h1 className="text-xl font-semibold">
                 Health & Wellness Dashboard
               </h1>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <ModeToggle />
               <Button
                 variant="outline"
                 size="sm"
@@ -63,7 +65,7 @@ export default function DashboardPage() {
         <div className="space-y-8">
           {/* Welcome Section */}
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            <h2 className="text-3xl font-bold text-blue-900 mb-2">
               Welcome back{user?.email ? `, ${user.email.split('@')[0]}` : ''}!
             </h2>
             <p className="text-gray-600">
