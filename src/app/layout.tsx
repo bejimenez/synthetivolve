@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { WeightDataProvider } from "@/components/weight/WeightDataProvider";
+import { GoalsDataProvider } from "@/components/goals/GoalsDataProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,7 +23,9 @@ export default function RootLayout({
       <body className={inter.className}>
         <AuthProvider>
           <WeightDataProvider>
-            {children}
+            <GoalsDataProvider>
+              {children}
+            </GoalsDataProvider>
           </WeightDataProvider>
         </AuthProvider>
       </body>

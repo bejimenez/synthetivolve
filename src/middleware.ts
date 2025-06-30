@@ -1,3 +1,4 @@
+// src/middleware.ts
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
@@ -29,6 +30,15 @@ export async function middleware(request: NextRequest) {
 
   // Refresh session if expired - required for Server Components
   const { data: { user } } = await supabase.auth.getUser()
+
+  // Handle root path - redirect based on auth status
+  if (request.nextUrl.pathname === '/') {
+    if (user) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    } else {
+      return NextResponse.redirect(new URL('/auth', request.url))
+    }
+  }
 
   // Protect dashboard routes
   if (request.nextUrl.pathname.startsWith('/dashboard')) {
