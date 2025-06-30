@@ -94,15 +94,16 @@ export function WeightEntryForm({ onSuccess }: WeightEntryFormProps) {
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <Card className="w-full h-fit">
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-2 text-lg">
           <Scale className="h-5 w-5" />
           Log Today&apos;s Weight
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* Alert components remain the same */}
           {error && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
@@ -118,53 +119,62 @@ export function WeightEntryForm({ onSuccess }: WeightEntryFormProps) {
             </Alert>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="weight_lbs">Weight (lbs)</Label>
-              <Input
-                id="weight_lbs"
-                type="number"
-                step="0.1"
-                placeholder="Enter your weight"
-                {...register('weight_lbs')}
-                disabled={submitting}
-              />
-              {errors.weight_lbs && (
-                <p className="text-sm text-destructive">{errors.weight_lbs.message}</p>
-              )}
+          {/* Compact form layout */}
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="weight_lbs" className="text-sm font-medium">
+                  Weight (lbs)
+                </Label>
+                <Input
+                  id="weight_lbs"
+                  type="number"
+                  step="0.1"
+                  placeholder="Enter weight"
+                  className="h-9"
+                  {...register('weight_lbs')}
+                  disabled={submitting}
+                />
+                {errors.weight_lbs && (
+                  <p className="text-xs text-destructive">{errors.weight_lbs.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="entry_date" className="text-sm font-medium">
+                  Date
+                </Label>
+                <Input
+                  id="entry_date"
+                  type="date"
+                  className="h-9"
+                  {...register('entry_date')}
+                  disabled={submitting}
+                />
+                {errors.entry_date && (
+                  <p className="text-xs text-destructive">{errors.entry_date.message}</p>
+                )}
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="entry_date">Date</Label>
+              <Label htmlFor="notes" className="text-sm font-medium">
+                Notes (optional)
+              </Label>
               <Input
-                id="entry_date"
-                type="date"
-                {...register('entry_date')}
+                id="notes"
+                placeholder="Any notes about today..."
+                className="h-9"
+                {...register('notes')}
                 disabled={submitting}
               />
-              {errors.entry_date && (
-                <p className="text-sm text-destructive">{errors.entry_date.message}</p>
-              )}
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes (optional)</Label>
-            <Input
-              id="notes"
-              placeholder="Any notes about your weight today..."
-              {...register('notes')}
-              disabled={submitting}
-            />
-            {errors.notes && (
-              <p className="text-sm text-destructive">{errors.notes.message}</p>
-            )}
+            <Button type="submit" className="w-full h-9" disabled={submitting}>
+              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {submitting ? 'Saving...' : 'Log Weight'}
+            </Button>
           </div>
-
-          <Button type="submit" className="w-full" disabled={submitting}>
-            {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {submitting ? 'Saving...' : 'Log Weight'}
-          </Button>
         </form>
       </CardContent>
     </Card>

@@ -105,24 +105,24 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Main Dashboard Content - Only show when profile is complete and not in settings mode */}
-          {isProfileComplete && !showProfileSettings && (
+          {/* Main Dashboard Content - Only show when profile is complete and not in settings mode - Improved 2x2 grid */}
+          {isProfileComplete && (
             <>
-              {/* Top Row: Goal Progress and Weight Entry */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Top Row: Goal Progress + Weight Entry */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <GoalProgressWidget
                   onCreateGoal={() => setShowGoalCreation(true)}
                 />
                 <WeightEntryForm />
               </div>
 
-              {/* Middle Row: Goal Progress Chart */}
-              <GoalProgressChart />
+              {/* Bottom Row: Goal Chart + Weight History */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <GoalProgressChart />
+                <WeightHistory />
+              </div>
 
-              {/* Weight History Chart */}
-              <WeightHistory />
-
-              {/* Enhanced Calorie Calculator */}
+              {/* Full Width: Enhanced Calorie Calculator */}
               <EnhancedCalorieCalculator />
             </>
           )}
