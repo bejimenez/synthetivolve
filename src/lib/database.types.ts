@@ -55,6 +55,90 @@ export interface Database {
           notes?: string | null
         }
       }
+      goals: {
+        Row: {
+          id: string
+          user_id: string
+          goal_type: 'fat_loss' | 'maintenance' | 'muscle_gain'
+          start_weight: number
+          start_date: string
+          duration_weeks: number
+          end_date: string
+          target_rate_lbs: number | null
+          target_rate_percent: number | null
+          rate_type: 'absolute' | 'percentage' | null
+          surplus_calories: number | null
+          is_active: boolean
+          completed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          goal_type: 'fat_loss' | 'maintenance' | 'muscle_gain'
+          start_weight: number
+          start_date?: string
+          duration_weeks: number
+          target_rate_lbs?: number | null
+          target_rate_percent?: number | null
+          rate_type?: 'absolute' | 'percentage' | null
+          surplus_calories?: number | null
+          is_active?: boolean
+          completed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          goal_type?: 'fat_loss' | 'maintenance' | 'muscle_gain'
+          start_weight?: number
+          start_date?: string
+          duration_weeks?: number
+          target_rate_lbs?: number | null
+          target_rate_percent?: number | null
+          rate_type?: 'absolute' | 'percentage' | null
+          surplus_calories?: number | null
+          is_active?: boolean
+          completed_at?: string | null
+          updated_at?: string
+        }
+      }
+      daily_targets: {
+        Row: {
+          id: string
+          user_id: string
+          goal_id: string
+          target_date: string
+          recommended_calories: number
+          recommended_protein: number
+          recommended_fat: number
+          recommended_carbs: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          goal_id: string
+          target_date: string
+          recommended_calories: number
+          recommended_protein: number
+          recommended_fat: number
+          recommended_carbs: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          goal_id?: string
+          target_date?: string
+          recommended_calories?: number
+          recommended_protein?: number
+          recommended_fat?: number
+          recommended_carbs?: number
+        }
+      }
     }
   }
 }
