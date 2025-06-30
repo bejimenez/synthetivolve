@@ -3,7 +3,6 @@ import type { Database } from './database.types'
 import { startOfWeek, addWeeks, parseISO, isAfter, isBefore, format } from 'date-fns'
 
 type Goal = Database['public']['Tables']['goals']['Row']
-type Profile = Database['public']['Tables']['profiles']['Row']
 
 export interface CalorieAdjustment {
   adjustedCalories: number
