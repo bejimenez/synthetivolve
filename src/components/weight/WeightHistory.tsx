@@ -32,11 +32,11 @@ export function WeightHistory() {
   // State to hold computed colors. Initialize with fallbacks.
   const [chartColors, setChartColors] = useState({
     primary: '#000000',
-    secondary: '#666666',
+    secondary: '#009900',
     background: '#ffffff',
     popover: '#ffffff',
     popoverForeground: '#000000',
-    border: '#dddddd',
+    border: '#3333ff',
   });
 
   // This effect runs on the client to resolve CSS variables into concrete
