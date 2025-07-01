@@ -112,18 +112,18 @@ export default function DashboardPage() {
           {/* Complete Profile Layout - Optimized 3-Row Layout */}
           {isProfileComplete && (
             <>
-              {/* Row 1: Goal Progress + Weight Entry */}
+              {/* Row 1: Weight Entry + Weight History */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <WeightEntryForm />
+                <WeightHistory />
+              </div>
+
+              {/* Row 2: Goal Progress + Goal Chart */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <GoalProgressWidget
                   onCreateGoal={() => setShowGoalCreation(true)}
                 />
-                <WeightEntryForm />
-              </div>
-
-              {/* Row 2: Goal Chart + Weight History */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <GoalProgressChart />
-                <WeightHistory />
               </div>
 
               {/* Row 3: Compact Calorie Calculator (less vertical space) */}
