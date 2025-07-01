@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { LogOut, Settings, AlertTriangle } from 'lucide-react'
 import { useState } from 'react'
 import { ModeToggle } from '@/components/ui/mode-toggle'
+import { CompactCalorieCalculator } from '@/components/calories/CompactCalorieCalculator'
 
 export default function DashboardPage() {
   const { user, signOut } = useAuth()
@@ -108,9 +109,10 @@ export default function DashboardPage() {
           )}
 
           {/* Main Dashboard Content - Only show when profile is complete and not in settings mode - Improved 2x2 grid */}
+          {/* Complete Profile Layout - Optimized 3-Row Layout */}
           {isProfileComplete && (
             <>
-              {/* Top Row: Goal Progress + Weight Entry */}
+              {/* Row 1: Goal Progress + Weight Entry */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <GoalProgressWidget
                   onCreateGoal={() => setShowGoalCreation(true)}
@@ -118,14 +120,14 @@ export default function DashboardPage() {
                 <WeightEntryForm />
               </div>
 
-              {/* Bottom Row: Goal Chart + Weight History */}
+              {/* Row 2: Goal Chart + Weight History */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <GoalProgressChart />
                 <WeightHistory />
               </div>
 
-              {/* Full Width: Enhanced Calorie Calculator */}
-              <EnhancedCalorieCalculator />
+              {/* Row 3: Compact Calorie Calculator (less vertical space) */}
+              <CompactCalorieCalculator />
             </>
           )}
 
