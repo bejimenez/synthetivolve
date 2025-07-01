@@ -1,7 +1,7 @@
 // src/components/weight/WeightHistory.tsx
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { format, parseISO } from 'date-fns'
 import { useWeightData } from '@/components/weight/WeightDataProvider'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -28,6 +28,35 @@ function calculateRollingAverage(entries: Array<{ weight_lbs: number; entry_date
 
 export function WeightHistory() {
   const { entries: weightEntries, loading, error } = useWeightData()
+
+  const [chartColors, setChartColors] = useState({
+    primary: '#000000',
+    secondary: '#888888',
+    mutedForeground: '#888888',
+    border: '#dddddd',
+    background: '#ffffff',
+    popover: '#ffffff',
+    popoverForeground: '#000000',
+  });
+
+  // NEW: useEffect to read CSS variables from the DOM on component mount
+  useEffect(() => {
+    // This function runs on the client side after the initial render
+    const rootStyles = window.getComputedStyle(document.documentElement);
+    
+    // Helper to read the oklch variable value and format it as a valid color string
+    const getColor = (varName: string) => `oklch(${rootStyles.getPropertyValue(varName).trim()})`;
+
+    setChartColors({
+      primary: getColor('--primary'),
+      secondary: getColor('--secondary'),
+      mutedForeground: getColor('--muted-foreground'),
+      border: getColor('--border'),
+      background: getColor('--background'),
+      popover: getColor('--popover'),
+      popoverForeground: getColor('--popover-foreground'),
+    });
+  }, []); // The empty dependency array ensures this runs only once on mount
 
   const chartData = useMemo(() => {
     if (!weightEntries.length) return []
@@ -168,21 +197,21 @@ export function WeightHistory() {
             <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid 
                 strokeDasharray="3 3" 
-                stroke="hsl(var(--muted-foreground))" 
+                stroke={chartColors.mutedForeground} // UPDATED
                 opacity={0.3}
               />
               <XAxis 
                 dataKey="date" 
-                tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
-                axisLine={{ stroke: 'hsl(var(--border))' }}
-                tickLine={{ stroke: 'hsl(var(--border))' }}
+                tick={{ fontSize: 12, fill: chartColors.mutedForeground }} // UPDATED
+                axisLine={{ stroke: chartColors.border }} // UPDATED
+                tickLine={{ stroke: chartColors.border }} // UPDATED
                 interval="preserveStartEnd"
               />
               <YAxis 
                 domain={['dataMin - 2', 'dataMax + 2']}
-                tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
-                axisLine={{ stroke: 'hsl(var(--border))' }}
-                tickLine={{ stroke: 'hsl(var(--border))' }}
+                tick={{ fontSize: 12, fill: chartColors.mutedForeground }} // UPDATED
+                axisLine={{ stroke: chartColors.border }} // UPDATED
+                tickLine={{ stroke: chartColors.border }} // UPDATED
               />
               <Tooltip 
                 labelFormatter={(label) => `Date: ${label}`}
@@ -191,30 +220,30 @@ export function WeightHistory() {
                   name === 'weight_lbs' ? 'Daily Weight' : '7-Day Average'
                 ]}
                 contentStyle={{
-                  backgroundColor: 'hsl(var(--popover))',
-                  border: '1px solid hsl(var(--border))',
+                  backgroundColor: chartColors.popover, // UPDATED
+                  border: `1px solid ${chartColors.border}`, // UPDATED
                   borderRadius: '6px',
-                  color: 'hsl(var(--popover-foreground))'
+                  color: chartColors.popoverForeground, // UPDATED
                 }}
               />
               <Line 
                 type="monotone" 
                 dataKey="weight_lbs" 
-                stroke="hsl(var(--primary))" 
+                stroke={chartColors.primary} // UPDATED
                 strokeWidth={3}
-                dot={{ r: 5, fill: 'hsl(var(--primary))', strokeWidth: 2, stroke: 'hsl(var(--background))' }}
-                activeDot={{ r: 6, fill: 'hsl(var(--primary))', strokeWidth: 2, stroke: 'hsl(var(--background))' }}
+                dot={{ r: 5, fill: chartColors.primary, strokeWidth: 2, stroke: chartColors.background }} // UPDATED
+                activeDot={{ r: 6, fill: chartColors.primary, strokeWidth: 2, stroke: chartColors.background }} // UPDATED
                 name="weight_lbs"
               />
               {chartData.length >= 7 && (
                 <Line 
                   type="monotone" 
                   dataKey="rollingAverage" 
-                  stroke="hsl(var(--secondary))" 
+                  stroke={chartColors.secondary} // UPDATED
                   strokeWidth={2}
                   strokeDasharray="8 4"
                   dot={false}
-                  activeDot={{ r: 4, fill: 'hsl(var(--secondary))', strokeWidth: 2, stroke: 'hsl(var(--background))' }}
+                  activeDot={{ r: 4, fill: chartColors.secondary, strokeWidth: 2, stroke: chartColors.background }} // UPDATED
                   name="rollingAverage"
                 />
               )}
