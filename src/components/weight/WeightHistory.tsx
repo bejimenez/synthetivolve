@@ -29,34 +29,54 @@ function calculateRollingAverage(entries: Array<{ weight_lbs: number; entry_date
 export function WeightHistory() {
   const { entries: weightEntries, loading, error } = useWeightData()
 
+  // State to hold computed colors. Initialize with fallbacks.
   const [chartColors, setChartColors] = useState({
     primary: '#000000',
-    secondary: '#888888',
-    mutedForeground: '#888888',
-    border: '#dddddd',
+    secondary: '#666666',
     background: '#ffffff',
     popover: '#ffffff',
     popoverForeground: '#000000',
+    border: '#dddddd',
   });
 
-  // NEW: useEffect to read CSS variables from the DOM on component mount
+  // This effect runs on the client to resolve CSS variables into concrete
+  // RGB color values that Recharts can render.
   useEffect(() => {
-    // This function runs on the client side after the initial render
-    const rootStyles = window.getComputedStyle(document.documentElement);
-    
-    // Helper to read the oklch variable value and format it as a valid color string
-    const getColor = (varName: string) => `oklch(${rootStyles.getPropertyValue(varName).trim()})`;
+    // A helper function to get the computed RGB value of a CSS variable
+    const getResolvedColor = (variableName: string) => {
+      const style = getComputedStyle(document.documentElement);
+      const oklchValue = style.getPropertyValue(variableName);
+      if (!oklchValue) return '#000'; // Fallback
+      
+      // We must convert the oklch value to a format SVG understands (like RGB).
+      // A reliable trick is to apply it to a temporary element.
+      const tempEl = document.createElement('div');
+      tempEl.style.color = `var(${variableName})`;
+      document.body.appendChild(tempEl);
+      const color = window.getComputedStyle(tempEl).color;
+      document.body.removeChild(tempEl);
+      return color;
+    }
 
-    setChartColors({
-      primary: getColor('--primary'),
-      secondary: getColor('--secondary'),
-      mutedForeground: getColor('--muted-foreground'),
-      border: getColor('--border'),
-      background: getColor('--background'),
-      popover: getColor('--popover'),
-      popoverForeground: getColor('--popover-foreground'),
-    });
-  }, []); // The empty dependency array ensures this runs only once on mount
+    const updateColors = () => {
+      setChartColors({
+        primary: getResolvedColor('--primary'),
+        secondary: getResolvedColor('--secondary'),
+        background: getResolvedColor('--background'),
+        popover: getResolvedColor('--popover'),
+        popoverForeground: getResolvedColor('--popover-foreground'),
+        border: getResolvedColor('--border'),
+      });
+    }
+
+    updateColors(); // Set initial colors
+
+    // Observe theme changes (light/dark mode) and update colors
+    const observer = new MutationObserver(updateColors);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    return () => observer.disconnect(); // Cleanup
+  }, []);
 
   const chartData = useMemo(() => {
     if (!weightEntries.length) return []
@@ -197,54 +217,55 @@ export function WeightHistory() {
             <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid 
                 strokeDasharray="3 3" 
-                stroke={chartColors.mutedForeground} // UPDATED
-                opacity={0.3}
+                className="stroke-muted-foreground/30" // Use className for grid lines
               />
               <XAxis 
                 dataKey="date" 
-                tick={{ fontSize: 12, fill: chartColors.mutedForeground }} // UPDATED
-                axisLine={{ stroke: chartColors.border }} // UPDATED
-                tickLine={{ stroke: chartColors.border }} // UPDATED
+                className="fill-muted-foreground text-xs" // Use className for axis text
+                tickLine={{ className: "stroke-border" }}
+                axisLine={{ className: "stroke-border" }}
                 interval="preserveStartEnd"
               />
               <YAxis 
                 domain={['dataMin - 2', 'dataMax + 2']}
-                tick={{ fontSize: 12, fill: chartColors.mutedForeground }} // UPDATED
-                axisLine={{ stroke: chartColors.border }} // UPDATED
-                tickLine={{ stroke: chartColors.border }} // UPDATED
+                className="fill-muted-foreground text-xs"
+                tickLine={{ className: "stroke-border" }}
+                axisLine={{ className: "stroke-border" }}
               />
               <Tooltip 
+                contentStyle={{
+                  backgroundColor: chartColors.popover, // Use resolved JS color for tooltip
+                  border: `1px solid ${chartColors.border}`,
+                  borderRadius: '0.5rem',
+                  color: chartColors.popoverForeground
+                }}
                 labelFormatter={(label) => `Date: ${label}`}
                 formatter={(value: number, name: string) => [
                   `${value} lbs`,
                   name === 'weight_lbs' ? 'Daily Weight' : '7-Day Average'
                 ]}
-                contentStyle={{
-                  backgroundColor: chartColors.popover, // UPDATED
-                  border: `1px solid ${chartColors.border}`, // UPDATED
-                  borderRadius: '6px',
-                  color: chartColors.popoverForeground, // UPDATED
-                }}
               />
               <Line 
                 type="monotone" 
                 dataKey="weight_lbs" 
-                stroke={chartColors.primary} // UPDATED
+                stroke={chartColors.primary} // Use resolved JS color for the line
                 strokeWidth={3}
-                dot={{ r: 5, fill: chartColors.primary, strokeWidth: 2, stroke: chartColors.background }} // UPDATED
-                activeDot={{ r: 6, fill: chartColors.primary, strokeWidth: 2, stroke: chartColors.background }} // UPDATED
+                dot={{ r: 5, fill: chartColors.primary, strokeWidth: 2, stroke: chartColors.background }}
+                activeDot={{ r: 6, fill: chartColors.primary, strokeWidth: 2, stroke: chartColors.background }}
                 name="weight_lbs"
+                connectNulls
               />
               {chartData.length >= 7 && (
                 <Line 
                   type="monotone" 
                   dataKey="rollingAverage" 
-                  stroke={chartColors.secondary} // UPDATED
+                  stroke={chartColors.secondary} // Use resolved JS color for the line
                   strokeWidth={2}
                   strokeDasharray="8 4"
                   dot={false}
-                  activeDot={{ r: 4, fill: chartColors.secondary, strokeWidth: 2, stroke: chartColors.background }} // UPDATED
+                  activeDot={{ r: 4, fill: chartColors.secondary, strokeWidth: 2, stroke: chartColors.background }}
                   name="rollingAverage"
+                  connectNulls
                 />
               )}
             </LineChart>
@@ -259,7 +280,7 @@ export function WeightHistory() {
           </div>
           {chartData.length >= 7 && (
             <div className="flex items-center gap-2">
-              <div className="w-6 h-1 bg-secondary rounded border-dashed border-t-2"></div>
+              <div className="w-6 h-px border-t-2 border-dashed border-secondary" />
               <span className="text-muted-foreground">7-Day Average</span>
             </div>
           )}
