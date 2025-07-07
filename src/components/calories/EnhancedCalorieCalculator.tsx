@@ -9,7 +9,8 @@ import { calculateGoalCalories, calculateGoalMacros } from '@/lib/goal_calculati
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { Calculator, Zap, Target, Apple, AlertTriangle } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Calculator, Zap, Target, Apple, AlertTriangle, HelpCircle } from 'lucide-react'
 
 // Activity level multipliers for TDEE calculation
 const ACTIVITY_MULTIPLIERS = {
@@ -261,7 +262,46 @@ export function EnhancedCalorieCalculator() {
         </div>
 
         {/* Macro Nutrient Goals */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Apple className="h-5 w-5" />
+            Daily Macronutrient Targets
+            <Dialog>
+              <DialogTrigger asChild>
+                <button className="ml-auto p-1 rounded-full hover:bg-gray-100 transition-colors">
+                  <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                </button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>How Macro Targets Are Calculated</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 text-sm">
+                  <div>
+                    <h4 className="font-semibold text-green-600 mb-1">Protein</h4>
+                    <p>1 gram per pound of body weight</p>
+                    <p className="text-muted-foreground">Example: 150 lbs = 150g protein</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-yellow-600 mb-1">Fat</h4>
+                    <p>Minimum 50g per day, or 0.25g per pound (whichever is higher)</p>
+                    <p className="text-muted-foreground">Example: 150 lbs = max(50g, 37.5g) = 50g fat</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-red-600 mb-1">Carbohydrates</h4>
+                    <p>Remaining calories after protein and fat allocation</p>
+                    <p className="text-muted-foreground">Calculated as: (Total Calories - Protein Calories - Fat Calories) ÷ 4</p>
+                  </div>
+                  <div className="pt-2 border-t">
+                    <p className="text-xs text-muted-foreground">
+                      <strong>Note:</strong> These calculations ensure adequate protein for muscle maintenance and minimum fat for hormonal health, while filling remaining calories with carbohydrates for energy.
+                    </p>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-4 bg-white rounded-lg border border-gray-200">
             <h3 className="text-lg font-semibold mb-4">Protein</h3>
             <div className="flex items-center justify-between mb-2">
@@ -308,6 +348,7 @@ export function EnhancedCalorieCalculator() {
                 style={{ width: `${(calculatedData.macros.carbs / 300) * 100}%` }}
               />
             </div>
+          </div>
           </div>
         </div>
 
