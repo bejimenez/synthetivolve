@@ -5,6 +5,8 @@
 import { useMemo } from 'react'
 import { useProfile } from '@/hooks/useProfile'
 import { useWeightEntries } from '@/hooks/useWeightEntries'
+import { useGoals } from '@/hooks/useGoals'
+import { calculateGoalCalories, calculateGoalMacros } from '@/lib/goal_calculations'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -22,6 +24,9 @@ const ACTIVITY_MULTIPLIERS = {
 interface CalorieData {
   bmr: number
   tdee: number
+  adjustedCalories: number
+  adjustmentReason: string
+  warnings: string[]
   macros: {
     protein: number
     fat: number
@@ -37,6 +42,7 @@ interface CalorieData {
 export function CalorieCalculator() {
   const { profile, loading: profileLoading, isProfileComplete } = useProfile()
   const { weightEntries, loading: weightLoading } = useWeightEntries()
+  const { activeGoal, loading: goalLoading } = useGoals()
 
   const calculatedData = useMemo((): CalorieData | null => {
     if (!profile || !isProfileComplete || weightEntries.length === 0) {
@@ -65,29 +71,35 @@ export function CalorieCalculator() {
     // TDEE calculation
     const tdee = bmr * ACTIVITY_MULTIPLIERS[profile.activity_level!]
 
-    // Macro calculations based on project specs
-    const protein = currentWeight // 1g per lb body weight
-    const fat = Math.max(50, currentWeight * 0.25) // Minimum 50g, or 0.25g per lb
-    const proteinCalories = protein * 4
-    const fatCalories = fat * 9
-    const remainingCalories = Math.max(0, tdee - proteinCalories - fatCalories)
-    const carbs = remainingCalories / 4
+    // Calculate goal-based calories and macros
+    let adjustedCalories = tdee
+    let adjustmentReason = 'maintenance calories'
+    const warnings: string[] = []
+
+    if (activeGoal) {
+      const goalData = calculateGoalCalories(tdee, currentWeight, activeGoal)
+      adjustedCalories = goalData.adjustedCalories
+      adjustmentReason = goalData.adjustmentReason
+      warnings.push(...goalData.warnings)
+    }
+
+    // Calculate macros using the goal calculations utility
+    const macroData = calculateGoalMacros(adjustedCalories, currentWeight)
 
     return {
       bmr: Math.round(bmr),
       tdee: Math.round(tdee),
+      adjustedCalories: Math.round(adjustedCalories),
+      adjustmentReason,
+      warnings,
       macros: {
-        protein: Math.round(protein),
-        fat: Math.round(fat),
-        carbs: Math.round(carbs),
+        protein: macroData.protein,
+        fat: macroData.fat,
+        carbs: macroData.carbs,
       },
-      macroCalories: {
-        protein: Math.round(proteinCalories),
-        fat: Math.round(fatCalories),
-        carbs: Math.round(remainingCalories),
-      },
+      macroCalories: macroData.macroCalories,
     }
-  }, [profile, isProfileComplete, weightEntries])
+  }, [profile, isProfileComplete, weightEntries, activeGoal])
 
   const getActivityDescription = (level: string) => {
     const descriptions = {
@@ -100,7 +112,7 @@ export function CalorieCalculator() {
     return descriptions[level as keyof typeof descriptions] || level
   }
 
-  if (profileLoading || weightLoading) {
+  if (profileLoading || weightLoading || goalLoading) {
     return (
       <Card>
         <CardHeader>
@@ -188,7 +200,7 @@ export function CalorieCalculator() {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Calorie Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
             <div className="flex items-center justify-center gap-2 mb-2">
               <Zap className="h-5 w-5 text-blue-600" />
@@ -210,6 +222,17 @@ export function CalorieCalculator() {
             </p>
             <p className="text-sm text-green-700">maintenance calories</p>
           </div>
+
+          <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <Apple className="h-5 w-5 text-orange-600" />
+              <span className="font-semibold text-orange-900">Target</span>
+            </div>
+            <p className="text-2xl font-bold text-orange-900">
+              {calculatedData.adjustedCalories.toLocaleString()}
+            </p>
+            <p className="text-sm text-orange-700">{calculatedData.adjustmentReason}</p>
+          </div>
         </div>
 
         {/* Activity Level Info */}
@@ -221,6 +244,19 @@ export function CalorieCalculator() {
             {getActivityDescription(profile!.activity_level!)}
           </p>
         </div>
+
+        {/* Warnings */}
+        {calculatedData.warnings.length > 0 && (
+          <div className="space-y-2">
+            {calculatedData.warnings.map((warning, index) => (
+              <Alert key={index} className="border-yellow-200 bg-yellow-50">
+                <AlertDescription className="text-yellow-800">
+                  {warning}
+                </AlertDescription>
+              </Alert>
+            ))}
+          </div>
+        )}
 
         {/* Macro Breakdown */}
         <div>
@@ -279,6 +315,7 @@ export function CalorieCalculator() {
           <p><strong>Calculations based on:</strong></p>
           <ul className="list-disc list-inside space-y-1 ml-2">
             <li>BMR: Mifflin-St Jeor equation</li>
+            <li>Target calories: {activeGoal ? 'Goal-adjusted from TDEE' : 'TDEE (maintenance)'}</li>
             <li>Protein: 1g per lb body weight</li>
             <li>Fat: Minimum 50g or 0.25g per lb</li>
             <li>Carbs: Remaining calories after protein and fat</li>
