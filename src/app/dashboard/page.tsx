@@ -40,7 +40,7 @@ export default function DashboardPage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <h1 className="text-xl font-semibold">
-                Health & Wellness Dashboard
+                Dashboard
               </h1>
             </div>
             <div className="flex items-center gap-3">
