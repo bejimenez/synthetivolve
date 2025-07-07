@@ -10,7 +10,8 @@ import { calculateGoalCalories, calculateGoalMacros } from '@/lib/goal_calculati
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { Calculator, Zap, Target, Apple, Beef, Wheat } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Calculator, Zap, Target, Apple, Beef, Wheat, HelpCircle } from 'lucide-react'
 
 // Activity level multipliers for TDEE calculation
 const ACTIVITY_MULTIPLIERS = {
@@ -263,6 +264,40 @@ export function CalorieCalculator() {
           <h3 className="font-semibold mb-3 flex items-center gap-2">
             <Apple className="h-4 w-4" />
             Daily Macronutrient Targets
+            <Dialog>
+              <DialogTrigger asChild>
+                <button className="ml-auto p-1 rounded-full hover:bg-gray-100 transition-colors">
+                  <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                </button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>How Macro Targets Are Calculated</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 text-sm">
+                  <div>
+                    <h4 className="font-semibold text-red-600 mb-1">Protein</h4>
+                    <p>1 gram per pound of body weight</p>
+                    <p className="text-muted-foreground">Example: 150 lbs = 150g protein</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-yellow-600 mb-1">Fat</h4>
+                    <p>Minimum 50g per day, or 0.25g per pound (whichever is higher)</p>
+                    <p className="text-muted-foreground">Example: 150 lbs = max(50g, 37.5g) = 50g fat</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-amber-600 mb-1">Carbohydrates</h4>
+                    <p>Remaining calories after protein and fat allocation</p>
+                    <p className="text-muted-foreground">Calculated as: (Total Calories - Protein Calories - Fat Calories) ÷ 4</p>
+                  </div>
+                  <div className="pt-2 border-t">
+                    <p className="text-xs text-muted-foreground">
+                      <strong>Note:</strong> These calculations ensure adequate protein for muscle maintenance and minimum fat for hormonal health, while filling remaining calories with carbohydrates for energy.
+                    </p>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </h3>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
