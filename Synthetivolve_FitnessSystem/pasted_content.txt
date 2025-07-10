@@ -1,0 +1,142 @@
+Synthetivolve — Mesocycle Builder & Workout Logger
+Project Vision
+Design a smart, mobile-first training app for serious lifters that combines mesocycle planning, muscle group balance tracking, and streamlined logging—all while supporting both RIR/RPE and percentage-based programming, with flexibility to adapt on-the-fly.
+
+Features & User Stories
+📆 Mesocycle Planner
+Weeks & Days: Select 2–16 weeks with a customizable number (1–7) of training days/week.
+Drag & Drop: Build each day by dragging exercise cards from a personal, user-created/updatable library (including “Add New Exercise” while building).
+Muscle Group Coverage:
+Each exercise specifies:
+Primary muscle group (adds 1 set)
+Any number of secondary groups (each adds 0.5 set)
+Equipment & notes
+RIR/RPE toggle (per exercise)
+Supported muscle groups: CHEST, BACK, SHOULDERS, TRICEPS, BICEPS, QUADS, HAMSTRINGS, GLUTES, CALVES, ABS, FOREARMS
+Real-time muscle distribution bar with color-coded warnings (e.g. <2x/week, <3x if specialized).
+Specialization: Pick up to two groups (forces ≥ 3x/week, suggests 30–50 sets).
+Template Library: Save, load, duplicate, or modify templates. Add a text goal for each meso.
+Mobile-first design: Drag and drop support for mobile and desktop.
+🏋️ Workout Logger
+Plan-guided Logging:
+New session auto-loads the next planned day in order.
+Automatically sets the current week & day.
+Option to override (pick any day/week at will).
+Logging Interface:
+For each planned exercise: Log set-by-set (weight, reps, optional RIR/RPE, shown only if enabled for this exercise).
+Swap/accessory exercises: Add/swap exercises in the moment (with optional "make permanent" toggle).
+Show previous session's data inline (collapsible for mobile).
+Freestyle Logging:
+“Start Workout from Scratch” lets user build and log an unscripted session (unconnected to any mesocycle).
+Session Summary:
+Post-log popup with:
+Total volume by muscle
+PRs
+Shareable screenshot/stats
+Historical Data:
+Past logs and stats always accessible.
+Goal field per session (optional).
+Technical Architecture & Data Model
+Types & Interfaces
+export type MuscleGroup =
+  | 'CHEST'
+  | 'BACK'
+  | 'SHOULDERS'
+  | 'TRICEPS'
+  | 'BICEPS'
+  | 'QUADS'
+  | 'HAMSTRINGS'
+  | 'GLUTES'
+  | 'CALVES'
+  | 'ABS'
+  | 'FOREARMS';
+
+export interface Exercise {
+  id: string;
+  name: string;
+  primary: MuscleGroup;
+  secondary: MuscleGroup[];
+  equipment: string;
+  notes?: string;
+  useRIRRPE: boolean; // true=use RIR/RPE, false=use %1RM
+}
+
+export interface DayPlan {
+  day: number; // 1-indexed
+  exercises: string[]; // Array of exercise IDs
+}
+
+export interface MesocyclePlan {
+  id: string;
+  name: string;
+  weeks: number; // 2–16
+  daysPerWeek: number;
+  specialization: MuscleGroup[]; // Up to 2
+  goalStatement?: string;
+  days: DayPlan[]; // Length == daysPerWeek
+  exerciseDB: Record<string, Exercise>;
+}
+
+export interface SetLog {
+  weight: number;
+  reps: number;
+  rir?: number;
+  rpe?: number;
+}
+
+export interface LoggedExercise {
+  exerciseId: string;
+  sets: SetLog[];
+  replacedOriginal?: boolean;
+  wasAccessory?: boolean;
+}
+
+export interface WorkoutLog {
+  mesocycleId?: string; // absent if "workout from scratch"
+  week?: number;
+  day?: number;
+  date: string;
+  exercises: LoggedExercise[];
+  customGoalEntry?: string;
+}
+UI/UX Highlights
+Drag & Drop: dnd-kit for exercise arrangements, optimized for mobile/desktop
+Muscle Bars/Badges: Shadcn/ui Progress/Bars, dynamic color-coding
+Summary Popups: Shadcn/ui modal with share/export
+Exercise Library: Modal/dialog, always accessible while planning/logging
+User Flows
+graph TD
+  A[Home] --> B[Mesocycle Planner]
+  B --> D[Create Plan/Template]
+  B --> E[Duplicate/Modify Template]
+  A --> C[Start Workout]
+  C --> F[Auto-load Next Planned Day]
+  C --> G[Manual Day/Week Select]
+  C --> H[Workout from Scratch]
+  F --> I[Log Sets/Reps/RIR/%1RM]
+  H --> I
+  I --> J[Modify w/ Swaps, Accessories]
+  I --> K[View Previous Data]
+  I --> L[Submit Workout]
+  L --> M[Session Summary/Share]
+Features Deferred/Post-MVP
+Automated analysis/goals based on long-term data
+Suggestion/recommendation engines
+Public/shared template library (optional, future)
+Supabase/user auth/full multi-user sync (integrate later)
+Development Roadmap (Epics/Sprints)
+Planner Components:
+Plan setup; muscle bar logic
+Drag/drop: mobile, desktop
+Exercise creation modal
+Logger Components:
+Auto/progress session
+Flexible set input + previous data
+Swaps/accessories workflow
+Scratch logging UX
+Data/Storage Layer:
+Local storage CRUD; Export/Import codecs
+Model validation (Zod)
+Session Summary & Sharing:
+Modal, statistics computation
+Simple sharing UX
