@@ -13,7 +13,7 @@ export default function LoggerPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
+    <div>
       <WorkoutLogger onWorkoutComplete={handleWorkoutComplete} />
     </div>
   );

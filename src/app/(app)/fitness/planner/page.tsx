@@ -8,12 +8,12 @@ export default function PlannerPage() {
   const router = useRouter();
 
   const handleSave = () => {
-    // After saving, redirect to the main fitness dashboard
-    router.push('/fitness');
+    // After saving, redirect to the main dashboard
+    router.push('/dashboard');
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
+    <div>
       <MesocyclePlanner onSave={handleSave} />
     </div>
   );

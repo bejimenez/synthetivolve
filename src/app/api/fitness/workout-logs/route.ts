@@ -38,10 +38,14 @@ export async function GET() {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Simplified GET. A full implementation would fetch related data.
     const { data, error } = await supabase
         .from('workout_logs')
-        .select('*')
+        .select(`
+            *,
+            exercise_logs (*,
+                set_logs (*)
+            )
+        `)
         .eq('user_id', user.id)
         .order('workout_date', { ascending: false });
 

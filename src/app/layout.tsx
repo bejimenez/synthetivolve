@@ -7,6 +7,8 @@ import { WeightDataProvider } from "@/components/weight/WeightDataProvider";
 import { GoalsDataProvider } from "@/components/goals/GoalsDataProvider";
 import { FitnessDataProvider } from "@/components/fitness/FitnessDataProvider";
 import { ThemeProvider } from "@/components/theme-provider";
+import AppWrapper from "@/components/layout/AppWrapper";
+
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -33,7 +35,7 @@ export default function RootLayout({
             <WeightDataProvider>
               <GoalsDataProvider>
                 <FitnessDataProvider>
-                  {children}
+                  <AppWrapper>{children}</AppWrapper>
                 </FitnessDataProvider>
               </GoalsDataProvider>
             </WeightDataProvider>

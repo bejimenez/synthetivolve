@@ -31,26 +31,23 @@ export async function middleware(request: NextRequest) {
   // Refresh session if expired - required for Server Components
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Handle root path - redirect based on auth status
+  // Handle root path and auth page redirects
   if (request.nextUrl.pathname === '/') {
-    if (user) {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
-    } else {
-      return NextResponse.redirect(new URL('/auth', request.url))
-    }
-  }
-
-  // Protect dashboard routes
-  if (request.nextUrl.pathname.startsWith('/dashboard')) {
     if (!user) {
       return NextResponse.redirect(new URL('/auth', request.url))
     }
-  }
-
-  // Redirect authenticated users away from auth page
-  if (request.nextUrl.pathname.startsWith('/auth')) {
+  } else if (request.nextUrl.pathname.startsWith('/auth')) {
     if (user) {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+  } else {
+    // Protect other app routes (e.g., /fitness, /profile)
+    // If user is not logged in and tries to access any other app route, redirect to auth
+    const protectedRoutes = ['/fitness', '/profile']; // Add other protected routes here
+    const isProtectedRoute = protectedRoutes.some(route => request.nextUrl.pathname.startsWith(route));
+
+    if (isProtectedRoute && !user) {
+      return NextResponse.redirect(new URL('/auth', request.url));
     }
   }
 

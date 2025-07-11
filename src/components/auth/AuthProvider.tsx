@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (event === 'SIGNED_IN' && newUser) {
           // Add small delay to ensure state is fully updated
           setTimeout(() => {
-            router.push('/dashboard')
+            router.push('/')
             router.refresh() // Force a refresh to update middleware state
           }, 100)
         } else if (event === 'SIGNED_OUT') {

@@ -15,6 +15,7 @@ interface FitnessState {
   exercises: ExerciseRow[]
   mesocycles: MesocycleRow[]
   workoutLogs: WorkoutLogRow[]
+  activeMesocycle: MesocycleRow | null
   loading: boolean
   error: string | null
 }
@@ -44,6 +45,7 @@ function fitnessReducer(state: FitnessState, action: FitnessAction): FitnessStat
       return { 
         ...state, 
         ...action.payload,
+        activeMesocycle: action.payload.mesocycles.length > 0 ? action.payload.mesocycles[0] : null,
         loading: false, 
         error: null 
       }
@@ -57,6 +59,7 @@ export function FitnessDataProvider({ children }: { children: React.ReactNode })
     exercises: [],
     mesocycles: [],
     workoutLogs: [],
+    activeMesocycle: null,
     loading: true,
     error: null
   })
