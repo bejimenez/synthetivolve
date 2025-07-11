@@ -1,0 +1,8 @@
+{
+  "name": "Synthetivolve Gemini CLI Environment",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/google-cloud-cli:1": {}
+  },
+  "postCreateCommand": "gcloud config set project $GCP_PROJECT_ID"
+}
