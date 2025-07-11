@@ -34,29 +34,33 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
   const [showExerciseLibrary, setShowExerciseLibrary] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
 
-  const initializeDays = useCallback(() => {
-    if (!mesocycle.daysPerWeek) return;
+  // Fixed: Remove circular dependency by not including mesocycle.days in dependencies
+  const initializeDays = useCallback((daysPerWeek: number, existingDays?: DayPlan[]) => {
+    if (!daysPerWeek) return [];
     
     const days: DayPlan[] = [];
-    for (let i = 1; i <= mesocycle.daysPerWeek; i++) {
-      const existingDay = mesocycle.days?.find(d => d.day === i);
+    for (let i = 1; i <= daysPerWeek; i++) {
+      const existingDay = existingDays?.find(d => d.day === i);
       days.push(existingDay || { day: i, exercises: [] });
     }
     
-    setMesocycle(prev => ({ ...prev, days }));
-  }, [mesocycle.days, mesocycle.daysPerWeek]);
+    return days;
+  }, []);
 
+  // Initialize from editing mesocycle
   useEffect(() => {
     if (editingMesocycle) {
       setMesocycle(editingMesocycle);
-    } else {
-      initializeDays();
     }
-  }, [editingMesocycle, initializeDays]);
+  }, [editingMesocycle]);
 
+  // Handle days per week changes
   useEffect(() => {
-    initializeDays();
-  }, [mesocycle.daysPerWeek, initializeDays]);
+    if (!editingMesocycle && mesocycle.daysPerWeek) {
+      const newDays = initializeDays(mesocycle.daysPerWeek, mesocycle.days);
+      setMesocycle(prev => ({ ...prev, days: newDays }));
+    }
+  }, [mesocycle.daysPerWeek, editingMesocycle, initializeDays]);
 
   const handleInputChange = (field: keyof MesocyclePlan, value: string | number | string[]) => {
     setMesocycle(prev => ({ ...prev, [field]: value }));
@@ -173,7 +177,7 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
                 <SelectContent>
                   {Array.from({ length: 7 }, (_, i) => i + 1).map(day => (
                     <SelectItem key={day} value={day.toString()}>
-                      {day} {day === 1 ? 'day' : 'days'}
+                      {day} {day === 1 ? 'day' : 'days'} per week
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -182,22 +186,23 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
           </div>
 
           <div>
-            <Label>Goal Statement (Optional)</Label>
+            <Label htmlFor="goalStatement">Goal Statement</Label>
             <Textarea
+              id="goalStatement"
               value={mesocycle.goalStatement || ''}
               onChange={(e) => handleInputChange('goalStatement', e.target.value)}
-              placeholder="Describe your goals for this mesocycle..."
+              placeholder="What do you want to achieve with this mesocycle?"
               rows={3}
             />
           </div>
 
           <div>
-            <Label>Specialization (Max 2 muscle groups)</Label>
+            <Label>Specialization (up to 2 muscle groups)</Label>
             <div className="flex flex-wrap gap-2 mt-2">
               {MUSCLE_GROUPS.map(muscle => (
                 <Badge
                   key={muscle}
-                  variant={mesocycle.specialization?.includes(muscle) ? "default" : "outline"}
+                  variant={mesocycle.specialization?.includes(muscle) ? 'default' : 'outline'}
                   className="cursor-pointer"
                   onClick={() => handleSpecializationToggle(muscle)}
                 >
@@ -209,82 +214,89 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
         </CardContent>
       </Card>
 
-      {/* Muscle Group Volume Overview */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Weekly Muscle Group Volume</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {MUSCLE_GROUPS.map(muscle => {
-              const volume = muscleVolume[muscle] || 0;
-              const isSpecialized = mesocycle.specialization?.includes(muscle) || false;
-              const warning = getMuscleGroupWarning(volume, isSpecialized);
-              const colorClass = getWarningColor(warning);
-              
-              return (
-                <div key={muscle} className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">
-                      {formatMuscleGroupName(muscle)}
-                      {isSpecialized && <span className="text-xs text-blue-600 ml-1">*</span>}
-                    </span>
-                    <span className="text-sm text-gray-600">{volume.toFixed(1)}</span>
+      {/* Day Planning Section */}
+      {mesocycle.daysPerWeek && mesocycle.days && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Training Days</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+              {mesocycle.days.map(day => (
+                <DayBuilder
+                  key={day.day}
+                  day={day}
+                  exercises={Object.values(mesocycle.exerciseDB || {})}
+                  onUpdate={(exerciseIds) => handleDayUpdate(day.day, exerciseIds)}
+                  onExerciseLibraryOpen={() => setShowExerciseLibrary(true)}
+                />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Volume Analysis */}
+      {Object.keys(muscleVolume).length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Weekly Volume Analysis</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {Object.entries(muscleVolume).map(([muscle, count]) => {
+                const warning = getMuscleGroupWarning(muscle as MuscleGroup, count);
+                const color = getWarningColor(warning);
+                const isSpecialized = mesocycle.specialization?.includes(muscle as MuscleGroup);
+                
+                return (
+                  <div key={muscle} className="space-y-1">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">
+                          {formatMuscleGroupName(muscle as MuscleGroup)}
+                        </span>
+                        {isSpecialized && (
+                          <Badge variant="secondary" className="text-xs">
+                            Specialized
+                          </Badge>
+                        )}
+                      </div>
+                      <span className="text-sm text-gray-600">{count} sets/week</span>
+                    </div>
+                    <Progress
+                      value={(count / 30) * 100}
+                      className="h-2"
+                      style={{ backgroundColor: `${color}20` }}
+                    />
+                    {warning && (
+                      <p className="text-xs" style={{ color }}>
+                        {warning}
+                      </p>
+                    )}
                   </div>
-                  <Progress 
-                    value={Math.min(volume * 20, 100)} 
-                    className="h-2"
-                  />
-                  <div className={`h-1 rounded ${colorClass}`} />
-                </div>
-              );
-            })}
-          </div>
-          <p className="text-xs text-gray-500 mt-4">
-            * Specialized muscle groups should have ≥3 sets/week
-          </p>
-        </CardContent>
-      </Card>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Day Builder */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            Workout Days
-            <Button
-              onClick={() => setShowExerciseLibrary(true)}
-              size="sm"
-              variant="outline"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Exercise Library
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {mesocycle.days?.map(day => (
-              <DayBuilder
-                key={day.day}
-                day={day}
-                exercises={Object.values(mesocycle.exerciseDB || {})}
-                onUpdate={(exerciseIds) => handleDayUpdate(day.day, exerciseIds)}
-                onExerciseLibraryOpen={() => setShowExerciseLibrary(true)}
-              />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Save Button */}
-      <div className="flex justify-end space-x-2">
-        <Button onClick={handleSave} className="flex items-center">
+      {/* Action Buttons */}
+      <div className="flex justify-end gap-3">
+        <Button
+          variant="outline"
+          onClick={() => window.history.back()}
+        >
+          Cancel
+        </Button>
+        <Button onClick={handleSave}>
           <Save className="w-4 h-4 mr-2" />
           Save Mesocycle
         </Button>
       </div>
 
-      {/* Exercise Library Modal */}
+      {/* Exercise Library Dialog */}
       {showExerciseLibrary && (
         <ExerciseLibrary
           onClose={() => setShowExerciseLibrary(false)}
