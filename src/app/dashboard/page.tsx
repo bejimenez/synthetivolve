@@ -13,8 +13,9 @@ import { GoalCreationForm } from '@/components/goals/GoalCreationForm'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { LogOut, Settings, AlertTriangle } from 'lucide-react'
+import { LogOut, Settings, AlertTriangle, Dumbbell } from 'lucide-react'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { ModeToggle } from '@/components/ui/mode-toggle'
 import { CompactCalorieCalculator } from '@/components/calories/CompactCalorieCalculator'
 
@@ -23,6 +24,7 @@ export default function DashboardPage() {
   const { isProfileComplete } = useProfile()
   const [showProfileSettings, setShowProfileSettings] = useState(false)
   const [showGoalCreation, setShowGoalCreation] = useState(false)
+  const router = useRouter()
 
   const handleSignOut = async () => {
     try {
@@ -45,6 +47,14 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center gap-3">
               <ModeToggle />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push('/fitness')}
+              >
+                <Dumbbell className="mr-2 h-4 w-4" />
+                Fitness
+              </Button>
               <Button
                 variant="outline"
                 size="sm"

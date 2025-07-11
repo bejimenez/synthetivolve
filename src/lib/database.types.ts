@@ -139,6 +139,111 @@ export interface Database {
           recommended_carbs?: number
         }
       }
+      exercises: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          primary_muscle_group: string
+          secondary_muscle_groups: string[]
+          equipment: string | null
+          notes: string | null
+          use_rir_rpe: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          primary_muscle_group: string
+          secondary_muscle_groups: string[]
+          equipment?: string | null
+          notes?: string | null
+          use_rir_rpe?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          primary_muscle_group?: string
+          secondary_muscle_groups?: string[]
+          equipment?: string | null
+          notes?: string | null
+          use_rir_rpe?: boolean
+        }
+      }
+      mesocycles: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          weeks: number
+          days_per_week: number
+          specialization: string[]
+          goal_statement: string | null
+          plan_data: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          weeks: number
+          days_per_week: number
+          specialization: string[]
+          goal_statement?: string | null
+          plan_data: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          weeks?: number
+          days_per_week?: number
+          specialization?: string[]
+          goal_statement?: string | null
+          plan_data?: Json
+        }
+      }
+      workout_logs: {
+        Row: {
+          id: string
+          user_id: string
+          mesocycle_id: string | null
+          week: number | null
+          day: number | null
+          log_data: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          mesocycle_id?: string | null
+          week?: number | null
+          day?: number | null
+          log_data: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          mesocycle_id?: string | null
+          week?: number | null
+          day?: number | null
+          log_data?: Json
+        }
+      }
     }
   }
 }
+
+// Define a generic Json type
+type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]

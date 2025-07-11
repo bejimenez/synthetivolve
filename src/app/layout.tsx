@@ -5,6 +5,7 @@ import "./globals.css";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { WeightDataProvider } from "@/components/weight/WeightDataProvider";
 import { GoalsDataProvider } from "@/components/goals/GoalsDataProvider";
+import { FitnessDataProvider } from "@/components/fitness/FitnessDataProvider";
 import { ThemeProvider } from "@/components/theme-provider";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -31,7 +32,9 @@ export default function RootLayout({
           <AuthProvider>
             <WeightDataProvider>
               <GoalsDataProvider>
-                {children}
+                <FitnessDataProvider>
+                  {children}
+                </FitnessDataProvider>
               </GoalsDataProvider>
             </WeightDataProvider>
           </AuthProvider>

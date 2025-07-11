@@ -1,0 +1,331 @@
+'use client'
+
+import React, { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Search, Plus, Edit, Trash2, Check } from 'lucide-react';
+import { useFitness } from '@/hooks/useFitness';
+import { MUSCLE_GROUPS, formatMuscleGroupName } from '@/lib/fitness_utils';
+import type { Exercise as FitnessExercise, MuscleGroup } from '@/lib/fitness.types';
+
+interface ExerciseLibraryProps {
+  onClose: () => void;
+  onExerciseAdd: (exercise: FitnessExercise) => void;
+  existingExercises: FitnessExercise[];
+}
+
+const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({ 
+  onClose, 
+  onExerciseAdd, 
+  existingExercises 
+}) => {
+  const { exercises, createExercise, refreshAll } = useFitness();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterMuscle, setFilterMuscle] = useState<MuscleGroup | 'ALL'>('ALL');
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingExercise, setEditingExercise] = useState<FitnessExercise | null>(null);
+  
+  const [newExercise, setNewExercise] = useState<Partial<FitnessExercise>>({
+    name: '',
+    primary_muscle_group: 'CHEST',
+    secondary_muscle_groups: [],
+    equipment: '',
+    notes: '',
+    use_rir_rpe: true
+  });
+
+  const filteredExercises = exercises.filter(exercise => {
+    const matchesSearch = exercise.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (exercise.equipment || '').toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesMuscle = filterMuscle === 'ALL' || 
+                         exercise.primary_muscle_group === filterMuscle ||
+                         (exercise.secondary_muscle_groups || []).includes(filterMuscle);
+    
+    return matchesSearch && matchesMuscle;
+  });
+
+  const handleCreateExercise = async () => {
+    if (!newExercise.name || !newExercise.primary_muscle_group) return;
+
+    await createExercise({
+      name: newExercise.name,
+      primary_muscle_group: newExercise.primary_muscle_group,
+      secondary_muscle_groups: newExercise.secondary_muscle_groups || [],
+      equipment: newExercise.equipment || '',
+      notes: newExercise.notes,
+      use_rir_rpe: newExercise.use_rir_rpe ?? true
+    });
+    
+    // Reset form
+    setNewExercise({
+      name: '',
+      primary_muscle_group: 'CHEST',
+      secondary_muscle_groups: [],
+      equipment: '',
+      notes: '',
+      use_rir_rpe: true
+    });
+    setShowCreateForm(false);
+  };
+
+  // Update and Delete would be implemented here using the useFitness hook
+
+  const handleSecondaryMuscleToggle = (muscle: MuscleGroup) => {
+    const current = newExercise.secondary_muscle_groups || [];
+    const updated = current.includes(muscle)
+      ? current.filter(m => m !== muscle)
+      : [...current, muscle];
+    
+    setNewExercise(prev => ({ ...prev, secondary_muscle_groups: updated }));
+  };
+
+  const isExerciseInMesocycle = (exerciseId: string) => {
+    return existingExercises.some(ex => ex.id === exerciseId);
+  };
+
+  return (
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Exercise Library</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* Search and Filter */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  placeholder="Search exercises..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            
+            <Select value={filterMuscle} onValueChange={(value) => setFilterMuscle(value as MuscleGroup | 'ALL')}>
+              <SelectTrigger className="w-full sm:w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Muscles</SelectItem>
+                {MUSCLE_GROUPS.map(muscle => (
+                  <SelectItem key={muscle} value={muscle}>
+                    {formatMuscleGroupName(muscle)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button onClick={() => setShowCreateForm(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              New Exercise
+            </Button>
+          </div>
+
+          {/* Create/Edit Form */}
+          {showCreateForm && (
+            <Card>
+              <CardContent className="pt-6 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="exerciseName">Exercise Name</Label>
+                    <Input
+                      id="exerciseName"
+                      value={newExercise.name || ''}
+                      onChange={(e) => setNewExercise(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="e.g., Barbell Bench Press"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="equipment">Equipment</Label>
+                    <Input
+                      id="equipment"
+                      value={newExercise.equipment || ''}
+                      onChange={(e) => setNewExercise(prev => ({ ...prev, equipment: e.target.value }))}
+                      placeholder="e.g., Barbell, Dumbbells"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="primaryMuscle">Primary Muscle Group</Label>
+                    <Select
+                      value={newExercise.primary_muscle_group || 'CHEST'}
+                      onValueChange={(value) => setNewExercise(prev => ({ ...prev, primary_muscle_group: value as MuscleGroup }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MUSCLE_GROUPS.map(muscle => (
+                          <SelectItem key={muscle} value={muscle}>
+                            {formatMuscleGroupName(muscle)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="useRIRRPE"
+                      checked={newExercise.use_rir_rpe ?? true}
+                      onCheckedChange={(checked) => setNewExercise(prev => ({ ...prev, use_rir_rpe: checked }))}
+                    />
+                    <Label htmlFor="useRIRRPE">Use RIR/RPE (vs %1RM)</Label>
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Secondary Muscle Groups</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {MUSCLE_GROUPS.filter(muscle => muscle !== newExercise.primary_muscle_group).map(muscle => (
+                      <Badge
+                        key={muscle}
+                        variant={newExercise.secondary_muscle_groups?.includes(muscle) ? "default" : "outline"}
+                        className="cursor-pointer"
+                        onClick={() => handleSecondaryMuscleToggle(muscle)}
+                      >
+                        {formatMuscleGroupName(muscle)}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="notes">Notes (Optional)</Label>
+                  <Textarea
+                    id="notes"
+                    value={newExercise.notes || ''}
+                    onChange={(e) => setNewExercise(prev => ({ ...prev, notes: e.target.value }))}
+                    placeholder="Any additional notes about this exercise..."
+                    rows={2}
+                  />
+                </div>
+
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowCreateForm(false);
+                      setEditingExercise(null);
+                      setNewExercise({
+                        name: '',
+                        primary_muscle_group: 'CHEST',
+                        secondary_muscle_groups: [],
+                        equipment: '',
+                        notes: '',
+                        use_rir_rpe: true
+                      });
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button onClick={handleCreateExercise}>
+                    {editingExercise ? 'Update' : 'Create'} Exercise
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Exercise List */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+            {filteredExercises.map(exercise => (
+              <Card key={exercise.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="pt-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-medium">{exercise.name}</h3>
+                      <div className="flex items-center space-x-1 mt-2">
+                        <Badge variant="default" className="text-xs">
+                          {formatMuscleGroupName(exercise.primary_muscle_group as MuscleGroup)}
+                        </Badge>
+                        {(exercise.secondary_muscle_groups || []).map(muscle => (
+                          <Badge key={muscle} variant="outline" className="text-xs">
+                            {formatMuscleGroupName(muscle as MuscleGroup)}
+                          </Badge>
+                        ))}
+                      </div>
+                      {exercise.equipment && (
+                        <p className="text-sm text-gray-600 mt-1">{exercise.equipment}</p>
+                      )}
+                      {exercise.notes && (
+                        <p className="text-xs text-gray-500 mt-1">{exercise.notes}</p>
+                      )}
+                      <div className="flex items-center mt-2">
+                        <Badge variant="outline" className="text-xs">
+                          {exercise.use_rir_rpe ? 'RIR/RPE' : '%1RM'}
+                        </Badge>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col space-y-1 ml-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          onExerciseAdd(exercise as unknown as FitnessExercise);
+                          onClose();
+                        }}
+                        disabled={isExerciseInMesocycle(exercise.id)}
+                      >
+                        {isExerciseInMesocycle(exercise.id) ? (
+                          <Check className="w-4 h-4" />
+                        ) : (
+                          <Plus className="w-4 h-4" />
+                        )}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setEditingExercise(exercise as unknown as FitnessExercise)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        // onClick={() => handleDeleteExercise(exercise.id)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {filteredExercises.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              <p>No exercises found matching your criteria.</p>
+              <Button
+                variant="outline"
+                onClick={() => setShowCreateForm(true)}
+                className="mt-2"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create New Exercise
+              </Button>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default ExerciseLibrary;
