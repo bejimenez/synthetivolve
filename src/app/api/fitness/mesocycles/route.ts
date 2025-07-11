@@ -1,5 +1,5 @@
 // src/app/api/fitness/mesocycles/route.ts
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createSupabaseServerClient } from '@/lib/supabase'
 import { z } from 'zod'
@@ -65,22 +65,33 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
+    // Await the cookies() function (Next.js 15+ requirement)
+    const cookieStore = await cookies()
+    const supabase = createSupabaseServerClient(cookieStore)
+    
+    // Check authentication
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Parse and validate request body
     const body = await request.json()
-    
     const validation = mesocycleCreateSchema.safeParse(body)
+
     if (!validation.success) {
       return NextResponse.json(
-        { error: 'Validation failed', details: validation.error }, 
+        { 
+          error: 'Invalid input', 
+          details: validation.error.flatten() 
+        }, 
         { status: 400 }
       )
     }
+
+    // In a real app, you would use a database transaction (RPC call in Supabase)
+    // to create the mesocycle and all its related days and exercises atomically.
+    // For simplicity here, we'll do it in steps with cleanup on failure.
 
     const { days, ...mesoData } = validation.data
 
@@ -91,7 +102,7 @@ export async function POST(request: Request) {
         ...mesoData, 
         user_id: user.id,
         created_at: new Date().toISOString()
-        // REMOVED updated_at - not in schema
+        // Note: updated_at exists in mesocycles table
       })
       .select()
       .single()
@@ -114,7 +125,7 @@ export async function POST(request: Request) {
             mesocycle_id: newMeso.id, 
             day_number: day.day_number,
             created_at: new Date().toISOString()
-            // REMOVED updated_at - not in schema
+            // Note: mesocycle_days table does NOT have updated_at
           })
           .select()
           .single()
@@ -130,7 +141,7 @@ export async function POST(request: Request) {
             exercise_id: ex.exercise_id,
             order_index: ex.order_index,
             created_at: new Date().toISOString()
-            // REMOVED updated_at - not in schema
+            // Note: day_exercises table does NOT have updated_at
           }))
 
           const { error: dayExercisesError } = await supabase
@@ -144,6 +155,7 @@ export async function POST(request: Request) {
       }
 
       // Success: Return the created mesocycle
+      // (A more complex query would be needed to get all nested data)
       return NextResponse.json(newMeso, { status: 201 })
 
     } catch (stepError) {

@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Plus, Save } from 'lucide-react';
+import { Save } from 'lucide-react';
 import { MesocyclePlan, MuscleGroup, Exercise, DayPlan } from '@/lib/fitness.types';
 import { MUSCLE_GROUPS, calculateWeeklyMuscleVolume, getMuscleGroupWarning, getWarningColor, formatMuscleGroupName, validateMesocyclePlan } from '@/lib/fitness_utils';
 import ExerciseLibrary from './ExerciseLibrary';
@@ -60,6 +60,7 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
       const newDays = initializeDays(mesocycle.daysPerWeek, mesocycle.days);
       setMesocycle(prev => ({ ...prev, days: newDays }));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mesocycle.daysPerWeek, editingMesocycle, initializeDays]);
 
   const handleInputChange = (field: keyof MesocyclePlan, value: string | number | string[]) => {
@@ -245,9 +246,9 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
           <CardContent>
             <div className="space-y-3">
               {Object.entries(muscleVolume).map(([muscle, count]) => {
-                const warning = getMuscleGroupWarning(muscle as MuscleGroup, count);
+                const isSpecialized = mesocycle.specialization?.includes(muscle as MuscleGroup) ?? false;
+                const warning = getMuscleGroupWarning(Number(count), isSpecialized);
                 const color = getWarningColor(warning);
-                const isSpecialized = mesocycle.specialization?.includes(muscle as MuscleGroup);
                 
                 return (
                   <div key={muscle} className="space-y-1">
@@ -265,7 +266,7 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
                       <span className="text-sm text-gray-600">{count} sets/week</span>
                     </div>
                     <Progress
-                      value={(count / 30) * 100}
+                      value={(Number(count) / 30) * 100}
                       className="h-2"
                       style={{ backgroundColor: `${color}20` }}
                     />
