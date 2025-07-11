@@ -29,8 +29,8 @@ const workoutLogCreateSchema = z.object({
   exercises: z.array(exerciseLogSchema),
 });
 
-export async function GET(request: NextRequest) {
-    const cookieStore = cookies()
+export async function GET() {
+    const cookieStore = await cookies()
     const supabase = createSupabaseServerClient(cookieStore)
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = createSupabaseServerClient(cookieStore)
     const { data: { user } } = await supabase.auth.getUser()
 

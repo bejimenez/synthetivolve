@@ -4,7 +4,7 @@
 import { createContext, useContext, useCallback, useReducer, useEffect } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import type { Database } from '@/lib/database.types'
-import type { Exercise, MesocyclePlan, WorkoutLog } from '@/lib/fitness.types' // Using the migrated types
+// Using the migrated types
 
 // More specific types from the database schema can be used if needed
 type ExerciseRow = Database['public']['Tables']['exercises']['Row']

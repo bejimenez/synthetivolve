@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+'use client'
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,10 +9,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Plus, Save, Trash2 } from 'lucide-react';
+import { Plus, Save } from 'lucide-react';
 import { MesocyclePlan, MuscleGroup, Exercise, DayPlan } from '@/lib/fitness.types';
-import { MUSCLE_GROUPS, calculateWeeklyMuscleVolume, getMuscleGroupWarning, getWarningColor, formatMuscleGroupName, generateId, validateMesocyclePlan } from '@/lib/fitness_utils';
-import { StorageService } from '../lib/storage'; // This will be replaced later
+import { MUSCLE_GROUPS, calculateWeeklyMuscleVolume, getMuscleGroupWarning, getWarningColor, formatMuscleGroupName, validateMesocyclePlan } from '@/lib/fitness_utils';
 import ExerciseLibrary from './ExerciseLibrary';
 import DayBuilder from './DayBuilder';
 
@@ -31,23 +32,9 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
   });
 
   const [showExerciseLibrary, setShowExerciseLibrary] = useState(false);
-  const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
 
-  useEffect(() => {
-    if (editingMesocycle) {
-      setMesocycle(editingMesocycle);
-    } else {
-      // Initialize days based on daysPerWeek
-      initializeDays();
-    }
-  }, [editingMesocycle]);
-
-  useEffect(() => {
-    initializeDays();
-  }, [mesocycle.daysPerWeek]);
-
-  const initializeDays = () => {
+  const initializeDays = useCallback(() => {
     if (!mesocycle.daysPerWeek) return;
     
     const days: DayPlan[] = [];
@@ -57,12 +44,22 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
     }
     
     setMesocycle(prev => ({ ...prev, days }));
-  };
+  }, [mesocycle.days, mesocycle.daysPerWeek]);
 
-  const handleInputChange = (field: keyof MesocyclePlan, value: any) => {
+  useEffect(() => {
+    if (editingMesocycle) {
+      setMesocycle(editingMesocycle);
+    } else {
+      initializeDays();
+    }
+  }, [editingMesocycle, initializeDays]);
+
+  useEffect(() => {
+    initializeDays();
+  }, [mesocycle.daysPerWeek, initializeDays]);
+
+  const handleInputChange = (field: keyof MesocyclePlan, value: string | number | string[]) => {
     setMesocycle(prev => ({ ...prev, [field]: value }));
-    
-    // Clear errors when user makes changes
     if (errors.length > 0) {
       setErrors([]);
     }
@@ -77,7 +74,6 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
     } else if (current.length < 2) {
       updated = [...current, muscle];
     } else {
-      // Replace the first specialization if already at max
       updated = [current[1], muscle];
     }
     
@@ -99,34 +95,18 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
 
   const calculateMuscleVolume = () => {
     if (!mesocycle.days || !mesocycle.exerciseDB) return {};
-    
-    const fullMesocycle = mesocycle as MesocyclePlan;
-    return calculateWeeklyMuscleVolume(fullMesocycle);
+    return calculateWeeklyMuscleVolume(mesocycle as MesocyclePlan);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const validationErrors = validateMesocyclePlan(mesocycle);
-    
     if (validationErrors.length > 0) {
       setErrors(validationErrors);
       return;
     }
-
-    const completeMesocycle: MesocyclePlan = {
-      id: mesocycle.id || generateId(),
-      name: mesocycle.name!,
-      weeks: mesocycle.weeks!,
-      daysPerWeek: mesocycle.daysPerWeek!,
-      specialization: mesocycle.specialization || [],
-      goalStatement: mesocycle.goalStatement,
-      days: mesocycle.days || [],
-      exerciseDB: mesocycle.exerciseDB || {}
-    };
-
-    StorageService.saveMesocycle(completeMesocycle);
     
     if (onSave) {
-      onSave(completeMesocycle);
+      onSave(mesocycle as MesocyclePlan);
     }
   };
 

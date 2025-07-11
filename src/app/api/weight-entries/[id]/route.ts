@@ -1,3 +1,4 @@
+// src/app/api/weight-entries/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createSupabaseServerClient } from '@/lib/supabase'
@@ -17,7 +18,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await the params promise (Next.js 15+ requirement)
     const { id } = await params
+    
     const cookieStore = await cookies()
     const supabase = createSupabaseServerClient(cookieStore)
     
@@ -29,12 +32,25 @@ export async function PUT(
 
     // Parse and validate request body
     const body = await request.json()
-    const validatedData = weightEntryUpdateSchema.parse(body)
+    const validation = weightEntryUpdateSchema.safeParse(body)
 
-    // Update weight entry
+    if (!validation.success) {
+      return NextResponse.json(
+        { 
+          error: 'Invalid input', 
+          details: validation.error.flatten() 
+        }, 
+        { status: 400 }
+      )
+    }
+
+    // Update weight entry with updated_at timestamp
     const { data: weightEntry, error } = await supabase
       .from('weight_entries')
-      .update(validatedData)
+      .update({
+        ...validation.data,
+        updated_at: new Date().toISOString()
+      })
       .eq('id', id)
       .eq('user_id', user.id) // Ensure user can only update their own entries
       .select()
@@ -45,20 +61,17 @@ export async function PUT(
         return NextResponse.json({ error: 'Weight entry not found' }, { status: 404 })
       }
       
-      console.error('Error updating weight entry:', error)
+      console.error('Database error:', error)
       return NextResponse.json({ error: 'Failed to update weight entry' }, { status: 500 })
     }
 
-    return NextResponse.json({ data: weightEntry })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
-        { status: 400 }
-      )
+    if (!weightEntry) {
+      return NextResponse.json({ error: 'Weight entry not found' }, { status: 404 })
     }
 
-    console.error('Unexpected error in PUT /api/weight-entries/[id]:', error)
+    return NextResponse.json(weightEntry)
+  } catch (error) {
+    console.error('PUT request error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -68,7 +81,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await the params promise (Next.js 15+ requirement)
     const { id } = await params
+    
     const cookieStore = await cookies()
     const supabase = createSupabaseServerClient(cookieStore)
     
@@ -78,21 +93,33 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Delete weight entry
+    // Check if the weight entry exists and belongs to the user before deletion
+    const { data: existingEntry, error: checkError } = await supabase
+      .from('weight_entries')
+      .select('id')
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .single()
+
+    if (checkError || !existingEntry) {
+      return NextResponse.json({ error: 'Weight entry not found' }, { status: 404 })
+    }
+
+    // Hard delete weight entry (weight entries don't need soft delete for data integrity)
     const { error } = await supabase
       .from('weight_entries')
       .delete()
       .eq('id', id)
-      .eq('user_id', user.id) // Ensure user can only delete their own entries
+      .eq('user_id', user.id)
 
     if (error) {
-      console.error('Error deleting weight entry:', error)
+      console.error('Database error:', error)
       return NextResponse.json({ error: 'Failed to delete weight entry' }, { status: 500 })
     }
 
-    return NextResponse.json({ message: 'Weight entry deleted successfully' })
+    return new Response(null, { status: 204 })
   } catch (error) {
-    console.error('Unexpected error in DELETE /api/weight-entries/[id]:', error)
+    console.error('DELETE request error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

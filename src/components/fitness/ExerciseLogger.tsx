@@ -1,13 +1,15 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { Plus, Minus, ChevronDown, ChevronUp, History } from 'lucide-react';
-import { Exercise, SetLog, LoggedExercise } from '@/lib/fitness.types';
+import { Exercise, SetLog, LoggedExercise, MuscleGroup } from '@/lib/fitness.types';
 import { formatMuscleGroupName } from '@/lib/fitness_utils';
-import { StorageService } from '../lib/storage'; // This will be replaced later
+import { useFitness } from '@/hooks/useFitness';
 
 interface ExerciseLoggerProps {
   exercise: Exercise;
@@ -27,6 +29,7 @@ const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
   const [sets, setSets] = useState<SetLog[]>(existingSets);
   const [showPrevious, setShowPrevious] = useState(false);
   const [previousWorkout, setPreviousWorkout] = useState<LoggedExercise | null>(null);
+  const { workoutLogs } = useFitness();
 
   useEffect(() => {
     setSets(existingSets);
@@ -34,17 +37,16 @@ const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
 
   useEffect(() => {
     if (showPreviousData) {
-      loadPreviousWorkout();
+      const lastWorkout = workoutLogs
+        .filter(log => (log.log_data as { exercises: { exerciseId: string }[] })?.exercises.some((ex: { exerciseId: string; }) => ex.exerciseId === exercise.id))
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+      
+      if (lastWorkout) {
+        const exerciseData = (lastWorkout.log_data as { exercises: { exerciseId: string }[] })?.exercises.find((ex: { exerciseId: string; }) => ex.exerciseId === exercise.id);
+        setPreviousWorkout(exerciseData as LoggedExercise || null);
+      }
     }
-  }, [exercise.id, showPreviousData]);
-
-  const loadPreviousWorkout = () => {
-    const lastWorkout = StorageService.getLastWorkoutForExercise(exercise.id);
-    if (lastWorkout) {
-      const exerciseData = lastWorkout.exercises.find(ex => ex.exerciseId === exercise.id);
-      setPreviousWorkout(exerciseData || null);
-    }
-  };
+  }, [exercise.id, showPreviousData, workoutLogs]);
 
   const addSet = () => {
     const newSet: SetLog = {
@@ -90,11 +92,6 @@ const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
     return sets.reduce((total, set) => total + (set.weight * set.reps), 0);
   };
 
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString();
-  };
-
   return (
     <Card className={`${isAccessory ? 'border-blue-200 bg-blue-50' : ''}`}>
       <CardHeader className="pb-3">
@@ -129,11 +126,11 @@ const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
         
         <div className="flex items-center space-x-2">
           <Badge variant="default" className="text-xs">
-            {formatMuscleGroupName(exercise.primary)}
+            {formatMuscleGroupName(exercise.primary as MuscleGroup)}
           </Badge>
-          {exercise.secondary.map(muscle => (
+          {exercise.secondary.map((muscle) => (
             <Badge key={muscle} variant="outline" className="text-xs">
-              {formatMuscleGroupName(muscle)}
+              {formatMuscleGroupName(muscle as MuscleGroup)}
             </Badge>
           ))}
           {exercise.equipment && (
@@ -154,7 +151,7 @@ const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
             <CollapsibleContent>
               <div className="bg-gray-50 border rounded-md p-3 mb-4">
                 <h4 className="text-sm font-medium text-gray-700 mb-2">
-                  Previous Workout ({formatDate(previousWorkout.sets[0]?.weight ? 'recent' : 'unknown')})
+                  Previous Workout
                 </h4>
                 <div className="grid grid-cols-4 gap-2 text-xs text-gray-600 mb-2">
                   <span>Weight</span>
@@ -162,7 +159,7 @@ const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
                   <span>{exercise.useRIRRPE ? 'RIR' : 'RPE'}</span>
                   <span>Volume</span>
                 </div>
-                {previousWorkout.sets.map((set, index) => (
+                {(previousWorkout.sets as SetLog[]).map((set, index) => (
                   <div key={index} className="grid grid-cols-4 gap-2 text-sm">
                     <span>{set.weight} kg</span>
                     <span>{set.reps}</span>
@@ -259,7 +256,7 @@ const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
           {sets.length === 0 && (
             <div className="text-center py-4 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
               <p className="text-sm">No sets logged yet</p>
-              <p className="text-xs mt-1">Click "Add Set" to start logging</p>
+              <p className="text-xs mt-1">Click &quot;Add Set&quot; to start logging</p>
             </div>
           )}
         </div>

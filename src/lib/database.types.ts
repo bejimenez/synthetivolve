@@ -240,7 +240,7 @@ export interface Database {
 }
 
 // Define a generic Json type
-type Json =
+export type Json =
   | string
   | number
   | boolean

@@ -1,81 +1,47 @@
-import React, { useState, useEffect } from 'react';
+'use client'
+
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Calendar, ChevronDown, ChevronUp, Filter, TrendingUp, Weight, Target } from 'lucide-react';
-import { WorkoutLog, Exercise, MesocyclePlan } from '@/lib/fitness.types';
-import { StorageService } from '../lib/storage'; // This will be replaced later
+import { Calendar, ChevronDown, ChevronUp, TrendingUp, Weight, Target } from 'lucide-react';
 import { formatMuscleGroupName } from '@/lib/fitness_utils';
+import { useFitness } from '@/hooks/useFitness';
+import type { WorkoutLog, Exercise, MuscleGroup } from '@/lib/fitness.types';
 
 interface WorkoutHistoryProps {
   selectedMesocycle?: string;
 }
 
 const WorkoutHistory: React.FC<WorkoutHistoryProps> = ({ selectedMesocycle }) => {
-  const [workoutLogs, setWorkoutLogs] = useState<WorkoutLog[]>([]);
-  const [exercises, setExercises] = useState<Record<string, Exercise>>({});
-  const [mesocycles, setMesocycles] = useState<Record<string, MesocyclePlan>>({});
+  const { workoutLogs, exercises, mesocycles } = useFitness();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMesocycle, setFilterMesocycle] = useState<string>(selectedMesocycle || 'ALL');
   const [expandedWorkouts, setExpandedWorkouts] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = () => {
-    const logs = StorageService.getAllWorkoutLogs();
-    const allExercises = StorageService.getAllExercises();
-    const allMesocycles = StorageService.getAllMesocycles();
-
-    setWorkoutLogs(logs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-    
-    // Create exercise lookup
-    const exerciseMap: Record<string, Exercise> = {};
-    allExercises.forEach(ex => {
-      exerciseMap[ex.id] = ex;
-    });
-    
-    // Add exercises from mesocycles
-    allMesocycles.forEach(meso => {
-      Object.values(meso.exerciseDB).forEach(ex => {
-        exerciseMap[ex.id] = ex;
-      });
-    });
-    
-    setExercises(exerciseMap);
-
-    // Create mesocycle lookup
-    const mesocycleMap: Record<string, MesocyclePlan> = {};
-    allMesocycles.forEach(meso => {
-      mesocycleMap[meso.id] = meso;
-    });
-    setMesocycles(mesocycleMap);
-  };
-
   const filteredWorkouts = workoutLogs.filter(workout => {
+    const logData = workout.log_data as { exercises: { exerciseId: string }[] };
     const matchesSearch = searchTerm === '' || 
-      Object.values(workout.exercises).some(ex => {
-        const exercise = exercises[ex.exerciseId];
+      logData.exercises.some((ex) => {
+        const exercise = exercises.find(e => e.id === ex.exerciseId);
         return exercise?.name.toLowerCase().includes(searchTerm.toLowerCase());
       });
 
     const matchesMesocycle = filterMesocycle === 'ALL' || 
-      workout.mesocycleId === filterMesocycle ||
-      (filterMesocycle === 'FREESTYLE' && !workout.mesocycleId);
+      workout.mesocycle_id === filterMesocycle ||
+      (filterMesocycle === 'FREESTYLE' && !workout.mesocycle_id);
 
     return matchesSearch && matchesMesocycle;
   });
 
-  const toggleWorkoutExpansion = (workoutIndex: string) => {
+  const toggleWorkoutExpansion = (workoutId: string) => {
     const newExpanded = new Set(expandedWorkouts);
-    if (newExpanded.has(workoutIndex)) {
-      newExpanded.delete(workoutIndex);
+    if (newExpanded.has(workoutId)) {
+      newExpanded.delete(workoutId);
     } else {
-      newExpanded.add(workoutIndex);
+      newExpanded.add(workoutId);
     }
     setExpandedWorkouts(newExpanded);
   };
@@ -84,9 +50,8 @@ const WorkoutHistory: React.FC<WorkoutHistoryProps> = ({ selectedMesocycle }) =>
     let totalVolume = 0;
     let totalSets = 0;
     let totalReps = 0;
-
-    workout.exercises.forEach(ex => {
-      ex.sets.forEach(set => {
+    workout.exercises.forEach((ex) => {
+      ex.sets.forEach((set) => {
         totalVolume += set.weight * set.reps;
         totalSets += 1;
         totalReps += set.reps;
@@ -115,9 +80,9 @@ const WorkoutHistory: React.FC<WorkoutHistoryProps> = ({ selectedMesocycle }) =>
   };
 
   const getWorkoutTitle = (workout: WorkoutLog) => {
-    if (workout.mesocycleId && mesocycles[workout.mesocycleId]) {
-      const mesocycle = mesocycles[workout.mesocycleId];
-      return `${mesocycle.name} - Week ${workout.week}, Day ${workout.day}`;
+    if (workout.mesocycleId && mesocycles.find(m => m.id === workout.mesocycleId)) {
+      const mesocycle = mesocycles.find(m => m.id === workout.mesocycleId);
+      return `${mesocycle?.name} - Week ${workout.week}, Day ${workout.day}`;
     }
     return 'Freestyle Workout';
   };
@@ -145,7 +110,7 @@ const WorkoutHistory: React.FC<WorkoutHistoryProps> = ({ selectedMesocycle }) =>
           <SelectContent>
             <SelectItem value="ALL">All Workouts</SelectItem>
             <SelectItem value="FREESTYLE">Freestyle Only</SelectItem>
-            {Object.values(mesocycles).map(meso => (
+            {Object.values(mesocycles).map((meso) => (
               <SelectItem key={meso.id} value={meso.id}>
                 {meso.name}
               </SelectItem>
@@ -170,7 +135,7 @@ const WorkoutHistory: React.FC<WorkoutHistoryProps> = ({ selectedMesocycle }) =>
               <Weight className="w-6 h-6 mx-auto mb-2 text-green-500" />
               <div className="text-2xl font-bold">
                 {filteredWorkouts.reduce((total, workout) => {
-                  const stats = calculateWorkoutStats(workout);
+                  const stats = calculateWorkoutStats(workout as unknown as WorkoutLog);
                   return total + stats.totalVolume;
                 }, 0).toFixed(0)}
               </div>
@@ -183,7 +148,7 @@ const WorkoutHistory: React.FC<WorkoutHistoryProps> = ({ selectedMesocycle }) =>
               <Target className="w-6 h-6 mx-auto mb-2 text-purple-500" />
               <div className="text-2xl font-bold">
                 {filteredWorkouts.reduce((total, workout) => {
-                  const stats = calculateWorkoutStats(workout);
+                  const stats = calculateWorkoutStats(workout as unknown as WorkoutLog);
                   return total + stats.totalSets;
                 }, 0)}
               </div>
@@ -196,7 +161,7 @@ const WorkoutHistory: React.FC<WorkoutHistoryProps> = ({ selectedMesocycle }) =>
               <TrendingUp className="w-6 h-6 mx-auto mb-2 text-orange-500" />
               <div className="text-2xl font-bold">
                 {Math.round(filteredWorkouts.reduce((total, workout) => {
-                  const stats = calculateWorkoutStats(workout);
+                  const stats = calculateWorkoutStats(workout as unknown as WorkoutLog);
                   return total + stats.totalVolume;
                 }, 0) / filteredWorkouts.length) || 0}
               </div>
@@ -208,10 +173,10 @@ const WorkoutHistory: React.FC<WorkoutHistoryProps> = ({ selectedMesocycle }) =>
 
       {/* Workout List */}
       <div className="space-y-4">
-        {filteredWorkouts.map((workout, index) => {
-          const workoutKey = `${workout.date}-${index}`;
+        {filteredWorkouts.map((workout) => {
+          const workoutKey = workout.id;
           const isExpanded = expandedWorkouts.has(workoutKey);
-          const stats = calculateWorkoutStats(workout);
+          const stats = calculateWorkoutStats(workout as unknown as WorkoutLog);
           
           return (
             <Card key={workoutKey}>
@@ -220,13 +185,13 @@ const WorkoutHistory: React.FC<WorkoutHistoryProps> = ({ selectedMesocycle }) =>
                   <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <CardTitle className="text-lg">{getWorkoutTitle(workout)}</CardTitle>
+                        <CardTitle className="text-lg">{getWorkoutTitle(workout as unknown as WorkoutLog)}</CardTitle>
                         <div className="flex items-center space-x-4 mt-2">
                           <span className="text-sm text-gray-600">
-                            {formatDate(workout.date)} at {formatTime(workout.date)}
+                            {formatDate(workout.created_at)} at {formatTime(workout.created_at)}
                           </span>
                           <Badge variant="outline" className="text-xs">
-                            {getUniqueExerciseCount(workout)} exercises
+                            {getUniqueExerciseCount(workout as unknown as WorkoutLog)} exercises
                           </Badge>
                           <Badge variant="outline" className="text-xs">
                             {stats.totalVolume.toFixed(0)} kg
@@ -235,7 +200,7 @@ const WorkoutHistory: React.FC<WorkoutHistoryProps> = ({ selectedMesocycle }) =>
                       </div>
                       
                       <div className="flex items-center space-x-2">
-                        {!workout.mesocycleId && (
+                        {!workout.mesocycle_id && (
                           <Badge variant="secondary" className="text-xs">
                             Freestyle
                           </Badge>
@@ -252,21 +217,21 @@ const WorkoutHistory: React.FC<WorkoutHistoryProps> = ({ selectedMesocycle }) =>
 
                 <CollapsibleContent>
                   <CardContent className="pt-0">
-                    {workout.customGoalEntry && (
+                    {(workout.log_data as { customGoalEntry: string }).customGoalEntry && (
                       <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
                         <p className="text-sm text-blue-800">
-                          <strong>Goal:</strong> {workout.customGoalEntry}
+                          <strong>Goal:</strong> {(workout.log_data as { customGoalEntry: string }).customGoalEntry}
                         </p>
                       </div>
                     )}
 
                     <div className="space-y-4">
-                      {workout.exercises.map((loggedExercise, exIndex) => {
-                        const exercise = exercises[loggedExercise.exerciseId];
+                      {(workout.log_data as { exercises: { exerciseId: string, sets: { weight: number, reps: number, rir?: number, rpe?: number }[], wasAccessory: boolean }[] }).exercises.map((loggedExercise, exIndex: number) => {
+                        const exercise = exercises.find(e => e.id === loggedExercise.exerciseId) as Exercise | undefined;
                         if (!exercise) return null;
 
                         const exerciseVolume = loggedExercise.sets.reduce(
-                          (total, set) => total + (set.weight * set.reps), 0
+                          (total: number, set: { weight: number, reps: number }) => total + (set.weight * set.reps), 0
                         );
 
                         return (
@@ -276,11 +241,11 @@ const WorkoutHistory: React.FC<WorkoutHistoryProps> = ({ selectedMesocycle }) =>
                                 <h4 className="font-medium">{exercise.name}</h4>
                                 <div className="flex items-center space-x-2 mt-1">
                                   <Badge variant="default" className="text-xs">
-                                    {formatMuscleGroupName(exercise.primary)}
+                                    {formatMuscleGroupName(exercise.primary as MuscleGroup)}
                                   </Badge>
-                                  {exercise.secondary.map(muscle => (
+                                  {exercise.secondary.map((muscle: string) => (
                                     <Badge key={muscle} variant="outline" className="text-xs">
-                                      {formatMuscleGroupName(muscle)}
+                                      {formatMuscleGroupName(muscle as MuscleGroup)}
                                     </Badge>
                                   ))}
                                   {loggedExercise.wasAccessory && (
@@ -305,7 +270,7 @@ const WorkoutHistory: React.FC<WorkoutHistoryProps> = ({ selectedMesocycle }) =>
                                 <span>{exercise.useRIRRPE ? 'RIR' : 'RPE'}</span>
                                 <span>Volume</span>
                               </div>
-                              {loggedExercise.sets.map((set, setIndex) => (
+                              {loggedExercise.sets.map((set: { weight: number, reps: number, rir?: number, rpe?: number }, setIndex: number) => (
                                 <div key={setIndex} className="grid grid-cols-4 gap-2 text-sm">
                                   <span>{set.weight} kg</span>
                                   <span>{set.reps}</span>

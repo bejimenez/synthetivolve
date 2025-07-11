@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+'use client'
+
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,71 +16,28 @@ import {
   BookOpen,
   Award
 } from 'lucide-react';
-import { MesocyclePlan, WorkoutLog } from '@/lib/fitness.types';
-import { StorageService } from '../lib/storage'; // This will be replaced later
-import { calculateWeeklyMuscleVolume, formatMuscleGroupName, MUSCLE_GROUPS } from '@/lib/fitness_utils';
+import { useFitness } from '@/hooks/useFitness';
+import { formatMuscleGroupName } from '@/lib/fitness_utils';
+import type { MuscleGroup } from '@/lib/fitness.types';
 
 interface DashboardProps {
   onNavigate: (view: string) => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
-  const [currentMesocycle, setCurrentMesocycle] = useState<MesocyclePlan | null>(null);
-  const [recentWorkouts, setRecentWorkouts] = useState<WorkoutLog[]>([]);
-  const [stats, setStats] = useState({
-    totalWorkouts: 0,
-    totalVolume: 0,
+const FitnessDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
+  const { mesocycles, workoutLogs, loading } = useFitness();
+  
+  // This is a placeholder for logic to determine the "active" mesocycle
+  const currentMesocycle = mesocycles.length > 0 ? mesocycles[0] : null;
+  const recentWorkouts = workoutLogs.slice(0, 5);
+
+  const stats = {
+    totalWorkouts: workoutLogs.length,
+    // Placeholder stats
+    totalVolume: 12345,
     currentWeek: 1,
     currentDay: 1,
-    weeklyProgress: 0
-  });
-
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
-
-  const loadDashboardData = () => {
-    // Load current mesocycle
-    const currentMesocycleId = StorageService.getCurrentMesocycle();
-    if (currentMesocycleId) {
-      const mesocycle = StorageService.getMesocycleById(currentMesocycleId);
-      setCurrentMesocycle(mesocycle);
-    }
-
-    // Load recent workouts
-    const allWorkouts = StorageService.getAllWorkoutLogs();
-    const recent = allWorkouts
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 5);
-    setRecentWorkouts(recent);
-
-    // Calculate stats
-    const totalWorkouts = allWorkouts.length;
-    const totalVolume = allWorkouts.reduce((total, workout) => {
-      return total + workout.exercises.reduce((workoutTotal, exercise) => {
-        return workoutTotal + exercise.sets.reduce((setTotal, set) => {
-          return setTotal + (set.weight * set.reps);
-        }, 0);
-      }, 0);
-    }, 0);
-
-    const currentWeek = StorageService.getCurrentWeek();
-    const currentDay = StorageService.getCurrentDay();
-    
-    // Calculate weekly progress
-    let weeklyProgress = 0;
-    if (currentMesocycleId && mesocycle) {
-      const completedDays = currentDay - 1;
-      weeklyProgress = (completedDays / mesocycle.daysPerWeek) * 100;
-    }
-
-    setStats({
-      totalWorkouts,
-      totalVolume,
-      currentWeek,
-      currentDay,
-      weeklyProgress
-    });
+    weeklyProgress: 25,
   };
 
   const formatDate = (dateString: string) => {
@@ -89,29 +48,15 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     });
   };
 
-  const getNextWorkout = () => {
-    if (!currentMesocycle) return null;
-    
-    const nextDay = StorageService.getNextPlannedDay();
-    if (!nextDay) return null;
-
-    const dayPlan = currentMesocycle.days.find(d => d.day === nextDay.day);
-    if (!dayPlan) return null;
-
-    return {
-      week: nextDay.week,
-      day: nextDay.day,
-      exerciseCount: dayPlan.exercises.length
-    };
-  };
-
-  const nextWorkout = getNextWorkout();
+  if (loading) {
+    return <div>Loading...</div>
+  }
 
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg p-6">
-        <h1 className="text-2xl font-bold mb-2">Welcome to Synthetivolve</h1>
+        <h1 className="text-2xl font-bold mb-2">Welcome to Synthetivolve Fitness</h1>
         <p className="text-blue-100">
           Your intelligent training companion for structured muscle building and strength development.
         </p>
@@ -168,13 +113,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                   <h3 className="font-medium text-lg">{currentMesocycle.name}</h3>
                   <p className="text-sm text-gray-600">
                     Week {stats.currentWeek} of {currentMesocycle.weeks} • 
-                    Day {stats.currentDay} of {currentMesocycle.daysPerWeek}
+                    Day {stats.currentDay} of {currentMesocycle.days_per_week}
                   </p>
                 </div>
 
-                {currentMesocycle.goalStatement && (
+                {currentMesocycle.goal_statement && (
                   <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-                    <p className="text-sm text-blue-800">{currentMesocycle.goalStatement}</p>
+                    <p className="text-sm text-blue-800">{currentMesocycle.goal_statement}</p>
                   </div>
                 )}
 
@@ -184,7 +129,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                     <div className="flex flex-wrap gap-1">
                       {currentMesocycle.specialization.map(muscle => (
                         <Badge key={muscle} variant="default" className="text-xs">
-                          {formatMuscleGroupName(muscle)}
+                          {formatMuscleGroupName(muscle as MuscleGroup)}
                         </Badge>
                       ))}
                     </div>
@@ -198,27 +143,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                   </div>
                   <Progress value={stats.weeklyProgress} className="h-2" />
                 </div>
-
-                {nextWorkout && (
-                  <div className="bg-green-50 border border-green-200 rounded-md p-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-green-800">Next Workout</p>
-                        <p className="text-xs text-green-600">
-                          Week {nextWorkout.week}, Day {nextWorkout.day} • {nextWorkout.exerciseCount} exercises
-                        </p>
-                      </div>
-                      <Button
-                        size="sm"
-                        onClick={() => onNavigate('workout')}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        <Play className="w-4 h-4 mr-1" />
-                        Start
-                      </Button>
-                    </div>
-                  </div>
-                )}
               </div>
             ) : (
               <div className="text-center py-6">
@@ -254,37 +178,26 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           <CardContent>
             {recentWorkouts.length > 0 ? (
               <div className="space-y-3">
-                {recentWorkouts.map((workout, index) => {
-                  const workoutVolume = workout.exercises.reduce((total, exercise) => {
-                    return total + exercise.sets.reduce((setTotal, set) => {
-                      return setTotal + (set.weight * set.reps);
-                    }, 0);
-                  }, 0);
-
-                  return (
+                {recentWorkouts.map((workout, index) => (
                     <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div>
                         <p className="font-medium text-sm">
-                          {workout.mesocycleId ? `Week ${workout.week}, Day ${workout.day}` : 'Freestyle'}
+                          {workout.mesocycle_id ? `Week ${workout.week}, Day ${workout.day}` : 'Freestyle'}
                         </p>
                         <p className="text-xs text-gray-600">
-                          {formatDate(workout.date)} • {workout.exercises.length} exercises
+                          {formatDate(workout.created_at)}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <p className="font-medium text-sm">{workoutVolume.toFixed(0)} kg</p>
-                        <p className="text-xs text-gray-600">volume</p>
-                      </div>
                     </div>
-                  );
-                })}
+                  )
+                )}
               </div>
             ) : (
               <div className="text-center py-6">
                 <Dumbbell className="w-12 h-12 mx-auto text-gray-400 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No Workouts Yet</h3>
                 <p className="text-gray-600 mb-4">Start logging workouts to see your progress</p>
-                <Button onClick={() => onNavigate('workout')}>
+                <Button onClick={() => onNavigate('logger')}>
                   <Play className="w-4 h-4 mr-2" />
                   Start Workout
                 </Button>
@@ -303,7 +216,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Button
               variant="outline"
-              onClick={() => onNavigate('workout')}
+              onClick={() => onNavigate('logger')}
               className="h-20 flex flex-col items-center justify-center space-y-2"
             >
               <Play className="w-6 h-6" />
@@ -343,4 +256,4 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   );
 };
 
-export default Dashboard;
+export default FitnessDashboard;

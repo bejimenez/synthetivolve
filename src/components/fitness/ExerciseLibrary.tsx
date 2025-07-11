@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,7 +26,7 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
   onExerciseAdd, 
   existingExercises 
 }) => {
-  const { exercises, createExercise, refreshAll } = useFitness();
+  const { exercises, createExercise } = useFitness();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMuscle, setFilterMuscle] = useState<MuscleGroup | 'ALL'>('ALL');
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -34,11 +34,11 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
   
   const [newExercise, setNewExercise] = useState<Partial<FitnessExercise>>({
     name: '',
-    primary_muscle_group: 'CHEST',
-    secondary_muscle_groups: [],
+    primary: 'CHEST',
+    secondary: [],
     equipment: '',
     notes: '',
-    use_rir_rpe: true
+    useRIRRPE: true
   });
 
   const filteredExercises = exercises.filter(exercise => {
@@ -53,25 +53,25 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
   });
 
   const handleCreateExercise = async () => {
-    if (!newExercise.name || !newExercise.primary_muscle_group) return;
+    if (!newExercise.name || !newExercise.primary) return;
 
     await createExercise({
       name: newExercise.name,
-      primary_muscle_group: newExercise.primary_muscle_group,
-      secondary_muscle_groups: newExercise.secondary_muscle_groups || [],
+      primary_muscle_group: newExercise.primary,
+      secondary_muscle_groups: newExercise.secondary || [],
       equipment: newExercise.equipment || '',
-      notes: newExercise.notes,
-      use_rir_rpe: newExercise.use_rir_rpe ?? true
+      notes: newExercise.notes || '',
+      use_rir_rpe: newExercise.useRIRRPE ?? true
     });
     
     // Reset form
     setNewExercise({
       name: '',
-      primary_muscle_group: 'CHEST',
-      secondary_muscle_groups: [],
+      primary: 'CHEST',
+      secondary: [],
       equipment: '',
       notes: '',
-      use_rir_rpe: true
+      useRIRRPE: true
     });
     setShowCreateForm(false);
   };
@@ -79,12 +79,12 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
   // Update and Delete would be implemented here using the useFitness hook
 
   const handleSecondaryMuscleToggle = (muscle: MuscleGroup) => {
-    const current = newExercise.secondary_muscle_groups || [];
+    const current = newExercise.secondary || [];
     const updated = current.includes(muscle)
       ? current.filter(m => m !== muscle)
       : [...current, muscle];
     
-    setNewExercise(prev => ({ ...prev, secondary_muscle_groups: updated }));
+    setNewExercise(prev => ({ ...prev, secondary: updated }));
   };
 
   const isExerciseInMesocycle = (exerciseId: string) => {
@@ -161,8 +161,8 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
                   <div>
                     <Label htmlFor="primaryMuscle">Primary Muscle Group</Label>
                     <Select
-                      value={newExercise.primary_muscle_group || 'CHEST'}
-                      onValueChange={(value) => setNewExercise(prev => ({ ...prev, primary_muscle_group: value as MuscleGroup }))}
+                      value={newExercise.primary || 'CHEST'}
+                      onValueChange={(value) => setNewExercise(prev => ({ ...prev, primary: value as MuscleGroup }))}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -180,8 +180,8 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
                   <div className="flex items-center space-x-2">
                     <Switch
                       id="useRIRRPE"
-                      checked={newExercise.use_rir_rpe ?? true}
-                      onCheckedChange={(checked) => setNewExercise(prev => ({ ...prev, use_rir_rpe: checked }))}
+                      checked={newExercise.useRIRRPE ?? true}
+                      onCheckedChange={(checked) => setNewExercise(prev => ({ ...prev, useRIRRPE: checked }))}
                     />
                     <Label htmlFor="useRIRRPE">Use RIR/RPE (vs %1RM)</Label>
                   </div>
@@ -190,10 +190,10 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
                 <div>
                   <Label>Secondary Muscle Groups</Label>
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {MUSCLE_GROUPS.filter(muscle => muscle !== newExercise.primary_muscle_group).map(muscle => (
+                    {MUSCLE_GROUPS.filter(muscle => muscle !== newExercise.primary).map(muscle => (
                       <Badge
                         key={muscle}
-                        variant={newExercise.secondary_muscle_groups?.includes(muscle) ? "default" : "outline"}
+                        variant={newExercise.secondary?.includes(muscle) ? "default" : "outline"}
                         className="cursor-pointer"
                         onClick={() => handleSecondaryMuscleToggle(muscle)}
                       >
@@ -222,11 +222,11 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
                       setEditingExercise(null);
                       setNewExercise({
                         name: '',
-                        primary_muscle_group: 'CHEST',
-                        secondary_muscle_groups: [],
+                        primary: 'CHEST',
+                        secondary: [],
                         equipment: '',
                         notes: '',
-                        use_rir_rpe: true
+                        useRIRRPE: true
                       });
                     }}
                   >

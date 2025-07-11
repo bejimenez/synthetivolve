@@ -167,7 +167,7 @@ const DayBuilder: React.FC<DayBuilderProps> = ({
               {dayExercises.length === 0 ? (
                 <div className="text-center text-gray-500 py-8 border-2 border-dashed border-gray-200 rounded-lg">
                   <p className="text-sm">No exercises added</p>
-                  <p className="text-xs mt-1">Click "Add Exercise" to get started</p>
+                  <p className="text-xs mt-1">Click &quot;Add Exercise&quot; to get started</p>
                 </div>
               ) : (
                 dayExercises.map(exercise => (

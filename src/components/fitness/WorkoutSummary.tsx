@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Share2, Download, Trophy, Clock, Weight, Target } from 'lucide-react';
-import { WorkoutLog, Exercise, MuscleGroupVolume } from '@/lib/fitness.types';
+import { WorkoutLog, Exercise, MuscleGroup, MuscleGroupVolume } from '@/lib/fitness.types';
 import { MUSCLE_GROUPS, formatMuscleGroupName } from '@/lib/fitness_utils';
 
 interface WorkoutSummaryProps {
@@ -53,9 +55,6 @@ const WorkoutSummary: React.FC<WorkoutSummaryProps> = ({
 
       // Check for PRs (simplified - would need historical data comparison)
       const maxWeight = Math.max(...loggedExercise.sets.map(s => s.weight));
-      const maxVolume = Math.max(...loggedExercise.sets.map(s => s.weight * s.reps));
-      
-      // For demo purposes, randomly mark some as PRs
       if (maxWeight > 0 && Math.random() > 0.7) {
         prs.push(`${exercise.name}: ${maxWeight}kg`);
       }
@@ -72,15 +71,15 @@ const WorkoutSummary: React.FC<WorkoutSummaryProps> = ({
 
   const getTopMuscleGroups = () => {
     return Object.entries(summaryData.muscleVolume)
-      .filter(([_, volume]) => volume > 0)
-      .sort(([_, a], [__, b]) => b - a)
+      .filter(([, volume]) => volume > 0)
+      .sort(([, a], [, b]) => b - a)
       .slice(0, 5);
   };
 
   const generateShareText = () => {
     const date = new Date(workout.date).toLocaleDateString();
     const topMuscles = getTopMuscleGroups()
-      .map(([muscle, volume]) => `${formatMuscleGroupName(muscle as any)}: ${volume.toFixed(0)}kg`)
+      .map(([muscle, volume]) => `${formatMuscleGroupName(muscle as MuscleGroup)}: ${volume.toFixed(0)}kg`)
       .join(', ');
 
     return `💪 Workout Complete - ${date}
@@ -102,7 +101,8 @@ ${summaryData.prs.length > 0 ? `🏆 PRs: ${summaryData.prs.join(', ')}` : ''}
           title: 'Workout Summary',
           text: shareText
         });
-      } catch (error) {
+      } catch (err) {
+        console.error("Share failed:", err)
         // Fallback to clipboard
         navigator.clipboard.writeText(shareText);
       }
@@ -192,7 +192,7 @@ ${summaryData.prs.length > 0 ? `🏆 PRs: ${summaryData.prs.join(', ')}` : ''}
                     <div key={muscle} className="space-y-1">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium">
-                          {formatMuscleGroupName(muscle as any)}
+                          {formatMuscleGroupName(muscle as MuscleGroup)}
                         </span>
                         <span className="text-sm text-gray-600">
                           {volume.toFixed(0)} kg

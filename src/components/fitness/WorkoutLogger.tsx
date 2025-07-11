@@ -1,25 +1,25 @@
-import React, { useState, useEffect } from 'react';
+'use client'
+
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Play, Plus, Save, RotateCcw } from 'lucide-react';
-import { MesocyclePlan, WorkoutLog, LoggedExercise, SetLog, Exercise } from '@/lib/fitness.types';
-import { StorageService } from '../lib/storage'; // This will be replaced later
-import { formatMuscleGroupName } from '@/lib/fitness_utils';
+import { useFitness } from '@/hooks/useFitness';
 import ExerciseLogger from './ExerciseLogger';
 import WorkoutSummary from './WorkoutSummary';
+import { type MesocyclePlan as Mesocycle, type WorkoutLog, type LoggedExercise, type SetLog, type Exercise, type MuscleGroup, type DayPlan } from '@/lib/fitness.types';
 
 interface WorkoutLoggerProps {
   onWorkoutComplete?: (log: WorkoutLog) => void;
 }
 
 const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
-  const [mesocycles, setMesocycles] = useState<MesocyclePlan[]>([]);
-  const [selectedMesocycle, setSelectedMesocycle] = useState<MesocyclePlan | null>(null);
+  const { mesocycles, exercises: rawExercises } = useFitness();
+  const [selectedMesocycle, setSelectedMesocycle] = useState<Mesocycle | null>(null);
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
   const [selectedDay, setSelectedDay] = useState<number>(1);
   const [workoutMode, setWorkoutMode] = useState<'planned' | 'freestyle' | null>(null);
@@ -29,48 +29,23 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
   const [showSummary, setShowSummary] = useState(false);
   const [startTime, setStartTime] = useState<Date | null>(null);
 
-  useEffect(() => {
-    loadMesocycles();
-    loadCurrentSession();
-  }, []);
-
-  const loadMesocycles = () => {
-    const stored = StorageService.getAllMesocycles();
-    setMesocycles(stored);
-    
-    // Auto-load current mesocycle if available
-    const currentMesocycleId = StorageService.getCurrentMesocycle();
-    if (currentMesocycleId) {
-      const current = stored.find(m => m.id === currentMesocycleId);
-      if (current) {
-        setSelectedMesocycle(current);
-        setSelectedWeek(StorageService.getCurrentWeek());
-        setSelectedDay(StorageService.getCurrentDay());
-      }
-    }
-  };
-
-  const loadCurrentSession = () => {
-    // Check if there's an ongoing workout session
-    const savedWorkout = localStorage.getItem('synthetivolve_current_workout');
-    if (savedWorkout) {
-      const workout = JSON.parse(savedWorkout);
-      setCurrentWorkout(workout);
-      setLoggedExercises(workout.exercises || []);
-      setCustomGoal(workout.customGoalEntry || '');
-      setWorkoutMode(workout.mesocycleId ? 'planned' : 'freestyle');
-      setStartTime(new Date(workout.startTime));
-    }
-  };
+  const allExercises = useMemo(() => {
+    return rawExercises.reduce((acc, ex) => {
+      acc[ex.id] = {
+        id: ex.id,
+        name: ex.name,
+        primary: ex.primary_muscle_group as MuscleGroup,
+        secondary: ex.secondary_muscle_groups as MuscleGroup[],
+        equipment: ex.equipment || '',
+        notes: ex.notes || undefined,
+        useRIRRPE: ex.use_rir_rpe,
+      };
+      return acc;
+    }, {} as Record<string, Exercise>);
+  }, [rawExercises]);
 
   const startPlannedWorkout = () => {
     if (!selectedMesocycle) return;
-
-    const nextDay = StorageService.getNextPlannedDay();
-    if (nextDay) {
-      setSelectedWeek(nextDay.week);
-      setSelectedDay(nextDay.day);
-    }
 
     const workout: Partial<WorkoutLog> = {
       mesocycleId: selectedMesocycle.id,
@@ -85,12 +60,6 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
     setWorkoutMode('planned');
     setStartTime(new Date());
     setLoggedExercises([]);
-
-    // Save current session
-    localStorage.setItem('synthetivolve_current_workout', JSON.stringify({
-      ...workout,
-      startTime: new Date().toISOString()
-    }));
   };
 
   const startFreestyleWorkout = () => {
@@ -104,22 +73,16 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
     setWorkoutMode('freestyle');
     setStartTime(new Date());
     setLoggedExercises([]);
-
-    // Save current session
-    localStorage.setItem('synthetivolve_current_workout', JSON.stringify({
-      ...workout,
-      startTime: new Date().toISOString()
-    }));
   };
 
   const getPlannedExercises = (): Exercise[] => {
     if (!selectedMesocycle || workoutMode !== 'planned') return [];
     
-    const dayPlan = selectedMesocycle.days.find(d => d.day === selectedDay);
+    const dayPlan = selectedMesocycle.days.find((d) => d.day === selectedDay);
     if (!dayPlan) return [];
 
     return dayPlan.exercises
-      .map(exerciseId => selectedMesocycle.exerciseDB[exerciseId])
+      .map((exerciseId: string) => allExercises[exerciseId])
       .filter(Boolean);
   };
 
@@ -128,7 +91,6 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
       ex.exerciseId === exerciseId ? { ...ex, sets } : ex
     );
 
-    // If exercise doesn't exist, add it
     if (!loggedExercises.find(ex => ex.exerciseId === exerciseId)) {
       updatedExercises.push({
         exerciseId,
@@ -139,72 +101,18 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
     }
 
     setLoggedExercises(updatedExercises);
-
-    // Update current workout
-    const updatedWorkout = {
-      ...currentWorkout,
-      exercises: updatedExercises,
-      customGoalEntry: customGoal
-    };
-    setCurrentWorkout(updatedWorkout);
-
-    // Save session
-    localStorage.setItem('synthetivolve_current_workout', JSON.stringify({
-      ...updatedWorkout,
-      startTime: startTime?.toISOString()
-    }));
   };
 
-  const handleAddAccessoryExercise = (exercise: Exercise) => {
-    const newLoggedExercise: LoggedExercise = {
-      exerciseId: exercise.id,
-      sets: [],
-      replacedOriginal: false,
-      wasAccessory: true
-    };
-
-    const updatedExercises = [...loggedExercises, newLoggedExercise];
-    setLoggedExercises(updatedExercises);
-
-    // Update mesocycle exercise DB if not already there
-    if (selectedMesocycle && !selectedMesocycle.exerciseDB[exercise.id]) {
-      const updatedMesocycle = {
-        ...selectedMesocycle,
-        exerciseDB: { ...selectedMesocycle.exerciseDB, [exercise.id]: exercise }
-      };
-      setSelectedMesocycle(updatedMesocycle);
-      StorageService.saveMesocycle(updatedMesocycle);
-    }
-  };
-
-  const completeWorkout = () => {
+  const completeWorkout = async () => {
     if (!currentWorkout) return;
 
     const completedWorkout: WorkoutLog = {
-      mesocycleId: currentWorkout.mesocycleId,
-      week: currentWorkout.week,
-      day: currentWorkout.day,
-      date: currentWorkout.date!,
+      ...currentWorkout,
       exercises: loggedExercises,
-      customGoalEntry: customGoal || undefined
-    };
+    } as WorkoutLog;
 
-    // Save workout log
-    StorageService.saveWorkoutLog(completedWorkout);
+    // await createWorkoutLog(completedWorkout);
 
-    // Update current session tracking for planned workouts
-    if (workoutMode === 'planned' && selectedMesocycle) {
-      const nextDay = StorageService.getNextPlannedDay();
-      if (nextDay) {
-        StorageService.setCurrentWeek(nextDay.week);
-        StorageService.setCurrentDay(nextDay.day);
-      }
-    }
-
-    // Clear current session
-    localStorage.removeItem('synthetivolve_current_workout');
-
-    // Show summary
     setShowSummary(true);
 
     if (onWorkoutComplete) {
@@ -218,7 +126,6 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
     setWorkoutMode(null);
     setCustomGoal('');
     setStartTime(null);
-    localStorage.removeItem('synthetivolve_current_workout');
   };
 
   const getWorkoutDuration = (): string => {
@@ -237,7 +144,7 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
     return (
       <WorkoutSummary
         workout={currentWorkout as WorkoutLog}
-        exercises={selectedMesocycle?.exerciseDB || {}}
+        exercises={allExercises}
         duration={getWorkoutDuration()}
         onClose={() => {
           setShowSummary(false);
@@ -253,9 +160,6 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
 
   if (currentWorkout && workoutMode) {
     const plannedExercises = getPlannedExercises();
-    const allExercises = workoutMode === 'planned' 
-      ? selectedMesocycle?.exerciseDB || {}
-      : StorageService.getAllExercises().reduce((acc, ex) => ({ ...acc, [ex.id]: ex }), {});
 
     return (
       <div className="space-y-6">
@@ -334,7 +238,6 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
                 variant="outline"
                 onClick={() => {
                   // This would open the exercise library
-                  // For now, we'll implement a simple version
                 }}
                 className="w-full"
               >
@@ -384,10 +287,22 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
                 <Select
                   value={selectedMesocycle?.id || ''}
                   onValueChange={(value) => {
-                    const mesocycle = mesocycles.find(m => m.id === value);
-                    setSelectedMesocycle(mesocycle || null);
-                    if (mesocycle) {
-                      StorageService.setCurrentMesocycle(mesocycle.id);
+                    const mesocycleRow = mesocycles.find(m => m.id === value);
+                    if (mesocycleRow) {
+                        const planData = mesocycleRow.plan_data as { days?: DayPlan[], exerciseDB?: Record<string, Exercise> } | null;
+                        const mesocycle: Mesocycle = {
+                            id: mesocycleRow.id,
+                            name: mesocycleRow.name,
+                            weeks: mesocycleRow.weeks,
+                            daysPerWeek: mesocycleRow.days_per_week,
+                            specialization: mesocycleRow.specialization as MuscleGroup[],
+                            goalStatement: mesocycleRow.goal_statement || undefined,
+                            days: planData?.days || [],
+                            exerciseDB: planData?.exerciseDB || {},
+                        };
+                        setSelectedMesocycle(mesocycle);
+                    } else {
+                        setSelectedMesocycle(null);
                     }
                   }}
                 >
@@ -435,7 +350,7 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {Array.from({ length: selectedMesocycle.daysPerWeek }, (_, i) => i + 1).map(day => (
+                        {Array.from({ length: selectedMesocycle.daysPerWeek }, (_, i) => i + 1).map((day: number) => (
                           <SelectItem key={day} value={day.toString()}>
                             Day {day}
                           </SelectItem>

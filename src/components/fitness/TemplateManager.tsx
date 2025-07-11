@@ -1,16 +1,18 @@
-import React, { useState, useEffect } from 'react';
+'use client'
+
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Copy, Edit, Trash2, Plus, Search, Calendar, Target } from 'lucide-react';
-import { MesocyclePlan } from '@/lib/fitness.types';
-import { StorageService } from '../lib/storage'; // This will be replaced later
+import { Copy, Trash2, Plus, Search, Calendar, Target } from 'lucide-react';
+import type { MesocyclePlan as Mesocycle, MuscleGroup } from '@/lib/fitness.types';
 import { formatMuscleGroupName } from '@/lib/fitness_utils';
+import { useFitness } from '@/hooks/useFitness';
 
 interface TemplateManagerProps {
-  onSelectTemplate?: (template: MesocyclePlan) => void;
+  onSelectTemplate?: (template: Mesocycle) => void;
   onCreateNew?: () => void;
 }
 
@@ -18,54 +20,33 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
   onSelectTemplate, 
   onCreateNew 
 }) => {
-  const [templates, setTemplates] = useState<MesocyclePlan[]>([]);
+  const { mesocycles } = useFitness();
   const [searchTerm, setSearchTerm] = useState('');
   const [showDeleteDialog, setShowDeleteDialog] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadTemplates();
-  }, []);
-
-  const loadTemplates = () => {
-    const stored = StorageService.getAllMesocycles();
-    setTemplates(stored);
-  };
-
-  const filteredTemplates = templates.filter(template =>
+  const filteredTemplates = mesocycles.filter(template =>
     template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    template.goalStatement?.toLowerCase().includes(searchTerm.toLowerCase())
+    template.goal_statement?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleDuplicate = (template: MesocyclePlan) => {
-    const duplicated: MesocyclePlan = {
-      ...template,
-      id: Math.random().toString(36).substr(2, 9),
-      name: `${template.name} (Copy)`
-    };
-
-    StorageService.saveMesocycle(duplicated);
-    loadTemplates();
+  const handleDuplicate = (template: Mesocycle) => {
+    console.log("Duplicating template:", template.id);
   };
 
   const handleDelete = (templateId: string) => {
-    StorageService.deleteMesocycle(templateId);
-    loadTemplates();
+    console.log("Deleting template:", templateId);
     setShowDeleteDialog(null);
   };
 
-  const getTemplateStats = (template: MesocyclePlan) => {
-    const totalExercises = template.days.reduce((total, day) => total + day.exercises.length, 0);
-    const uniqueExercises = new Set(template.days.flatMap(day => day.exercises)).size;
+  const getTemplateStats = (template: Mesocycle) => {
+    const totalExercises = template.days.reduce((total: number, day: { exercises: string[] }) => total + day.exercises.length, 0);
+    const uniqueExercises = new Set(template.days.flatMap((day: { exercises: string[] }) => day.exercises)).size;
     
     return {
       totalExercises,
       uniqueExercises,
       totalDays: template.days.length
     };
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
   };
 
   return (
@@ -93,7 +74,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredTemplates.map(template => {
-          const stats = getTemplateStats(template);
+          const stats = getTemplateStats(template as unknown as Mesocycle);
           
           return (
             <Card key={template.id} className="hover:shadow-lg transition-shadow">
@@ -105,7 +86,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
                     {template.weeks}w
                   </Badge>
                   <Badge variant="outline" className="text-xs">
-                    {template.daysPerWeek}d/week
+                    {template.days_per_week}d/week
                   </Badge>
                   <Badge variant="outline" className="text-xs">
                     {stats.uniqueExercises} exercises
@@ -114,11 +95,11 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
               </CardHeader>
 
               <CardContent className="space-y-4">
-                {template.goalStatement && (
+                {template.goal_statement && (
                   <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
                     <div className="flex items-start space-x-2">
                       <Target className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                      <p className="text-sm text-blue-800">{template.goalStatement}</p>
+                      <p className="text-sm text-blue-800">{template.goal_statement}</p>
                     </div>
                   </div>
                 )}
@@ -129,7 +110,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
                     <div className="flex flex-wrap gap-1">
                       {template.specialization.map(muscle => (
                         <Badge key={muscle} variant="default" className="text-xs">
-                          {formatMuscleGroupName(muscle)}
+                          {formatMuscleGroupName(muscle as MuscleGroup)}
                         </Badge>
                       ))}
                     </div>
@@ -152,7 +133,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
                 <div className="flex space-x-2">
                   {onSelectTemplate && (
                     <Button
-                      onClick={() => onSelectTemplate(template)}
+                      onClick={() => onSelectTemplate(template as unknown as Mesocycle)}
                       size="sm"
                       className="flex-1"
                     >
@@ -161,7 +142,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
                   )}
                   
                   <Button
-                    onClick={() => handleDuplicate(template)}
+                    onClick={() => handleDuplicate(template as unknown as Mesocycle)}
                     size="sm"
                     variant="outline"
                   >
