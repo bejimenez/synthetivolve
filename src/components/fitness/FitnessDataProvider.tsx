@@ -11,8 +11,10 @@ type ExerciseRow = Database['public']['Tables']['exercises']['Row']
 type MesocycleRow = Database['public']['Tables']['mesocycles']['Row']
 type WorkoutLogRow = Database['public']['Tables']['workout_logs']['Row']
 
+import type { Exercise, MesocyclePlan } from '@/lib/fitness.types'
+
 interface FitnessState {
-  exercises: ExerciseRow[]
+  exercises: Exercise[]
   mesocycles: MesocycleRow[]
   workoutLogs: WorkoutLogRow[]
   activeMesocycle: MesocycleRow | null
@@ -23,13 +25,11 @@ interface FitnessState {
 type FitnessAction =
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
-  | { type: 'SET_FITNESS_DATA'; payload: { exercises: ExerciseRow[], mesocycles: MesocycleRow[], workoutLogs: WorkoutLogRow[] } }
-  // Actions for specific data types can be added as needed
+  | { type: 'SET_FITNESS_DATA'; payload: { exercises: Exercise[], mesocycles: MesocycleRow[], workoutLogs: WorkoutLogRow[] } }
 
 interface FitnessContextType extends FitnessState {
-  // Define actions to interact with the fitness data
-  createExercise: (exercise: Omit<ExerciseRow, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'deleted_at'>) => Promise<ExerciseRow | null>
-  // ... other actions like createMesocycle, createWorkoutLog, etc.
+  createExercise: (exercise: Omit<ExerciseRow, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'deleted_at'>) => Promise<Exercise | null>
+  createMesocycle: (mesocycle: Omit<MesocyclePlan, 'id' | 'exerciseDB'> & { days: Array<{ day_number: number; exercises: Array<{ exercise_id: string; order_index: number }> }> }) => Promise<MesocycleRow | null>
   refreshAll: () => Promise<void>
 }
 
@@ -83,7 +83,15 @@ export function FitnessDataProvider({ children }: { children: React.ReactNode })
         throw new Error('Failed to fetch fitness data');
       }
 
-      const exercises = await exercisesRes.json();
+      const exercises = (await exercisesRes.json()).map((ex: ExerciseRow) => ({
+        id: ex.id,
+        name: ex.name,
+        primary: ex.primary_muscle_group,
+        secondary: ex.secondary_muscle_groups || [],
+        equipment: ex.equipment || '',
+        notes: ex.notes || undefined,
+        useRIRRPE: ex.use_rir_rpe,
+      }));
       const mesocycles = await mesocyclesRes.json();
       const workoutLogs = await workoutLogsRes.json();
 
@@ -106,10 +114,38 @@ export function FitnessDataProvider({ children }: { children: React.ReactNode })
         }
         const newExercise = await response.json();
         await refreshAll(); // Refresh data after creation
-        return newExercise;
+        return {
+          id: newExercise.id,
+          name: newExercise.name,
+          primary: newExercise.primary_muscle_group,
+          secondary: newExercise.secondary_muscle_groups || [],
+          equipment: newExercise.equipment || '',
+          notes: newExercise.notes || undefined,
+          useRIRRPE: newExercise.use_rir_rpe,
+        };
     } catch (err) {
         dispatch({ type: 'SET_ERROR', payload: err instanceof Error ? err.message : 'An unknown error occurred' });
         return null;
+    }
+  }
+
+  const createMesocycle = async (mesocycleData: any) => {
+    try {
+      const response = await fetch('/api/fitness/mesocycles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(mesocycleData),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create mesocycle');
+      }
+      const newMesocycle = await response.json();
+      await refreshAll();
+      return newMesocycle;
+    } catch (err) {
+      dispatch({ type: 'SET_ERROR', payload: err instanceof Error ? err.message : 'An unknown error occurred' });
+      return null;
     }
   }
 
@@ -120,6 +156,7 @@ export function FitnessDataProvider({ children }: { children: React.ReactNode })
   const value = {
     ...state,
     createExercise,
+    createMesocycle,
     refreshAll,
   }
 

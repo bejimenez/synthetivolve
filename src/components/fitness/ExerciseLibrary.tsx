@@ -241,71 +241,64 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
           )}
 
           {/* Exercise List */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+          <div className="space-y-2 max-h-96 overflow-y-auto">
             {filteredExercises.map(exercise => (
-              <Card key={exercise.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="pt-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-medium">{exercise.name}</h3>
-                      <div className="flex items-center space-x-1 mt-2">
-                        <Badge variant="default" className="text-xs">
-                          {formatMuscleGroupName(exercise.primary_muscle_group as MuscleGroup)}
-                        </Badge>
-                        {(exercise.secondary_muscle_groups || []).map(muscle => (
-                          <Badge key={muscle} variant="outline" className="text-xs">
-                            {formatMuscleGroupName(muscle as MuscleGroup)}
-                          </Badge>
-                        ))}
-                      </div>
-                      {exercise.equipment && (
-                        <p className="text-sm text-gray-600 mt-1">{exercise.equipment}</p>
-                      )}
-                      {exercise.notes && (
-                        <p className="text-xs text-gray-500 mt-1">{exercise.notes}</p>
-                      )}
-                      <div className="flex items-center mt-2">
-                        <Badge variant="outline" className="text-xs">
-                          {exercise.use_rir_rpe ? 'RIR/RPE' : '%1RM'}
-                        </Badge>
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-col space-y-1 ml-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          onExerciseAdd(exercise as unknown as FitnessExercise);
-                          onClose();
-                        }}
-                        disabled={isExerciseInMesocycle(exercise.id)}
-                      >
-                        {isExerciseInMesocycle(exercise.id) ? (
-                          <Check className="w-4 h-4" />
-                        ) : (
-                          <Plus className="w-4 h-4" />
-                        )}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setEditingExercise(exercise as unknown as FitnessExercise)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        // onClick={() => handleDeleteExercise(exercise.id)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+              <div key={exercise.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                <div className="flex-1">
+                  <h3 className="font-medium">{exercise.name}</h3>
+                  <div className="flex flex-wrap items-center space-x-1 mt-1">
+                    <Badge variant="default" className="text-xs">
+                      {formatMuscleGroupName(exercise.primary)}
+                    </Badge>
+                    {(exercise.secondary || []).map(muscle => (
+                      <Badge key={muscle} variant="outline" className="text-xs">
+                        {formatMuscleGroupName(muscle)}
+                      </Badge>
+                    ))}
+                    {exercise.equipment && (
+                      <Badge variant="outline" className="text-xs">
+                        {exercise.equipment}
+                      </Badge>
+                    )}
+                    <Badge variant="outline" className="text-xs">
+                      {exercise.use_rir_rpe ? 'RIR/RPE' : '%1RM'}
+                    </Badge>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+                
+                <div className="flex space-x-1 ml-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      onExerciseAdd(exercise as unknown as FitnessExercise);
+                      onClose();
+                    }}
+                    disabled={isExerciseInMesocycle(exercise.id)}
+                  >
+                    {isExerciseInMesocycle(exercise.id) ? (
+                      <Check className="w-4 h-4" />
+                    ) : (
+                      <Plus className="w-4 h-4" />
+                    )}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setEditingExercise(exercise as unknown as FitnessExercise)}
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    // onClick={() => handleDeleteExercise(exercise.id)}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
             ))}
           </div>
 

@@ -97,7 +97,7 @@ interface DayBuilderProps {
   day: DayPlan;
   exercises: Exercise[];
   onUpdate: (exerciseIds: string[]) => void;
-  onExerciseLibraryOpen: () => void;
+  onExerciseLibraryOpen: (dayNumber: number) => void;
 }
 
 const DayBuilder: React.FC<DayBuilderProps> = ({ 
@@ -185,7 +185,7 @@ const DayBuilder: React.FC<DayBuilderProps> = ({
         <Button
           variant="outline"
           size="sm"
-          onClick={onExerciseLibraryOpen}
+          onClick={() => onExerciseLibraryOpen(day.day)}
           className="w-full"
         >
           <Plus className="w-4 h-4 mr-2" />
