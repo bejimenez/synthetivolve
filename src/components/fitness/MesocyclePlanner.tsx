@@ -41,8 +41,8 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
     
     const days: DayPlan[] = [];
     for (let i = 1; i <= daysPerWeek; i++) {
-      const existingDay = existingDays?.find(d => d.day === i);
-      days.push(existingDay || { day: i, exercises: [] });
+      const existingDay = existingDays?.find(d => d.day_number === i); // Use day_number
+      days.push(existingDay || { day_number: i, exercises: [] }); // Use day_number
     }
     
     return days;
@@ -58,7 +58,7 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
   // Handle days per week changes
   useEffect(() => {
     if (!editingMesocycle && mesocycle.daysPerWeek) {
-      const newDays = initializeDays(mesocycle.daysPerWeek, mesocycle.days);
+      const newDays = initializeDays(mesocycle.daysPerWeek, mesocycle.days); // Pass existing days
       setMesocycle(prev => ({ ...prev, days: newDays }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -92,8 +92,8 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
     let updatedDays = mesocycle.days;
     if (selectedDayForExercise !== null && updatedDays) {
       updatedDays = updatedDays.map(day =>
-        day.day === selectedDayForExercise
-          ? { ...day, exercises: [...day.exercises, exercise.id] }
+        day.day_number === selectedDayForExercise // Use day_number
+          ? { ...day, exercises: [...day.exercises, { exercise_id: exercise.id, order_index: day.exercises.length }] } // Add as object
           : day
       );
     }
@@ -103,9 +103,9 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
     setSelectedDayForExercise(null); // Reset selected day
   };
 
-  const handleDayUpdate = (dayNumber: number, exerciseIds: string[]) => {
+  const handleDayUpdate = (dayNumber: number, exercises: Array<{ exercise_id: string; order_index: number }>) => { // Updated type
     const updatedDays = mesocycle.days?.map(day => 
-      day.day === dayNumber ? { ...day, exercises: exerciseIds } : day
+      day.day_number === dayNumber ? { ...day, exercises: exercises } : day // Use day_number
     ) || [];
     
     setMesocycle(prev => ({ ...prev, days: updatedDays }));
@@ -124,19 +124,19 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
     }
     
     const mesocycleToSave = {
-      name: mesocycle.name,
-      weeks: mesocycle.weeks,
-      days_per_week: mesocycle.daysPerWeek,
+      name: mesocycle.name!,
+      weeks: mesocycle.weeks!,
+      daysPerWeek: mesocycle.daysPerWeek!,
       specialization: mesocycle.specialization || [],
-      goal_statement: mesocycle.goalStatement || null,
+      goalStatement: mesocycle.goalStatement || undefined,
       days: mesocycle.days?.map(dayPlan => ({
-        day_number: dayPlan.day,
-        exercises: dayPlan.exercises.map((exerciseId, index) => ({
-          exercise_id: exerciseId,
+        day_number: dayPlan.day_number,
+        exercises: dayPlan.exercises.map((exercise, index) => ({
+          exercise_id: exercise.exercise_id,
           order_index: index,
         })),
       })) || [],
-      plan_data: {
+      plan_data: { // This will be stored as JSONB in the database
         days: mesocycle.days,
         exerciseDB: mesocycle.exerciseDB,
       },
@@ -224,7 +224,7 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
               id="goalStatement"
               value={mesocycle.goalStatement || ''}
               onChange={(e) => handleInputChange('goalStatement', e.target.value)}
-              placeholder="What do you want to achieve with this mesocycle?"
+              placeholder="What do you want to focus on today?"
               rows={3}
             />
           </div>
@@ -257,10 +257,10 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
               {mesocycle.days.map(day => (
                 <DayBuilder
-                  key={day.day}
+                  key={day.day_number}
                   day={day}
                   exercises={Object.values(mesocycle.exerciseDB || {})}
-                  onUpdate={(exerciseIds) => handleDayUpdate(day.day, exerciseIds)}
+                  onUpdate={(exercises) => handleDayUpdate(day.day_number, exercises)}
                   onExerciseLibraryOpen={(dayNumber) => {
                     setShowExerciseLibrary(true);
                     setSelectedDayForExercise(dayNumber);
@@ -337,7 +337,7 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
         <ExerciseLibrary
           onClose={() => setShowExerciseLibrary(false)}
           onExerciseAdd={handleExerciseAdd}
-          existingExercises={mesocycle.days?.find(day => day.day === selectedDayForExercise)?.exercises.map(id => mesocycle.exerciseDB?.[id]).filter(Boolean) as Exercise[] || []}
+          existingExercises={mesocycle.days?.find(day => day.day_number === selectedDayForExercise)?.exercises.map(ex => mesocycle.exerciseDB?.[ex.exercise_id]).filter(Boolean) as Exercise[] || []} // Updated to use day_number and exercise_id
         />
       )}
     </div>

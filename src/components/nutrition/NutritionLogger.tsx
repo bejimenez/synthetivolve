@@ -2,7 +2,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { format, parseISO } from 'date-fns'
+import { parseISO } from 'date-fns'
 import { useNutrition } from './NutritionDataProvider'
 import { useGoals } from '@/hooks/useGoals'
 import { useProfile } from '@/hooks/useProfile'
@@ -17,18 +17,17 @@ import { AddFoodDialog } from './AddFoodDialog'
 const timeSlots = Array.from({ length: 18 }, (_, i) => i + 3); // 3 AM to 8 PM
 
 export function NutritionLogger() {
-  const [selectedDate, setSelectedDate] = useState(new Date())
+  const [selectedDate] = useState(new Date())
   const [isAddFoodOpen, setAddFoodOpen] = useState(false)
-  const [selectedHour, setSelectedHour] = useState<number | null>(null)
   
-  const { foodLogs, fetchFoodLogs, loading, error, deleteFoodLog } = useNutrition()
+  const { foodLogs, refreshLogs, loading, error, removeFoodLog } = useNutrition()
   const { activeGoal } = useGoals()
   const { profile, isProfileComplete } = useProfile()
   const { weightEntries } = useWeightEntries()
 
   useEffect(() => {
-    fetchFoodLogs(format(selectedDate, 'yyyy-MM-dd'))
-  }, [selectedDate, fetchFoodLogs])
+    refreshLogs()
+  }, [selectedDate, refreshLogs])
 
   const calorieGoal = useMemo(() => {
     if (activeGoal && profile && isProfileComplete && weightEntries.length > 0) {
@@ -63,18 +62,17 @@ export function NutritionLogger() {
     return 2000 // Default goal
   }, [activeGoal, profile, isProfileComplete, weightEntries])
 
-  const handleAddFoodClick = (hour: number) => {
-    setSelectedHour(hour)
+  const handleAddFoodClick = () => {
     setAddFoodOpen(true)
   }
 
   const handleFoodAdded = () => {
-    fetchFoodLogs(format(selectedDate, 'yyyy-MM-dd'))
+    refreshLogs()
     setAddFoodOpen(false)
   }
 
   const handleDeleteLog = async (id: string) => {
-    await deleteFoodLog(id)
+    await removeFoodLog(id)
   }
 
   if (loading) {
@@ -100,14 +98,14 @@ export function NutritionLogger() {
             <Card key={hour}>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-base">{hour.toString().padStart(2, '0')}:00</CardTitle>
-                <Button size="sm" onClick={() => handleAddFoodClick(hour)}>+</Button>
+                <Button size="sm" onClick={handleAddFoodClick}>+</Button>
               </CardHeader>
               {logsForHour.length > 0 && (
                 <CardContent>
                   {logsForHour.map(log => (
                     <div key={log.id} className="flex items-center justify-between p-2 border-b">
                       <div>
-                        <p className="font-semibold">{log.foods.description}</p>
+                        <p className="font-semibold">{log.food.description}</p>
                         <p className="text-sm text-muted-foreground">{log.quantity}{log.unit}</p>
                       </div>
                       <div className="flex items-center gap-2">

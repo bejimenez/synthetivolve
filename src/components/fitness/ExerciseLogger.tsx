@@ -38,12 +38,12 @@ const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
   useEffect(() => {
     if (showPreviousData) {
       const lastWorkout = workoutLogs
-        .filter(log => (log.log_data as { exercises: { exerciseId: string }[] })?.exercises.some((ex: { exerciseId: string; }) => ex.exerciseId === exercise.id))
+        .filter(log => log.exercises.some(ex => ex.exercise_id === exercise.id)) // Use exercise_id
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
       
       if (lastWorkout) {
-        const exerciseData = (lastWorkout.log_data as { exercises: { exerciseId: string }[] })?.exercises.find((ex: { exerciseId: string; }) => ex.exerciseId === exercise.id);
-        setPreviousWorkout(exerciseData as LoggedExercise || null);
+        const exerciseData = lastWorkout.exercises.find(ex => ex.exercise_id === exercise.id); // Use exercise_id
+        setPreviousWorkout(exerciseData || null);
       }
     }
   }, [exercise.id, showPreviousData, workoutLogs]);

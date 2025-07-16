@@ -42,14 +42,11 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
   });
 
   const filteredExercises = exercises.filter(exercise => {
-    const matchesSearch = exercise.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (exercise.equipment || '').toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesMuscle = filterMuscle === 'ALL' || 
-                         exercise.primary_muscle_group === filterMuscle ||
-                         (exercise.secondary_muscle_groups || []).includes(filterMuscle);
-    
-    return matchesSearch && matchesMuscle;
+  const matchesSearch = exercise.name.toLowerCase().includes(searchTerm.toLowerCase());
+  const matchesMuscle = filterMuscle === 'ALL' || 
+                       exercise.primary === filterMuscle ||
+                       (exercise.secondary || []).includes(filterMuscle);
+  return matchesSearch && matchesMuscle;
   });
 
   const handleCreateExercise = async () => {
@@ -57,11 +54,11 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
 
     await createExercise({
       name: newExercise.name,
-      primary_muscle_group: newExercise.primary,
-      secondary_muscle_groups: newExercise.secondary || [],
+      primary: newExercise.primary,
+      secondary: newExercise.secondary || [],
       equipment: newExercise.equipment || '',
       notes: newExercise.notes || '',
-      use_rir_rpe: newExercise.useRIRRPE ?? true
+      useRIRRPE: newExercise.useRIRRPE ?? true
     });
     
     // Reset form
@@ -261,7 +258,7 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
                       </Badge>
                     )}
                     <Badge variant="outline" className="text-xs">
-                      {exercise.use_rir_rpe ? 'RIR/RPE' : '%1RM'}
+                      {exercise.useRIRRPE ? 'RIR/RPE' : '%1RM'}
                     </Badge>
                   </div>
                 </div>

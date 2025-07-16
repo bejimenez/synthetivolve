@@ -11,7 +11,8 @@ type ExerciseRow = Database['public']['Tables']['exercises']['Row']
 type MesocycleRow = Database['public']['Tables']['mesocycles']['Row']
 type WorkoutLogRow = Database['public']['Tables']['workout_logs']['Row']
 
-import type { Exercise, MesocyclePlan } from '@/lib/fitness.types'
+import type { Exercise, MesocyclePlan, MuscleGroup } from '@/lib/fitness.types'
+import { exerciseToRow, exerciseRowToExercise } from '@/lib/fitness.types'
 
 interface FitnessState {
   exercises: Exercise[]
@@ -28,7 +29,7 @@ type FitnessAction =
   | { type: 'SET_FITNESS_DATA'; payload: { exercises: Exercise[], mesocycles: MesocycleRow[], workoutLogs: WorkoutLogRow[] } }
 
 interface FitnessContextType extends FitnessState {
-  createExercise: (exercise: Omit<ExerciseRow, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'deleted_at'>) => Promise<Exercise | null>
+  createExercise: (exercise: Omit<Exercise, 'id'>) => Promise<Exercise | null>
   createMesocycle: (mesocycle: Omit<MesocyclePlan, 'id' | 'exerciseDB'> & { days: Array<{ day_number: number; exercises: Array<{ exercise_id: string; order_index: number }> }> }) => Promise<MesocycleRow | null>
   refreshAll: () => Promise<void>
 }
@@ -64,6 +65,7 @@ export function FitnessDataProvider({ children }: { children: React.ReactNode })
     error: null
   })
   const { user } = useAuth()
+  const supabase = createSupabaseClient()
 
   const refreshAll = useCallback(async () => {
     if (!user) {
@@ -101,53 +103,106 @@ export function FitnessDataProvider({ children }: { children: React.ReactNode })
     }
   }, [user])
 
-  const createExercise = async (exerciseData: Omit<ExerciseRow, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'deleted_at'>) => {
-    try {
-        const response = await fetch('/api/fitness/exercises', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(exerciseData),
-        });
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to create exercise');
-        }
-        const newExercise = await response.json();
-        await refreshAll(); // Refresh data after creation
-        return {
-          id: newExercise.id,
-          name: newExercise.name,
-          primary: newExercise.primary_muscle_group,
-          secondary: newExercise.secondary_muscle_groups || [],
-          equipment: newExercise.equipment || '',
-          notes: newExercise.notes || undefined,
-          useRIRRPE: newExercise.use_rir_rpe,
-        };
-    } catch (err) {
-        dispatch({ type: 'SET_ERROR', payload: err instanceof Error ? err.message : 'An unknown error occurred' });
-        return null;
+  const createExercise = async (exerciseData: Omit<Exercise, 'id'>) => {
+  try {
+    // Convert Exercise format to database format
+    const rowData = exerciseToRow(exerciseData);
+    
+    const response = await fetch('/api/fitness/exercises', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(rowData),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to create exercise');
     }
+    
+    const newExerciseRow = await response.json();
+    await refreshAll();
+    
+    // Return as Exercise type
+    return exerciseRowToExercise(newExerciseRow);
+  } catch (err) {
+    dispatch({ type: 'SET_ERROR', payload: err instanceof Error ? err.message : 'An error occurred' });
+    return null;
+  }
+};
+
+  // The function signature should match what's expected:
+const createMesocycle = useCallback(async (mesocycleData: {
+  name: string;
+  weeks: number;
+  daysPerWeek: number;
+  specialization: MuscleGroup[];
+  goalStatement?: string;
+  days: Array<{
+    day_number: number;
+    exercises: Array<{
+      exercise_id: string;
+      order_index: number;
+    }>;
+  }>;
+}) => {
+  if (!user) {
+    dispatch({ type: 'SET_ERROR', payload: 'No authenticated user' });
+    return null;
   }
 
-  const createMesocycle = async (mesocycleData: any) => {
-    try {
-      const response = await fetch('/api/fitness/mesocycles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(mesocycleData),
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create mesocycle');
+  try {
+    // First create the mesocycle
+    const { data: mesocycle, error: mesocycleError } = await supabase
+      .from('mesocycles')
+      .insert({
+        user_id: user.id,
+        name: mesocycleData.name,
+        weeks: mesocycleData.weeks,
+        days_per_week: mesocycleData.daysPerWeek,
+        specialization: mesocycleData.specialization,
+        goal_statement: mesocycleData.goalStatement
+      })
+      .select()
+      .single();
+
+    if (mesocycleError) throw mesocycleError;
+
+    // Then create the days and exercises
+    for (const day of mesocycleData.days) {
+      const { data: dayData, error: dayError } = await supabase
+        .from('mesocycle_days')
+        .insert({
+          mesocycle_id: mesocycle.id,
+          day_number: day.day_number
+        })
+        .select()
+        .single();
+
+      if (dayError) throw dayError;
+
+      // Insert exercises for this day
+      if (day.exercises.length > 0) {
+        const { error: exercisesError } = await supabase
+          .from('day_exercises')
+          .insert(
+            day.exercises.map(ex => ({
+              day_id: dayData.id,
+              exercise_id: ex.exercise_id,
+              order_index: ex.order_index
+            }))
+          );
+
+        if (exercisesError) throw exercisesError;
       }
-      const newMesocycle = await response.json();
-      await refreshAll();
-      return newMesocycle;
-    } catch (err) {
-      dispatch({ type: 'SET_ERROR', payload: err instanceof Error ? err.message : 'An unknown error occurred' });
-      return null;
     }
+
+    await refreshAll();
+    return mesocycle;
+  } catch (err) {
+    dispatch({ type: 'SET_ERROR', payload: err instanceof Error ? err.message : 'Failed to create mesocycle' });
+    return null;
   }
+}, [user, supabase, refreshAll]);
 
   useEffect(() => {
     refreshAll()

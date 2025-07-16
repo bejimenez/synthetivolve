@@ -2,12 +2,12 @@
 'use client'
 
 import { useMemo } from 'react'
-import { FoodLog } from './NutritionDataProvider'
+import { FoodLogWithFood } from './NutritionDataProvider'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 
 interface DailySummaryProps {
-  foodLogs: FoodLog[]
+  foodLogs: FoodLogWithFood[]
   calorieGoal: number
 }
 

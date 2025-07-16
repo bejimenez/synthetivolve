@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Loader2, Search } from 'lucide-react'
 import { format } from 'date-fns'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { RecentFood } from './NutritionDataProvider'
+import type { RecentFood } from './NutritionDataProvider'
 
 interface AddFoodDialogProps {
   open: boolean
@@ -54,15 +54,14 @@ export function AddFoodDialog({ open, onClose, onFoodAdded, selectedDate }: AddF
     if (!selectedFood) return
 
     const newLog = {
-      fdcId: selectedFood.fdcId,
+      food_id: selectedFood.id, // Use food.id from the selected food
       quantity,
       unit,
       logged_at: new Date().toISOString(),
       logged_date: format(selectedDate, 'yyyy-MM-dd'),
-      foodDetails: selectedFood,
     }
     
-    await logEntry(newLog)
+    await addFoodLog(newLog) // Use addFoodLog instead of logEntry
     onFoodAdded()
     handleClose()
   }
@@ -76,9 +75,9 @@ export function AddFoodDialog({ open, onClose, onFoodAdded, selectedDate }: AddF
     onClose()
   }
 
-  const handleSelectRecent = (recent: RecentFood) => {
+  const handleSelectRecent = (recent: RecentFood & { foods: Food }) => {
     // The 'foods' property on recent is the full food object
-    const foodDetails = recent.foods as unknown as FoodSearchResult
+    const foodDetails = recent.foods
     setSelectedFood(foodDetails)
   }
 

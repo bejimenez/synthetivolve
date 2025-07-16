@@ -96,15 +96,15 @@ const SortableExerciseItem: React.FC<SortableExerciseItemProps> = ({ exercise, o
 interface DayBuilderProps {
   day: DayPlan;
   exercises: Exercise[];
-  onUpdate: (exerciseIds: string[]) => void;
+  onUpdate: (exercises: Array<{ exercise_id: string; order_index: number }>) => void; // Updated to pass objects
   onExerciseLibraryOpen: (dayNumber: number) => void;
 }
 
-const DayBuilder: React.FC<DayBuilderProps> = ({ 
-  day, 
-  exercises, 
-  onUpdate, 
-  onExerciseLibraryOpen 
+const DayBuilder: React.FC<DayBuilderProps> = ({
+  day,
+  exercises,
+  onUpdate,
+  onExerciseLibraryOpen
 }) => {
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -117,25 +117,26 @@ const DayBuilder: React.FC<DayBuilderProps> = ({
     })
   );
 
+  // Map day.exercises to include the full Exercise object for rendering
   const dayExercises = day.exercises
-    .map(exerciseId => exercises.find(ex => ex.id === exerciseId))
+    .map(dayExercise => exercises.find(ex => ex.id === dayExercise.exercise_id))
     .filter(Boolean) as Exercise[];
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (active.id !== over?.id) {
-      const oldIndex = day.exercises.indexOf(active.id as string);
-      const newIndex = day.exercises.indexOf(over?.id as string);
+      const oldIndex = day.exercises.findIndex(ex => ex.exercise_id === active.id);
+      const newIndex = day.exercises.findIndex(ex => ex.exercise_id === over?.id);
       
       const newOrder = arrayMove(day.exercises, oldIndex, newIndex);
-      onUpdate(newOrder);
+      onUpdate(newOrder); // Pass the updated array of objects
     }
   };
 
   const handleRemoveExercise = (exerciseId: string) => {
-    const updatedExercises = day.exercises.filter(id => id !== exerciseId);
-    onUpdate(updatedExercises);
+    const updatedExercises = day.exercises.filter(ex => ex.exercise_id !== exerciseId);
+    onUpdate(updatedExercises); // Pass the updated array of objects
   };
 
   const getDayName = (dayNumber: number): string => {
@@ -147,7 +148,7 @@ const DayBuilder: React.FC<DayBuilderProps> = ({
     <Card className="h-fit">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center justify-between">
-          {getDayName(day.day)}
+          {getDayName(day.day_number)}
           <Badge variant="outline" className="text-xs">
             {dayExercises.length} exercises
           </Badge>
@@ -160,7 +161,7 @@ const DayBuilder: React.FC<DayBuilderProps> = ({
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={day.exercises}
+            items={day.exercises.map(ex => ex.exercise_id)} // Provide unique identifiers for dnd-kit
             strategy={verticalListSortingStrategy}
           >
             <div className="space-y-2 min-h-[100px]">
@@ -185,7 +186,7 @@ const DayBuilder: React.FC<DayBuilderProps> = ({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => onExerciseLibraryOpen(day.day)}
+          onClick={() => onExerciseLibraryOpen(day.day_number)}
           className="w-full"
         >
           <Plus className="w-4 h-4 mr-2" />

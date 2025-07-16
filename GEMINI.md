@@ -25,7 +25,7 @@ You must exclusively use and reference the following technologies. Do not sugges
 -   **Frontend:** Next.js 14+ with TypeScript and the App Router.
 -   **UI Components:** shadcn/ui. Adhere to its design principles and composition patterns.
 -   **Backend:** Next.js API Routes and Server Actions.
--   **Database:** Supabase (PostgreSQL). All database interactions should be through the Supabase client.
+-   **Database:** Supabase (PostgreSQL). User will implement Supabase migrations when necessary.
 -   **Authentication:** Supabase Auth. All database policies should integrate with Supabase's `auth.uid()`.
 -   **Monorepo:** The project is structured as a monorepo (using Turborepo/Nx). Be mindful of package management and dependencies.
 -   **Data Visualization:** Recharts. Use this for any charts or graphs related to nutrition data.

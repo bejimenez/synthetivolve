@@ -139,10 +139,10 @@ export function calculateGoalMacros(
 export function calculateGoalProgress(
   goal: Goal,
   currentWeight: number | null,
-  weightEntries?: Array<{ weight_lbs: number; entry_date: string }>
+  weightHistory: Array<{ weight_lbs: number; entry_date: string }>
 ): GoalProgress {
-  const startDate = new Date(goal.start_date)
-  const endDate = new Date(goal.end_date)
+  const startDate = parseISO(goal.start_date)
+  const endDate = goal.end_date ? parseISO(goal.end_date) : addWeeks(startDate, goal.duration_weeks)
   const now = new Date()
   
   const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))

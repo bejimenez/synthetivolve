@@ -39,8 +39,8 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
   };
 
   const getTemplateStats = (template: Mesocycle) => {
-    const totalExercises = template.days.reduce((total: number, day: { exercises: string[] }) => total + day.exercises.length, 0);
-    const uniqueExercises = new Set(template.days.flatMap((day: { exercises: string[] }) => day.exercises)).size;
+    const totalExercises = template.days.reduce((total, day) => total + day.exercises.length, 0);
+    const uniqueExercises = new Set(template.days.flatMap(day => day.exercises.map(ex => ex.exercise_id))).size; // Access exercise_id
     
     return {
       totalExercises,
