@@ -40,6 +40,9 @@ export async function middleware(request: NextRequest) {
     if (user) {
       return NextResponse.redirect(new URL('/', request.url))
     }
+  } else if (request.nextUrl.pathname === '/dashboard') {
+    // Rewrite /dashboard to / to handle old routes
+    return NextResponse.rewrite(new URL('/', request.url));
   } else {
     // Protect other app routes (e.g., /fitness, /profile)
     // If user is not logged in and tries to access any other app route, redirect to auth

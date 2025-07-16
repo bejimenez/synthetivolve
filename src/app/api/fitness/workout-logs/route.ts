@@ -1,8 +1,8 @@
-// src/app/api/fitness/workout-logs/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createSupabaseServerClient } from '@/lib/supabase'
 import { z } from 'zod'
+import { buildWorkoutLogFromRows, WorkoutLogRow, ExerciseLogRow, SetLogRow } from '@/lib/fitness.types'
 
 const setLogSchema = z.object({
   set_number: z.number().int(),
@@ -38,7 +38,7 @@ export async function GET() {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data, error } = await supabase
+    const { data: workoutLogsData, error } = await supabase
         .from('workout_logs')
         .select(`
             *,
@@ -53,7 +53,12 @@ export async function GET() {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json(data);
+    // Transform raw data into the WorkoutLog client-side type
+    const transformedWorkoutLogs = (workoutLogsData || []).map((workoutRow: WorkoutLogRow & { exercise_logs: (ExerciseLogRow & { set_logs: SetLogRow[] })[] }) => {
+      return buildWorkoutLogFromRows(workoutRow, workoutRow.exercise_logs);
+    });
+
+    return NextResponse.json(transformedWorkoutLogs);
 }
 
 export async function POST(request: NextRequest) {

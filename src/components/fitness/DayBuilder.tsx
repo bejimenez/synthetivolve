@@ -27,7 +27,7 @@ import { formatMuscleGroupName } from '@/lib/fitness_utils';
 
 interface SortableExerciseItemProps {
   exercise: Exercise;
-  onRemove: () => void;
+  onRemove: (exerciseId: string) => void;
 }
 
 const SortableExerciseItem: React.FC<SortableExerciseItemProps> = ({ exercise, onRemove }) => {
@@ -83,7 +83,7 @@ const SortableExerciseItem: React.FC<SortableExerciseItemProps> = ({ exercise, o
         <Button
           variant="ghost"
           size="sm"
-          onClick={onRemove}
+          onClick={() => onRemove(exercise.id)}
           className="text-red-500 hover:text-red-700 hover:bg-red-50"
         >
           <X className="w-4 h-4" />
@@ -148,7 +148,7 @@ const DayBuilder: React.FC<DayBuilderProps> = ({
     <Card className="h-fit">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center justify-between">
-          {getDayName(day.day_number)}
+          {getDayName(day.day)}
           <Badge variant="outline" className="text-xs">
             {dayExercises.length} exercises
           </Badge>
@@ -186,7 +186,7 @@ const DayBuilder: React.FC<DayBuilderProps> = ({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => onExerciseLibraryOpen(day.day_number)}
+          onClick={() => onExerciseLibraryOpen(day.day)}
           className="w-full"
         >
           <Plus className="w-4 h-4 mr-2" />

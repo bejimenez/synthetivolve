@@ -38,11 +38,15 @@ const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
   useEffect(() => {
     if (showPreviousData) {
       const lastWorkout = workoutLogs
-        .filter(log => log.exercises.some(ex => ex.exercise_id === exercise.id)) // Use exercise_id
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+        .filter(log => log.exercises.some((ex: LoggedExercise) => ex.exercise_id === exercise.id)) // Use exercise_id
+        .sort((a, b) => {
+          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0; // Treat null as very old
+          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0; // Treat null as very old
+          return dateB - dateA;
+        })[0];
       
       if (lastWorkout) {
-        const exerciseData = lastWorkout.exercises.find(ex => ex.exercise_id === exercise.id); // Use exercise_id
+        const exerciseData = lastWorkout.exercises.find((ex: LoggedExercise) => ex.exercise_id === exercise.id); // Use exercise_id
         setPreviousWorkout(exerciseData || null);
       }
     }
@@ -50,6 +54,7 @@ const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
 
   const addSet = () => {
     const newSet: SetLog = {
+      set_number: sets.length + 1,
       weight: 0,
       reps: 0,
       ...(exercise.useRIRRPE ? { rir: 0 } : { rpe: 0 })
@@ -66,7 +71,7 @@ const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
     onUpdate(updatedSets);
   };
 
-  const updateSet = (index: number, field: keyof SetLog, value: number) => {
+  const updateSet = (index: number, field: keyof SetLog, value: number | null) => {
     const updatedSets = sets.map((set, i) => 
       i === index ? { ...set, [field]: value } : set
     );

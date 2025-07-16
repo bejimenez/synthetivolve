@@ -20,6 +20,8 @@ export const FoodSearchResultSchema = z.object({
 
 export const FoodDetailsSchema = FoodSearchResultSchema.extend({
   ingredients: z.string().optional(),
+  servingSize: z.number().optional(),
+  servingUnit: z.string().optional(),
 })
 
 export type FoodSearchResult = z.infer<typeof FoodSearchResultSchema>

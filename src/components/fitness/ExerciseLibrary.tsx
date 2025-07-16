@@ -26,7 +26,7 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
   onExerciseAdd, 
   existingExercises 
 }) => {
-  const { exercises, createExercise } = useFitness();
+  const { exercises, createExercise, updateExercise, deleteExercise } = useFitness();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMuscle, setFilterMuscle] = useState<MuscleGroup | 'ALL'>('ALL');
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -36,8 +36,8 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
     name: '',
     primary: 'CHEST',
     secondary: [],
-    equipment: '',
-    notes: '',
+    equipment: null,
+    notes: null,
     useRIRRPE: true
   });
 
@@ -49,28 +49,64 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
   return matchesSearch && matchesMuscle;
   });
 
-  const handleCreateExercise = async () => {
-    if (!newExercise.name || !newExercise.primary) return;
-
-    await createExercise({
-      name: newExercise.name,
-      primary: newExercise.primary,
-      secondary: newExercise.secondary || [],
-      equipment: newExercise.equipment || '',
-      notes: newExercise.notes || '',
-      useRIRRPE: newExercise.useRIRRPE ?? true
-    });
-    
-    // Reset form
+  const resetForm = () => {
     setNewExercise({
       name: '',
       primary: 'CHEST',
       secondary: [],
-      equipment: '',
-      notes: '',
+      equipment: null,
+      notes: null,
       useRIRRPE: true
     });
+    setEditingExercise(null);
     setShowCreateForm(false);
+  };
+
+  const handleSubmitExercise = async () => {
+    if (!newExercise.name || !newExercise.primary) return;
+
+    if (editingExercise) {
+      // Update existing exercise
+      await updateExercise(editingExercise.id, {
+        name: newExercise.name,
+        primary: newExercise.primary,
+        secondary: newExercise.secondary || [],
+        equipment: newExercise.equipment || null,
+        notes: newExercise.notes || null,
+        useRIRRPE: newExercise.useRIRRPE ?? true
+      });
+    } else {
+      // Create new exercise
+      await createExercise({
+        name: newExercise.name,
+        primary: newExercise.primary,
+        secondary: newExercise.secondary || [],
+        equipment: newExercise.equipment || null,
+        notes: newExercise.notes || null,
+        useRIRRPE: newExercise.useRIRRPE ?? true
+      });
+    }
+    
+    resetForm();
+  };
+
+  const handleDeleteExercise = async (exerciseId: string) => {
+    if (window.confirm('Are you sure you want to delete this exercise? This cannot be undone.')) {
+      await deleteExercise(exerciseId);
+    }
+  };
+
+  const handleEditClick = (exercise: FitnessExercise) => {
+    setEditingExercise(exercise);
+    setNewExercise({
+      name: exercise.name,
+      primary: exercise.primary,
+      secondary: exercise.secondary,
+      equipment: exercise.equipment,
+      notes: exercise.notes,
+      useRIRRPE: exercise.useRIRRPE
+    });
+    setShowCreateForm(true);
   };
 
   // Update and Delete would be implemented here using the useFitness hook
@@ -214,22 +250,11 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
                 <div className="flex justify-end space-x-2">
                   <Button
                     variant="outline"
-                    onClick={() => {
-                      setShowCreateForm(false);
-                      setEditingExercise(null);
-                      setNewExercise({
-                        name: '',
-                        primary: 'CHEST',
-                        secondary: [],
-                        equipment: '',
-                        notes: '',
-                        useRIRRPE: true
-                      });
-                    }}
+                    onClick={resetForm}
                   >
                     Cancel
                   </Button>
-                  <Button onClick={handleCreateExercise}>
+                  <Button onClick={handleSubmitExercise}>
                     {editingExercise ? 'Update' : 'Create'} Exercise
                   </Button>
                 </div>
@@ -268,7 +293,7 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
                     size="sm"
                     variant="outline"
                     onClick={() => {
-                      onExerciseAdd(exercise as unknown as FitnessExercise);
+                      onExerciseAdd(exercise);
                       onClose();
                     }}
                     disabled={isExerciseInMesocycle(exercise.id)}
@@ -282,14 +307,14 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => setEditingExercise(exercise as unknown as FitnessExercise)}
+                    onClick={() => handleEditClick(exercise)}
                   >
                     <Edit className="w-4 h-4" />
                   </Button>
                   <Button
                     size="sm"
                     variant="ghost"
-                    // onClick={() => handleDeleteExercise(exercise.id)}
+                    onClick={() => handleDeleteExercise(exercise.id)}
                     className="text-red-500 hover:text-red-700"
                   >
                     <Trash2 className="w-4 h-4" />

@@ -31,7 +31,7 @@ export function GoalProgressChart({ className }: GoalProgressChartProps) {
     if (!activeGoal) return []
 
     const startDate = parseISO(activeGoal.start_date)
-    const endDate = parseISO(activeGoal.end_date)
+    const endDate = parseISO(activeGoal.end_date!)
     const now = new Date()
 
     // Find the first Sunday on or after the goal start date

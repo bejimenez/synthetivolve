@@ -15,20 +15,20 @@ export function NutritionOverview() {
 
     foodLogs.forEach(log => {
       const factor = log.quantity / 100
-      const protein = (log.foods.protein_per_100g || 0) * factor
-      const carbs = (log.foods.carbs_per_100g || 0) * factor
-      const fat = (log.foods.fat_per_100g || 0) * factor
+      const protein = (log.food.protein_per_100g || 0) * factor
+      const carbs = (log.food.carbs_per_100g || 0) * factor
+      const fat = (log.food.fat_per_100g || 0) * factor
       
       totals.protein += protein
       totals.carbs += carbs
       totals.fat += fat
 
-      const existingSource = calorieSources.find(s => s.name === log.foods.description)
-      const calories = (log.foods.calories_per_100g || 0) * factor
+      const existingSource = calorieSources.find(s => s.name === log.food.description)
+      const calories = (log.food.calories_per_100g || 0) * factor
       if (existingSource) {
         existingSource.value += calories
       } else {
-        calorieSources.push({ name: log.foods.description, value: calories })
+        calorieSources.push({ name: log.food.description, value: calories })
       }
     })
 

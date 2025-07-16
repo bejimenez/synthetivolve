@@ -4,19 +4,7 @@ import { cookies } from 'next/headers'
 import { createSupabaseServerClient } from '@/lib/supabase'
 import { z } from 'zod'
 
-// Schema for day exercise configuration
-const dayExerciseSchema = z.object({
-  exercise_id: z.string().uuid(),
-  order_index: z.number().int(),
-})
-
-// Schema for day plan configuration
-const dayPlanSchema = z.object({
-  day_number: z.number().int().min(1).max(7),
-  exercises: z.array(dayExerciseSchema),
-})
-
-// Schema for creating a complete mesocycle
+// Schema for creating a complete mesocycle (now includes plan_data)
 const mesocycleCreateSchema = z.object({
   name: z.string().min(1, 'Mesocycle name is required'),
   weeks: z.number().int().min(2).max(16),
@@ -24,7 +12,25 @@ const mesocycleCreateSchema = z.object({
   specialization: z.array(z.string()).optional(),
   goal_statement: z.string().optional(),
   is_template: z.boolean().optional(),
-  days: z.array(dayPlanSchema),
+  // plan_data will be a JSONB object containing days and exerciseDB
+  plan_data: z.object({
+    days: z.array(z.object({
+      day_number: z.number().int().min(1).max(7),
+      exercises: z.array(z.object({
+        exercise_id: z.string().uuid(),
+        order_index: z.number().int(),
+      })),
+    })),
+    exerciseDB: z.record(z.string().uuid(), z.object({
+      id: z.string().uuid(),
+      name: z.string(),
+      primary: z.string(),
+      secondary: z.array(z.string()).optional(),
+      equipment: z.string().optional().nullable(),
+      notes: z.string().optional().nullable(),
+      useRIRRPE: z.boolean(),
+    })).optional(),
+  }).optional().nullable(),
 })
 
 export async function GET() {
@@ -40,7 +46,6 @@ export async function GET() {
     }
 
     // Fetch user's mesocycles (excluding soft-deleted ones)
-    // This is a simplified GET. A real implementation would fetch and join related data.
     const { data, error } = await supabase
       .from('mesocycles')
       .select('*')
@@ -89,20 +94,12 @@ export async function POST(request: Request) {
       )
     }
 
-    // In a real app, you would use a database transaction (RPC call in Supabase)
-    // to create the mesocycle and all its related days and exercises atomically.
-    // For simplicity here, we'll do it in steps with cleanup on failure.
-
-    const { days, ...mesoData } = validation.data
-
-    // Step 1: Create the mesocycle
     const { data: newMeso, error: mesoError } = await supabase
       .from('mesocycles')
       .insert({ 
-        ...mesoData, 
+        ...validation.data, 
         user_id: user.id,
         created_at: new Date().toISOString()
-        // Note: updated_at exists in mesocycles table
       })
       .select()
       .single()
@@ -115,68 +112,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // Step 2: Create the days and exercises for the mesocycle
-    try {
-      for (const day of days) {
-        // Create mesocycle day
-        const { data: newDay, error: dayError } = await supabase
-          .from('mesocycle_days')
-          .insert({ 
-            mesocycle_id: newMeso.id, 
-            day_number: day.day_number,
-            created_at: new Date().toISOString()
-            // Note: mesocycle_days table does NOT have updated_at
-          })
-          .select()
-          .single()
-
-        if (dayError) {
-          throw new Error(`Failed to create day ${day.day_number}: ${dayError.message}`)
-        }
-
-        // Step 3: Create the exercises for the day
-        if (day.exercises.length > 0) {
-          const dayExercisesData = day.exercises.map(ex => ({
-            day_id: newDay.id,
-            exercise_id: ex.exercise_id,
-            order_index: ex.order_index,
-            created_at: new Date().toISOString()
-            // Note: day_exercises table does NOT have updated_at
-          }))
-
-          const { error: dayExercisesError } = await supabase
-            .from('day_exercises')
-            .insert(dayExercisesData)
-
-          if (dayExercisesError) {
-            throw new Error(`Failed to add exercises to day ${day.day_number}: ${dayExercisesError.message}`)
-          }
-        }
-      }
-
-      // Success: Return the created mesocycle
-      // (A more complex query would be needed to get all nested data)
-      return NextResponse.json(newMeso, { status: 201 })
-
-    } catch (stepError) {
-      // Cleanup: Delete the mesocycle if any step fails
-      console.error('Mesocycle creation step failed:', stepError)
-      
-      const { error: cleanupError } = await supabase
-        .from('mesocycles')
-        .delete()
-        .eq('id', newMeso.id)
-
-      if (cleanupError) {
-        console.error('Cleanup failed:', cleanupError)
-      }
-
-      const errorMessage = stepError instanceof Error ? stepError.message : 'An unknown error occurred during a creation step.';
-      return NextResponse.json(
-        { error: errorMessage }, 
-        { status: 500 }
-      )
-    }
+    return NextResponse.json(newMeso, { status: 201 })
 
   } catch (error) {
     console.error('POST request error:', error)

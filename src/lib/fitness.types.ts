@@ -13,15 +13,18 @@ export type MuscleGroup =
   | 'CHEST' | 'BACK' | 'SHOULDERS' | 'TRICEPS' | 'BICEPS' 
   | 'QUADS' | 'HAMSTRINGS' | 'GLUTES' | 'CALVES' | 'ABS' | 'FOREARMS'
 
+// Muscle group volume type
+export type MuscleGroupVolume = { [key in MuscleGroup]: number }
+
 // Legacy Exercise type for backward compatibility
 export interface Exercise {
   id: string
   name: string
   primary: MuscleGroup
   secondary: MuscleGroup[]
-  equipment?: string
-  notes?: string
-  useRIRRPE: boolean
+  equipment?: string | null
+  notes?: string | null
+  useRIRRPE: boolean | null
 }
 
 // Convert database row to Exercise type
@@ -69,7 +72,7 @@ export interface DayPlan {
 
 // Set type for logging
 export interface SetLog {
-  set_number?: number; // Optional, can be assigned on backend or during processing
+  set_number: number; // Optional, can be assigned on backend or during processing
   weight: number;
   reps: number;
   rir?: number | null;
@@ -78,7 +81,7 @@ export interface SetLog {
 
 // Logged Exercise type for workout logs
 export interface LoggedExercise {
-  exercise_id: string;
+  exercise_id: string | null;
   order_index: number;
   replaced_original?: boolean;
   was_accessory?: boolean;
@@ -88,22 +91,22 @@ export interface LoggedExercise {
 // Workout log types
 export interface WorkoutLog {
   id: string;
-  user_id: string;
-  mesocycle_id?: string | null;
-  week_number?: number | null;
-  day_number?: number | null;
-  workout_date: string;
-  custom_goal_entry?: string | null;
-  started_at: string;
-  completed_at?: string | null;
-  created_at: string;
+  user_id: string | null; // user_id can be null in DB
+  mesocycle_id: string | null;
+  week_number: number | null;
+  day_number: number | null;
+  workout_date: string; // workout_date is NOT NULL in DB
+  custom_goal_entry: string | null;
+  started_at: string | null; // started_at can be null in DB
+  completed_at: string | null;
+  created_at: string | null; // created_at can be null in DB
   exercises: LoggedExercise[]; // Nested logged exercises
 }
 
 // Helper function to convert database workout log with relations
 export function buildWorkoutLogFromRows(
   workoutRow: WorkoutLogRow,
-  exerciseLogs: (ExerciseLogRow & { sets: SetLogRow[] })[]
+  exerciseLogs: (ExerciseLogRow & { set_logs: SetLogRow[] })[]
 ): WorkoutLog {
   return {
     id: workoutRow.id,
@@ -111,24 +114,24 @@ export function buildWorkoutLogFromRows(
     mesocycle_id: workoutRow.mesocycle_id,
     week_number: workoutRow.week_number,
     day_number: workoutRow.day_number,
-    workout_date: workoutRow.workout_date,
+    workout_date: workoutRow.workout_date || new Date().toISOString().split('T')[0], // Provide a default if null
     custom_goal_entry: workoutRow.custom_goal_entry,
     exercises: exerciseLogs.map(log => ({
       exercise_id: log.exercise_id,
       order_index: log.order_index,
       replaced_original: log.replaced_original || false,
       was_accessory: log.was_accessory || false,
-      sets: log.sets.map(set => ({
+      sets: log.set_logs.map(set => ({
         set_number: set.set_number,
         reps: set.reps,
         weight: set.weight,
-        rir: set.rir || undefined,
-        rpe: set.rpe || undefined
+        rir: set.rir || null,
+        rpe: set.rpe || null
       }))
     })),
-    started_at: workoutRow.started_at,
-    completed_at: workoutRow.completed_at || undefined,
-    created_at: workoutRow.created_at
+    started_at: workoutRow.started_at || null,
+    completed_at: workoutRow.completed_at || null,
+    created_at: workoutRow.created_at || null
   }
 }
 
@@ -140,60 +143,7 @@ export interface MesocyclePlan {
   daysPerWeek: number
   specialization: MuscleGroup[]
   goalStatement?: string
+  isTemplate?: boolean
   days: DayPlan[] // Use the new DayPlan structure
   exerciseDB?: Record<string, Exercise>
-}
-
-// Workout log types
-export interface WorkoutExercise {
-  exerciseId: string
-  sets: Set[]
-  replacedOriginal?: boolean
-  wasAccessory?: boolean
-  orderIndex: number
-}
-
-export interface WorkoutLog {
-  id: string
-  userId: string
-  mesocycleId?: string | null
-  weekNumber?: number | null
-  dayNumber?: number | null
-  workoutDate: string
-  customGoalEntry?: string | null
-  exercises: WorkoutExercise[]
-  startedAt: string
-  completedAt?: string | null
-  createdAt: string
-}
-
-// Helper function to convert database workout log with relations
-export function buildWorkoutLogFromRows(
-  workoutRow: WorkoutLogRow,
-  exerciseLogs: (ExerciseLogRow & { sets: SetLogRow[] })[]
-): WorkoutLog {
-  return {
-    id: workoutRow.id,
-    userId: workoutRow.user_id,
-    mesocycleId: workoutRow.mesocycle_id,
-    weekNumber: workoutRow.week_number,
-    dayNumber: workoutRow.day_number,
-    workoutDate: workoutRow.workout_date,
-    customGoalEntry: workoutRow.custom_goal_entry,
-    exercises: exerciseLogs.map(log => ({
-      exerciseId: log.exercise_id,
-      orderIndex: log.order_index,
-      replacedOriginal: log.replaced_original || false,
-      wasAccessory: log.was_accessory || false,
-      sets: log.sets.map(set => ({
-        reps: set.reps,
-        weight: set.weight,
-        rir: set.rir || undefined,
-        rpe: set.rpe || undefined
-      }))
-    })),
-    startedAt: workoutRow.started_at,
-    completedAt: workoutRow.completed_at || undefined,
-    createdAt: workoutRow.created_at
-  }
 }

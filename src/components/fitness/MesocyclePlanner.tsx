@@ -16,7 +16,7 @@ import ExerciseLibrary from './ExerciseLibrary';
 import DayBuilder from './DayBuilder';
 
 interface MesocyclePlannerProps {
-  onSave?: (mesocycle: any) => void;
+  onSave?: (mesocycle: MesocyclePlan) => void;
   editingMesocycle?: MesocyclePlan | null;
 }
 
@@ -41,8 +41,8 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
     
     const days: DayPlan[] = [];
     for (let i = 1; i <= daysPerWeek; i++) {
-      const existingDay = existingDays?.find(d => d.day_number === i); // Use day_number
-      days.push(existingDay || { day_number: i, exercises: [] }); // Use day_number
+      const existingDay = existingDays?.find(d => d.day === i); // Use day
+      days.push(existingDay || { day: i, exercises: [] }); // Use day
     }
     
     return days;
@@ -92,7 +92,7 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
     let updatedDays = mesocycle.days;
     if (selectedDayForExercise !== null && updatedDays) {
       updatedDays = updatedDays.map(day =>
-        day.day_number === selectedDayForExercise // Use day_number
+        day.day === selectedDayForExercise // Use day
           ? { ...day, exercises: [...day.exercises, { exercise_id: exercise.id, order_index: day.exercises.length }] } // Add as object
           : day
       );
@@ -105,7 +105,7 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
 
   const handleDayUpdate = (dayNumber: number, exercises: Array<{ exercise_id: string; order_index: number }>) => { // Updated type
     const updatedDays = mesocycle.days?.map(day => 
-      day.day_number === dayNumber ? { ...day, exercises: exercises } : day // Use day_number
+      day.day === dayNumber ? { ...day, exercises: exercises } : day // Use day
     ) || [];
     
     setMesocycle(prev => ({ ...prev, days: updatedDays }));
@@ -123,23 +123,14 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
       return;
     }
     
-    const mesocycleToSave = {
+    const mesocycleToSave: MesocyclePlan = {
       name: mesocycle.name!,
       weeks: mesocycle.weeks!,
       daysPerWeek: mesocycle.daysPerWeek!,
       specialization: mesocycle.specialization || [],
       goalStatement: mesocycle.goalStatement || undefined,
-      days: mesocycle.days?.map(dayPlan => ({
-        day_number: dayPlan.day_number,
-        exercises: dayPlan.exercises.map((exercise, index) => ({
-          exercise_id: exercise.exercise_id,
-          order_index: index,
-        })),
-      })) || [],
-      plan_data: { // This will be stored as JSONB in the database
-        days: mesocycle.days,
-        exerciseDB: mesocycle.exerciseDB,
-      },
+      days: mesocycle.days || [], // Keep days for internal state/DayBuilder
+      exerciseDB: mesocycle.exerciseDB || {},
     };
 
     if (onSave) {
@@ -257,10 +248,10 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
               {mesocycle.days.map(day => (
                 <DayBuilder
-                  key={day.day_number}
+                  key={day.day}
                   day={day}
                   exercises={Object.values(mesocycle.exerciseDB || {})}
-                  onUpdate={(exercises) => handleDayUpdate(day.day_number, exercises)}
+                  onUpdate={(exercises) => handleDayUpdate(day.day, exercises)}
                   onExerciseLibraryOpen={(dayNumber) => {
                     setShowExerciseLibrary(true);
                     setSelectedDayForExercise(dayNumber);
@@ -280,7 +271,7 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {Object.entries(muscleVolume).map(([muscle, count]) => {
+              {(Object.entries(muscleVolume) as [string, number][]).map(([muscle, count]) => {
                 const isSpecialized = mesocycle.specialization?.includes(muscle as MuscleGroup) ?? false;
                 const warning = getMuscleGroupWarning(Number(count), isSpecialized);
                 const color = getWarningColor(warning);
@@ -337,7 +328,7 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
         <ExerciseLibrary
           onClose={() => setShowExerciseLibrary(false)}
           onExerciseAdd={handleExerciseAdd}
-          existingExercises={mesocycle.days?.find(day => day.day_number === selectedDayForExercise)?.exercises.map(ex => mesocycle.exerciseDB?.[ex.exercise_id]).filter(Boolean) as Exercise[] || []} // Updated to use day_number and exercise_id
+          existingExercises={mesocycle.days?.find(day => day.day === selectedDayForExercise)?.exercises.map(ex => mesocycle.exerciseDB?.[ex.exercise_id]).filter(Boolean) as Exercise[] || []} // Updated to use day and exercise_id
         />
       )}
     </div>

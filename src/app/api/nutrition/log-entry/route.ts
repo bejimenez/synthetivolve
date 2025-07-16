@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createSupabaseServerClient } from '@/lib/supabase'
 import { z } from 'zod'
-import { USDAClient, FoodDetailsSchema } from '@/lib/nutrition/usda'
+import { FoodDetailsSchema } from '@/lib/nutrition/usda'
 
 const logEntrySchema = z.object({
   fdcId: z.number(),
@@ -34,7 +34,8 @@ export async function POST(request: NextRequest) {
     const { fdcId, quantity, unit, logged_at, logged_date, foodDetails } = validation.data
 
     // Step 1: Check if food exists in our `foods` table, or create it.
-    let { data: food, error: foodError } = await supabase
+    let food;
+    const { data: existingFood, error: foodError } = await supabase
       .from('foods')
       .select('id')
       .eq('fdc_id', fdcId)
@@ -44,7 +45,9 @@ export async function POST(request: NextRequest) {
       throw new Error(`Error checking for existing food: ${foodError.message}`)
     }
 
-    if (!food) {
+    if (existingFood) {
+      food = existingFood;
+    } else {
       // Food not found, so create it
       const { data: newFood, error: newFoodError } = await supabase
         .from('foods')
@@ -52,10 +55,10 @@ export async function POST(request: NextRequest) {
           fdc_id: fdcId,
           description: foodDetails.description,
           brand_name: foodDetails.brandName,
-          calories_per_100g: foodDetails.foodNutrients?.find(n => n.nutrientId === 1008)?.value,
-          protein_per_100g: foodDetails.foodNutrients?.find(n => n.nutrientId === 1003)?.value,
-          fat_per_100g: foodDetails.foodNutrients?.find(n => n.nutrientId === 1004)?.value,
-          carbs_per_100g: foodDetails.foodNutrients?.find(n => n.nutrientId === 1005)?.value,
+          calories_per_100g: foodDetails.foodNutrients?.find(n => n.nutrientId === 1008)?.value || null,
+          protein_per_100g: foodDetails.foodNutrients?.find(n => n.nutrientId === 1003)?.value || null,
+          fat_per_100g: foodDetails.foodNutrients?.find(n => n.nutrientId === 1004)?.value || null,
+          carbs_per_100g: foodDetails.foodNutrients?.find(n => n.nutrientId === 1005)?.value || null,
         })
         .select('id')
         .single()

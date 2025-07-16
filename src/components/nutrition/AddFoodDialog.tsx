@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Loader2, Search } from 'lucide-react'
 import { format } from 'date-fns'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import type { RecentFood } from './NutritionDataProvider'
+import type { RecentFood, Food } from './NutritionDataProvider'
 
 interface AddFoodDialogProps {
   open: boolean
@@ -30,13 +30,13 @@ export function AddFoodDialog({ open, onClose, onFoodAdded, selectedDate }: AddF
   const [loading, setLoading] = useState(false)
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500)
-  const { searchFoods, logEntry, recentFoods, fetchRecentFoods } = useNutrition()
+  const { searchFoods, addFoodLog, recentFoods, refreshLogs } = useNutrition() // Removed logEntry, added addFoodLog
 
   useEffect(() => {
     if (open && activeTab === 'recent') {
-      fetchRecentFoods()
+      refreshLogs() // Use refreshLogs to fetch recent foods
     }
-  }, [open, activeTab, fetchRecentFoods])
+  }, [open, activeTab, refreshLogs])
 
   useEffect(() => {
     if (debouncedSearchTerm) {
@@ -54,14 +54,15 @@ export function AddFoodDialog({ open, onClose, onFoodAdded, selectedDate }: AddF
     if (!selectedFood) return
 
     const newLog = {
-      food_id: selectedFood.id, // Use food.id from the selected food
+      fdcId: selectedFood.fdcId,
       quantity,
       unit,
       logged_at: new Date().toISOString(),
       logged_date: format(selectedDate, 'yyyy-MM-dd'),
+      foodDetails: selectedFood,
     }
     
-    await addFoodLog(newLog) // Use addFoodLog instead of logEntry
+    await addFoodLog(newLog)
     onFoodAdded()
     handleClose()
   }
@@ -75,10 +76,25 @@ export function AddFoodDialog({ open, onClose, onFoodAdded, selectedDate }: AddF
     onClose()
   }
 
-  const handleSelectRecent = (recent: RecentFood & { foods: Food }) => {
-    // The 'foods' property on recent is the full food object
-    const foodDetails = recent.foods
-    setSelectedFood(foodDetails)
+  const handleSelectRecent = (recent: RecentFood & { food: Food }) => {
+    const foodDetails = recent.food
+    const transformedFood: FoodSearchResult = {
+      fdcId: foodDetails.fdc_id || 0, // Assuming fdc_id exists for recent foods, or provide a fallback
+      description: foodDetails.description,
+      brandName: foodDetails.brand_name || undefined,
+      dataType: 'Database', // Placeholder, as this food comes from our DB
+      // Optionally map other nutrients if needed for display in the next step
+      foodNutrients: [
+        { nutrientId: 1008, nutrientName: 'Calories', nutrientNumber: '208', unitName: 'KCAL', value: foodDetails.calories_per_100g || 0 },
+        { nutrientId: 1003, nutrientName: 'Protein', nutrientNumber: '203', unitName: 'G', value: foodDetails.protein_per_100g || 0 },
+        { nutrientId: 1004, nutrientName: 'Fat', nutrientNumber: '204', unitName: 'G', value: foodDetails.fat_per_100g || 0 },
+        { nutrientId: 1005, nutrientName: 'Carbohydrate', nutrientNumber: '205', unitName: 'G', value: foodDetails.carbs_per_100g || 0 },
+        { nutrientId: 1007, nutrientName: 'Fiber', nutrientNumber: '291', unitName: 'G', value: foodDetails.fiber_per_100g || 0 },
+        { nutrientId: 2000, nutrientName: 'Sugars', nutrientNumber: '269', unitName: 'G', value: foodDetails.sugar_per_100g || 0 },
+        { nutrientId: 1093, nutrientName: 'Sodium', nutrientNumber: '307', unitName: 'MG', value: foodDetails.sodium_per_100g || 0 },
+      ]
+    };
+    setSelectedFood(transformedFood);
   }
 
   return (
@@ -132,7 +148,7 @@ export function AddFoodDialog({ open, onClose, onFoodAdded, selectedDate }: AddF
                     onClick={() => handleSelectRecent(recent)}
                     className="p-3 border rounded-lg hover:bg-accent cursor-pointer"
                   >
-                    <p className="font-semibold">{recent.foods.description}</p>
+                    <p className="font-semibold">{recent.food.description}</p>
                   </div>
                 ))}
               </div>

@@ -139,10 +139,9 @@ export function calculateGoalMacros(
 export function calculateGoalProgress(
   goal: Goal,
   currentWeight: number | null,
-  weightHistory: Array<{ weight_lbs: number; entry_date: string }>
 ): GoalProgress {
   const startDate = parseISO(goal.start_date)
-  const endDate = goal.end_date ? parseISO(goal.end_date) : addWeeks(startDate, goal.duration_weeks)
+  const endDate = parseISO(goal.end_date!)
   const now = new Date()
   
   const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
@@ -176,12 +175,6 @@ export function calculateGoalProgress(
     onTrack = variance <= 0.2
   }
 
-  // Calculate weekly progress if weight entries provided
-  let weeklyProgress: WeeklyProgress[] | undefined
-  if (weightEntries && weightEntries.length > 0) {
-    weeklyProgress = calculateWeeklyProgress(goal, weightEntries)
-  }
-
   return {
     daysElapsed,
     daysRemaining,
@@ -190,7 +183,6 @@ export function calculateGoalProgress(
     expectedWeightChange,
     currentWeightChange,
     onTrack,
-    weeklyProgress
   }
 }
 
@@ -202,7 +194,7 @@ export function calculateWeeklyProgress(
   weightEntries: Array<{ weight_lbs: number; entry_date: string }>
 ): WeeklyProgress[] {
   const startDate = parseISO(goal.start_date)
-  const endDate = parseISO(goal.end_date)
+  const endDate = parseISO(goal.end_date!)
   const now = new Date()
 
   // Find the first Sunday on or after the goal start date

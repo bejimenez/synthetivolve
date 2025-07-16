@@ -24,9 +24,9 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [showDeleteDialog, setShowDeleteDialog] = useState<string | null>(null);
 
-  const filteredTemplates = mesocycles.filter(template =>
+  const filteredTemplates: Mesocycle[] = mesocycles.filter(template =>
     template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    template.goal_statement?.toLowerCase().includes(searchTerm.toLowerCase())
+    template.goalStatement?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleDuplicate = (template: Mesocycle) => {
@@ -74,7 +74,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredTemplates.map(template => {
-          const stats = getTemplateStats(template as unknown as Mesocycle);
+          const stats = getTemplateStats(template);
           
           return (
             <Card key={template.id} className="hover:shadow-lg transition-shadow">
@@ -86,7 +86,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
                     {template.weeks}w
                   </Badge>
                   <Badge variant="outline" className="text-xs">
-                    {template.days_per_week}d/week
+                    {template.daysPerWeek}d/week
                   </Badge>
                   <Badge variant="outline" className="text-xs">
                     {stats.uniqueExercises} exercises
@@ -95,11 +95,11 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
               </CardHeader>
 
               <CardContent className="space-y-4">
-                {template.goal_statement && (
+                {template.goalStatement && (
                   <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
                     <div className="flex items-start space-x-2">
                       <Target className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                      <p className="text-sm text-blue-800">{template.goal_statement}</p>
+                      <p className="text-sm text-blue-800">{template.goalStatement}</p>
                     </div>
                   </div>
                 )}
@@ -133,7 +133,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
                 <div className="flex space-x-2">
                   {onSelectTemplate && (
                     <Button
-                      onClick={() => onSelectTemplate(template as unknown as Mesocycle)}
+                      onClick={() => onSelectTemplate(template)}
                       size="sm"
                       className="flex-1"
                     >
@@ -142,7 +142,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
                   )}
                   
                   <Button
-                    onClick={() => handleDuplicate(template as unknown as Mesocycle)}
+                    onClick={() => handleDuplicate(template)}
                     size="sm"
                     variant="outline"
                   >
@@ -150,7 +150,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
                   </Button>
                   
                   <Button
-                    onClick={() => setShowDeleteDialog(template.id)}
+                    onClick={() => setShowDeleteDialog(template.id!)}
                     size="sm"
                     variant="outline"
                     className="text-red-500 hover:text-red-700"

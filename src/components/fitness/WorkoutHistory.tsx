@@ -9,7 +9,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Calendar, ChevronDown, ChevronUp, TrendingUp, Weight, Target } from 'lucide-react';
 import { formatMuscleGroupName } from '@/lib/fitness_utils';
 import { useFitness } from '@/hooks/useFitness';
-import type { WorkoutLog, Exercise, MuscleGroup, LoggedExercise, SetLog } from '@/lib/fitness.types';
+import type { WorkoutLog, MuscleGroup, MesocyclePlan } from '@/lib/fitness.types';
 
 interface WorkoutHistoryProps {
   selectedMesocycle?: string;
@@ -17,9 +17,9 @@ interface WorkoutHistoryProps {
 
 const WorkoutHistory: React.FC<WorkoutHistoryProps> = ({ selectedMesocycle }) => {
   const fitnessContext = useFitness();
-  const workoutLogs = fitnessContext.workoutLogs;
+  const workoutLogs: WorkoutLog[] = fitnessContext.workoutLogs;
   const exercises = fitnessContext.exercises;
-  const mesocycles = fitnessContext.mesocycles;
+  const mesocycles: MesocyclePlan[] = fitnessContext.mesocycles;
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMesocycle, setFilterMesocycle] = useState<string>(selectedMesocycle || 'ALL');
@@ -114,7 +114,7 @@ const WorkoutHistory: React.FC<WorkoutHistoryProps> = ({ selectedMesocycle }) =>
             <SelectItem value="ALL">All Workouts</SelectItem>
             <SelectItem value="FREESTYLE">Freestyle Only</SelectItem>
             {Object.values(mesocycles).map((meso) => (
-              <SelectItem key={meso.id} value={meso.id}>
+              <SelectItem key={meso.id!} value={meso.id!}>
                 {meso.name}
               </SelectItem>
             ))}
@@ -191,7 +191,7 @@ const WorkoutHistory: React.FC<WorkoutHistoryProps> = ({ selectedMesocycle }) =>
                         <CardTitle className="text-lg">{getWorkoutTitle(workout)}</CardTitle>
                         <div className="flex items-center space-x-4 mt-2">
                           <span className="text-sm text-gray-600">
-                            {formatDate(workout.workout_date)} at {formatTime(workout.started_at)}
+                            {formatDate(workout.workout_date)} at {formatTime(workout.started_at || '')}
                           </span>
                           <Badge variant="outline" className="text-xs">
                             {getUniqueExerciseCount(workout)} exercises

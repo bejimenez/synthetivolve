@@ -2,12 +2,12 @@
 'use client'
 
 import { useMemo } from 'react'
-import type { FoodLog } from './NutritionDataProvider'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
+import { FoodLogWithFood } from './NutritionDataProvider'
 
 interface DailySummaryProps {
-  foodLogs: FoodLog[]
+  foodLogs: FoodLogWithFood[]
   calorieGoal: number
 }
 
@@ -16,10 +16,10 @@ export function DailySummary({ foodLogs, calorieGoal }: DailySummaryProps) {
     const result = { calories: 0, protein: 0, carbs: 0, fat: 0 }
     foodLogs.forEach(log => {
       const factor = log.quantity / 100
-      result.calories += (log.foods.calories_per_100g || 0) * factor
-      result.protein += (log.foods.protein_per_100g || 0) * factor
-      result.carbs += (log.foods.carbs_per_100g || 0) * factor
-      result.fat += (log.foods.fat_per_100g || 0) * factor
+      result.calories += (log.food.calories_per_100g || 0) * factor
+      result.protein += (log.food.protein_per_100g || 0) * factor
+      result.carbs += (log.food.carbs_per_100g || 0) * factor
+      result.fat += (log.food.fat_per_100g || 0) * factor
     })
     return {
       calories: Math.round(result.calories),
@@ -34,7 +34,7 @@ export function DailySummary({ foodLogs, calorieGoal }: DailySummaryProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Today's Summary</CardTitle>
+        <CardTitle>Today&#39;s Summary</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">

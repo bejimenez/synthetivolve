@@ -13,8 +13,7 @@ export const TotalVolumeCard = () => {
     if (!workoutLogs || workoutLogs.length === 0) return 0
     // This is a placeholder calculation.
     return workoutLogs.reduce((acc, log) => {
-      const logData = log.log_data as { exercises?: Array<{ sets: Array<{ weight: number; reps: number }> }> };
-      const workoutVolume = (logData.exercises || []).reduce((exerciseAcc, exercise) => {
+      const workoutVolume = (log.exercises || []).reduce((exerciseAcc, exercise) => {
         return exerciseAcc + (exercise.sets || []).reduce((setAcc, set) => setAcc + (set.weight * set.reps), 0);
       }, 0);
       return acc + workoutVolume;

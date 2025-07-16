@@ -21,12 +21,7 @@ export const MUSCLE_GROUPS: MuscleGroup[] = [
 ];
 
 export function calculateMuscleGroupVolume(exercises: Exercise[], exerciseIds: string[]): MuscleGroupVolume {
-  const volume: MuscleGroupVolume = {};
-  
-  // Initialize all muscle groups to 0
-  MUSCLE_GROUPS.forEach(group => {
-    volume[group] = 0;
-  });
+  const volume: MuscleGroupVolume = Object.fromEntries(MUSCLE_GROUPS.map(group => [group, 0])) as MuscleGroupVolume;
 
   exerciseIds.forEach(exerciseId => {
     const exercise = exercises.find(ex => ex.id === exerciseId);
@@ -45,18 +40,13 @@ export function calculateMuscleGroupVolume(exercises: Exercise[], exerciseIds: s
 }
 
 export function calculateWeeklyMuscleVolume(mesocycle: MesocyclePlan): MuscleGroupVolume {
-  const weeklyVolume: MuscleGroupVolume = {};
-  
-  // Initialize all muscle groups to 0
-  MUSCLE_GROUPS.forEach(group => {
-    weeklyVolume[group] = 0;
-  });
+  const weeklyVolume: MuscleGroupVolume = Object.fromEntries(MUSCLE_GROUPS.map(group => [group, 0])) as MuscleGroupVolume;
 
   // Sum up volume from all days
   mesocycle.days.forEach(day => {
     const dayVolume = calculateMuscleGroupVolume(
-      Object.values(mesocycle.exerciseDB),
-      day.exercises
+      Object.values(mesocycle.exerciseDB || {}),
+      day.exercises.map(ex => ex.exercise_id)
     );
     
     MUSCLE_GROUPS.forEach(group => {

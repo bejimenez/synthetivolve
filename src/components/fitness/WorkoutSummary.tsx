@@ -24,20 +24,16 @@ const WorkoutSummary: React.FC<WorkoutSummaryProps> = ({
   onClose
 }) => {
   const summaryData = useMemo(() => {
-    const muscleVolume: MuscleGroupVolume = {};
+    const muscleVolume: MuscleGroupVolume = Object.fromEntries(MUSCLE_GROUPS.map(group => [group, 0])) as MuscleGroupVolume;
     let totalVolume = 0;
     let totalSets = 0;
     let totalReps = 0;
     const prs: string[] = [];
 
-    // Initialize muscle groups
-    MUSCLE_GROUPS.forEach(group => {
-      muscleVolume[group] = 0;
-    });
-
     // Calculate statistics
     workout.exercises.forEach(loggedExercise => {
-      const exercise = exercises[loggedExercise.exerciseId];
+      if (!loggedExercise.exercise_id) return; // Handle null exercise_id
+      const exercise = exercises[loggedExercise.exercise_id];
       if (!exercise) return;
 
       loggedExercise.sets.forEach(set => {
@@ -47,10 +43,14 @@ const WorkoutSummary: React.FC<WorkoutSummaryProps> = ({
         totalReps += set.reps;
 
         // Add to muscle group volume
-        muscleVolume[exercise.primary] += setVolume;
-        exercise.secondary.forEach(muscle => {
-          muscleVolume[muscle] += setVolume * 0.5;
-        });
+        if (exercise.primary) {
+          muscleVolume[exercise.primary] += setVolume;
+        }
+        if (exercise.secondary && Array.isArray(exercise.secondary)) {
+          exercise.secondary.forEach(muscle => {
+            muscleVolume[muscle] += setVolume * 0.5;
+          });
+        }
       });
 
       // Check for PRs (simplified - would need historical data comparison)
@@ -71,15 +71,15 @@ const WorkoutSummary: React.FC<WorkoutSummaryProps> = ({
 
   const getTopMuscleGroups = () => {
     return Object.entries(summaryData.muscleVolume)
-      .filter(([, volume]) => volume > 0)
-      .sort(([, a], [, b]) => b - a)
+      .filter(([, volume]) => (volume as number) > 0)
+      .sort(([, a], [, b]) => (b as number) - (a as number))
       .slice(0, 5);
   };
 
   const generateShareText = () => {
-    const date = new Date(workout.date).toLocaleDateString();
+    const date = new Date(workout.workout_date).toLocaleDateString();
     const topMuscles = getTopMuscleGroups()
-      .map(([muscle, volume]) => `${formatMuscleGroupName(muscle as MuscleGroup)}: ${volume.toFixed(0)}kg`)
+      .map(([muscle, volume]) => `${formatMuscleGroupName(muscle as MuscleGroup)}: ${(volume as number).toFixed(0)}kg`)
       .join(', ');
 
     return `💪 Workout Complete - ${date}
@@ -90,26 +90,6 @@ const WorkoutSummary: React.FC<WorkoutSummaryProps> = ({
 ${summaryData.prs.length > 0 ? `🏆 PRs: ${summaryData.prs.join(', ')}` : ''}
 
 #Synthetivolve #WorkoutComplete`;
-  };
-
-  const handleShare = async () => {
-    const shareText = generateShareText();
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Workout Summary',
-          text: shareText
-        });
-      } catch (err) {
-        console.error("Share failed:", err)
-        // Fallback to clipboard
-        navigator.clipboard.writeText(shareText);
-      }
-    } else {
-      // Fallback to clipboard
-      navigator.clipboard.writeText(shareText);
-    }
   };
 
   const handleExport = () => {
@@ -124,11 +104,20 @@ ${summaryData.prs.length > 0 ? `🏆 PRs: ${summaryData.prs.join(', ')}` : ''}
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `workout-${new Date(workout.date).toISOString().split('T')[0]}.json`;
+    a.download = `workout-${new Date(workout.workout_date).toISOString().split('T')[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  };
+
+  const handleShare = () => {
+    const shareText = generateShareText();
+    if (navigator.share) {
+      navigator.share({ text: shareText });
+    } else {
+      window.prompt('Copy your workout summary:', shareText);
+    }
   };
 
   return (
@@ -185,8 +174,8 @@ ${summaryData.prs.length > 0 ? `🏆 PRs: ${summaryData.prs.join(', ')}` : ''}
             <CardContent>
               <div className="space-y-3">
                 {getTopMuscleGroups().map(([muscle, volume]) => {
-                  const maxVolume = Math.max(...Object.values(summaryData.muscleVolume));
-                  const percentage = (volume / maxVolume) * 100;
+                  const maxVolume = Math.max(...Object.values(summaryData.muscleVolume).map(v => v as number));
+                  const percentage = ((volume as number) / maxVolume) * 100;
                   
                   return (
                     <div key={muscle} className="space-y-1">
@@ -195,7 +184,7 @@ ${summaryData.prs.length > 0 ? `🏆 PRs: ${summaryData.prs.join(', ')}` : ''}
                           {formatMuscleGroupName(muscle as MuscleGroup)}
                         </span>
                         <span className="text-sm text-gray-600">
-                          {volume.toFixed(0)} kg
+                          {(volume as number).toFixed(0)} kg
                         </span>
                       </div>
                       <Progress value={percentage} className="h-2" />
@@ -238,7 +227,8 @@ ${summaryData.prs.length > 0 ? `🏆 PRs: ${summaryData.prs.join(', ')}` : ''}
             <CardContent>
               <div className="space-y-3">
                 {workout.exercises.map(loggedExercise => {
-                  const exercise = exercises[loggedExercise.exerciseId];
+                  if (!loggedExercise.exercise_id) return null;
+                  const exercise = exercises[loggedExercise.exercise_id];
                   if (!exercise) return null;
 
                   const exerciseVolume = loggedExercise.sets.reduce(
@@ -265,14 +255,14 @@ ${summaryData.prs.length > 0 ? `🏆 PRs: ${summaryData.prs.join(', ')}` : ''}
           </Card>
 
           {/* Goal Achievement */}
-          {workout.customGoalEntry && (
+          {workout.custom_goal_entry && (
             <Card>
               <CardHeader>
                 <CardTitle>Session Goal</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-                  <p className="text-blue-800">{workout.customGoalEntry}</p>
+                  <p className="text-blue-800">{workout.custom_goal_entry}</p>
                 </div>
               </CardContent>
             </Card>
