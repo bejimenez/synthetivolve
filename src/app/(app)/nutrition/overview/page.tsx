@@ -2,11 +2,12 @@
 'use client'
 
 import { NutritionOverview } from '@/components/nutrition/NutritionOverview'
+import { NutritionDataProvider } from '@/components/nutrition/NutritionDataProvider'
 
 export default function NutritionOverviewPage() {
   return (
-    <div>
+    <NutritionDataProvider>
       <NutritionOverview />
-    </div>
+    </NutritionDataProvider>
   )
 }

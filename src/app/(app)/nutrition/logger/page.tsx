@@ -2,11 +2,12 @@
 'use client'
 
 import { NutritionLogger } from '@/components/nutrition/NutritionLogger'
+import { NutritionDataProvider } from '@/components/nutrition/NutritionDataProvider'
 
 export default function NutritionLoggerPage() {
   return (
-    <div>
+    <NutritionDataProvider>
       <NutritionLogger />
-    </div>
+    </NutritionDataProvider>
   )
 }
