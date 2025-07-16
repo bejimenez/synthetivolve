@@ -13,6 +13,9 @@ type WorkoutLogRow = Database['public']['Tables']['workout_logs']['Row']
 
 import type { Exercise, MesocyclePlan, MuscleGroup } from '@/lib/fitness.types'
 import { exerciseToRow, exerciseRowToExercise } from '@/lib/fitness.types'
+import { createClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
 
 interface FitnessState {
   exercises: Exercise[]
@@ -229,3 +232,12 @@ export function useFitness() {
   }
   return context
 }
+function createSupabaseClient(): SupabaseClient<Database> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!url || !anonKey) {
+    throw new Error('Supabase URL or anon key is not set in environment variables.')
+  }
+  return createClient<Database>(url, anonKey)
+}
+
