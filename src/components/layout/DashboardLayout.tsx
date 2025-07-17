@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
 import { ModeToggle } from '@/components/ui/mode-toggle';
-import { LogOut, Settings, LayoutDashboard } from 'lucide-react';
+import { LogOut, Settings, LayoutDashboard, Dumbbell, Scale, Utensils } from 'lucide-react';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -24,7 +24,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     }
   };
 
-  const isDashboard = pathname === '/';
+  const navItems = [
+    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+    { name: 'Fitness', href: '/fitness', icon: Dumbbell },
+    { name: 'Weight', href: '/weight', icon: Scale },
+    { name: 'Nutrition', href: '/nutrition', icon: Utensils },
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex flex-col">
@@ -36,18 +41,22 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <h1 className="text-xl font-semibold">
                 Synthetivolve
               </h1>
+              <nav className="ml-8 hidden md:flex space-x-4">
+                {navItems.map((item) => (
+                  <Button
+                    key={item.href}
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => router.push(item.href)}
+                    className={pathname === item.href ? 'bg-accent text-accent-foreground' : ''}
+                  >
+                    <item.icon className="mr-2 h-4 w-4" />
+                    {item.name}
+                  </Button>
+                ))}
+              </nav>
             </div>
             <div className="flex items-center gap-3">
-              {!isDashboard && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => router.push('/')}
-                >
-                  <LayoutDashboard className="mr-2 h-4 w-4" />
-                  Dashboard
-                </Button>
-              )}
               <ModeToggle />
               <Button
                 variant="outline"

@@ -22,7 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { GripVertical, X, Plus } from 'lucide-react';
-import { DayPlan, Exercise } from '@/lib/fitness.types';
+import { DayPlan, Exercise, MuscleGroup } from '@/lib/fitness.types';
 import { formatMuscleGroupName } from '@/lib/fitness_utils';
 
 interface SortableExerciseItemProps {
@@ -66,9 +66,9 @@ const SortableExerciseItem: React.FC<SortableExerciseItemProps> = ({ exercise, o
             <div className="font-medium text-sm">{exercise.name}</div>
             <div className="flex items-center space-x-1 mt-1">
               <Badge variant="default" className="text-xs">
-                {formatMuscleGroupName(exercise.primary)}
+                {formatMuscleGroupName(exercise.primary_muscle_group)}
               </Badge>
-              {exercise.secondary.map(muscle => (
+              {exercise.secondary_muscle_groups.map((muscle: MuscleGroup) => (
                 <Badge key={muscle} variant="outline" className="text-xs">
                   {formatMuscleGroupName(muscle)}
                 </Badge>

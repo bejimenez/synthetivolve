@@ -7,11 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Share2, Download, Trophy, Clock, Weight, Target } from 'lucide-react';
-import { WorkoutLog, Exercise, MuscleGroup, MuscleGroupVolume } from '@/lib/fitness.types';
+import { WorkoutLogResponse, Exercise, MuscleGroup, MuscleGroupVolume } from '@/lib/fitness.types';
 import { MUSCLE_GROUPS, formatMuscleGroupName } from '@/lib/fitness_utils';
 
 interface WorkoutSummaryProps {
-  workout: WorkoutLog;
+  workout: WorkoutLogResponse;
   exercises: Record<string, Exercise>;
   duration: string;
   onClose: () => void;
@@ -36,25 +36,25 @@ const WorkoutSummary: React.FC<WorkoutSummaryProps> = ({
     });
 
     // Calculate statistics
-    workout.exercises.forEach(loggedExercise => {
-      const exercise = exercises[loggedExercise.exerciseId];
+    workout.exercise_logs?.forEach(loggedExercise => {
+      const exercise = exercises[loggedExercise.exercise_id || ''];
       if (!exercise) return;
 
-      loggedExercise.sets.forEach(set => {
+      loggedExercise.set_logs.forEach(set => {
         const setVolume = set.weight * set.reps;
         totalVolume += setVolume;
         totalSets += 1;
         totalReps += set.reps;
 
         // Add to muscle group volume
-        muscleVolume[exercise.primary] += setVolume;
-        exercise.secondary.forEach(muscle => {
+        muscleVolume[exercise.primary_muscle_group] += setVolume;
+        exercise.secondary_muscle_groups.forEach(muscle => {
           muscleVolume[muscle] += setVolume * 0.5;
         });
       });
 
       // Check for PRs (simplified - would need historical data comparison)
-      const maxWeight = Math.max(...loggedExercise.sets.map(s => s.weight));
+      const maxWeight = Math.max(...loggedExercise.set_logs.map(s => s.weight));
       if (maxWeight > 0 && Math.random() > 0.7) {
         prs.push(`${exercise.name}: ${maxWeight}kg`);
       }
@@ -77,7 +77,7 @@ const WorkoutSummary: React.FC<WorkoutSummaryProps> = ({
   };
 
   const generateShareText = () => {
-    const date = new Date(workout.date).toLocaleDateString();
+    const date = new Date(workout.workout_date).toLocaleDateString();
     const topMuscles = getTopMuscleGroups()
       .map(([muscle, volume]) => `${formatMuscleGroupName(muscle as MuscleGroup)}: ${volume.toFixed(0)}kg`)
       .join(', ');
@@ -124,7 +124,7 @@ ${summaryData.prs.length > 0 ? `🏆 PRs: ${summaryData.prs.join(', ')}` : ''}
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `workout-${new Date(workout.date).toISOString().split('T')[0]}.json`;
+    a.download = `workout-${new Date(workout.workout_date).toISOString().split('T')[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -237,11 +237,11 @@ ${summaryData.prs.length > 0 ? `🏆 PRs: ${summaryData.prs.join(', ')}` : ''}
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {workout.exercises.map(loggedExercise => {
-                  const exercise = exercises[loggedExercise.exerciseId];
+                {workout.exercise_logs?.map(loggedExercise => {
+                  const exercise = exercises[loggedExercise.exercise_id || ''];
                   if (!exercise) return null;
 
-                  const exerciseVolume = loggedExercise.sets.reduce(
+                  const exerciseVolume = loggedExercise.set_logs.reduce(
                     (total, set) => total + (set.weight * set.reps), 0
                   );
 
@@ -250,7 +250,7 @@ ${summaryData.prs.length > 0 ? `🏆 PRs: ${summaryData.prs.join(', ')}` : ''}
                       <div>
                         <div className="font-medium">{exercise.name}</div>
                         <div className="text-sm text-gray-600">
-                          {loggedExercise.sets.length} sets
+                          {loggedExercise.set_logs.length} sets
                         </div>
                       </div>
                       <div className="text-right">
@@ -265,14 +265,14 @@ ${summaryData.prs.length > 0 ? `🏆 PRs: ${summaryData.prs.join(', ')}` : ''}
           </Card>
 
           {/* Goal Achievement */}
-          {workout.customGoalEntry && (
+          {workout.custom_goal_entry && (
             <Card>
               <CardHeader>
                 <CardTitle>Session Goal</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-                  <p className="text-blue-800">{workout.customGoalEntry}</p>
+                  <p className="text-blue-800">{workout.custom_goal_entry}</p>
                 </div>
               </CardContent>
             </Card>

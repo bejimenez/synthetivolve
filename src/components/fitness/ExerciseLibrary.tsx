@@ -34,11 +34,11 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
   
   const [newExercise, setNewExercise] = useState<Partial<FitnessExercise>>({
     name: '',
-    primary: 'CHEST',
-    secondary: [],
+    primary_muscle_group: 'CHEST',
+    secondary_muscle_groups: [],
     equipment: '',
     notes: '',
-    useRIRRPE: true
+    use_rir_rpe: true
   });
 
   const filteredExercises = exercises.filter(exercise => {
@@ -53,25 +53,25 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
   });
 
   const handleCreateExercise = async () => {
-    if (!newExercise.name || !newExercise.primary) return;
+    if (!newExercise.name || !newExercise.primary_muscle_group) return;
 
     await createExercise({
       name: newExercise.name,
-      primary_muscle_group: newExercise.primary,
-      secondary_muscle_groups: newExercise.secondary || [],
+      primary_muscle_group: newExercise.primary_muscle_group,
+      secondary_muscle_groups: newExercise.secondary_muscle_groups || [],
       equipment: newExercise.equipment || '',
       notes: newExercise.notes || '',
-      use_rir_rpe: newExercise.useRIRRPE ?? true
+      use_rir_rpe: newExercise.use_rir_rpe ?? true
     });
     
     // Reset form
     setNewExercise({
       name: '',
-      primary: 'CHEST',
-      secondary: [],
+      primary_muscle_group: 'CHEST',
+      secondary_muscle_groups: [],
       equipment: '',
       notes: '',
-      useRIRRPE: true
+      use_rir_rpe: true
     });
     setShowCreateForm(false);
   };
@@ -79,12 +79,12 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
   // Update and Delete would be implemented here using the useFitness hook
 
   const handleSecondaryMuscleToggle = (muscle: MuscleGroup) => {
-    const current = newExercise.secondary || [];
+    const current = newExercise.secondary_muscle_groups || [];
     const updated = current.includes(muscle)
       ? current.filter(m => m !== muscle)
       : [...current, muscle];
     
-    setNewExercise(prev => ({ ...prev, secondary: updated }));
+    setNewExercise(prev => ({ ...prev, secondary_muscle_groups: updated }));
   };
 
   const isExerciseInMesocycle = (exerciseId: string) => {
@@ -161,8 +161,8 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
                   <div>
                     <Label htmlFor="primaryMuscle">Primary Muscle Group</Label>
                     <Select
-                      value={newExercise.primary || 'CHEST'}
-                      onValueChange={(value) => setNewExercise(prev => ({ ...prev, primary: value as MuscleGroup }))}
+                      value={newExercise.primary_muscle_group || 'CHEST'}
+                      onValueChange={(value) => setNewExercise(prev => ({ ...prev, primary_muscle_group: value as MuscleGroup }))}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -179,21 +179,21 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
 
                   <div className="flex items-center space-x-2">
                     <Switch
-                      id="useRIRRPE"
-                      checked={newExercise.useRIRRPE ?? true}
-                      onCheckedChange={(checked) => setNewExercise(prev => ({ ...prev, useRIRRPE: checked }))}
+                      id="use_rir_rpe"
+                      checked={newExercise.use_rir_rpe ?? true}
+                      onCheckedChange={(checked) => setNewExercise(prev => ({ ...prev, use_rir_rpe: checked }))}
                     />
-                    <Label htmlFor="useRIRRPE">Use RIR/RPE (vs %1RM)</Label>
+                    <Label htmlFor="use_rir_rpe">Use RIR/RPE (vs %1RM)</Label>
                   </div>
                 </div>
 
                 <div>
                   <Label>Secondary Muscle Groups</Label>
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {MUSCLE_GROUPS.filter(muscle => muscle !== newExercise.primary).map(muscle => (
+                    {MUSCLE_GROUPS.filter(muscle => muscle !== newExercise.primary_muscle_group).map(muscle => (
                       <Badge
                         key={muscle}
-                        variant={newExercise.secondary?.includes(muscle) ? "default" : "outline"}
+                        variant={newExercise.secondary_muscle_groups?.includes(muscle) ? "default" : "outline"}
                         className="cursor-pointer"
                         onClick={() => handleSecondaryMuscleToggle(muscle)}
                       >
@@ -221,13 +221,13 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
                       setShowCreateForm(false);
                       setEditingExercise(null);
                       setNewExercise({
-                        name: '',
-                        primary: 'CHEST',
-                        secondary: [],
-                        equipment: '',
-                        notes: '',
-                        useRIRRPE: true
-                      });
+                      name: '',
+                      primary_muscle_group: 'CHEST',
+                      secondary_muscle_groups: [],
+                      equipment: '',
+                      notes: '',
+                      use_rir_rpe: true
+                    });
                     }}
                   >
                     Cancel
@@ -248,9 +248,9 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
                   <h3 className="font-medium">{exercise.name}</h3>
                   <div className="flex flex-wrap items-center space-x-1 mt-1">
                     <Badge variant="default" className="text-xs">
-                      {formatMuscleGroupName(exercise.primary)}
+                      {formatMuscleGroupName(exercise.primary_muscle_group)}
                     </Badge>
-                    {(exercise.secondary || []).map(muscle => (
+                    {(exercise.secondary_muscle_groups || []).map(muscle => (
                       <Badge key={muscle} variant="outline" className="text-xs">
                         {formatMuscleGroupName(muscle)}
                       </Badge>

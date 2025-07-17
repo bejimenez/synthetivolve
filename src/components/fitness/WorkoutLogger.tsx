@@ -11,10 +11,10 @@ import { Play, Plus, Save, RotateCcw } from 'lucide-react';
 import { useFitness } from '@/hooks/useFitness';
 import ExerciseLogger from './ExerciseLogger';
 import WorkoutSummary from './WorkoutSummary';
-import { type MesocyclePlan as Mesocycle, type WorkoutLog, type LoggedExercise, type SetLog, type Exercise, type MuscleGroup, type DayPlan } from '@/lib/fitness.types';
+import { type MesocyclePlan as Mesocycle, type WorkoutLogResponse, type WorkoutLogCreatePayload, type LoggedExercise, type SetLog, type Exercise, type MuscleGroup, type DayPlan, type MesocyclePlanData } from '@/lib/fitness.types';
 
 interface WorkoutLoggerProps {
-  onWorkoutComplete?: (log: WorkoutLog) => void;
+  onWorkoutComplete?: (log: WorkoutLogResponse) => void;
 }
 
 const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
@@ -23,22 +23,23 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
   const [selectedDay, setSelectedDay] = useState<number>(1);
   const [workoutMode, setWorkoutMode] = useState<'planned' | 'freestyle' | null>(null);
-  const [currentWorkout, setCurrentWorkout] = useState<Partial<WorkoutLog> | null>(null);
+  const [currentWorkout, setCurrentWorkout] = useState<Partial<WorkoutLogResponse> | null>(null);
   const [loggedExercises, setLoggedExercises] = useState<LoggedExercise[]>([]);
   const [customGoal, setCustomGoal] = useState<string>('');
   const [showSummary, setShowSummary] = useState(false);
   const [startTime, setStartTime] = useState<Date | null>(null);
+  const [finalizedWorkout, setFinalizedWorkout] = useState<WorkoutLogResponse | null>(null);
 
   const allExercises = useMemo(() => {
     return rawExercises.reduce((acc, ex) => {
       acc[ex.id] = {
         id: ex.id,
         name: ex.name,
-        primary: ex.primary_muscle_group as MuscleGroup,
-        secondary: ex.secondary_muscle_groups as MuscleGroup[],
+        primary_muscle_group: ex.primary_muscle_group as MuscleGroup,
+        secondary_muscle_groups: ex.secondary_muscle_groups as MuscleGroup[],
         equipment: ex.equipment || '',
         notes: ex.notes || undefined,
-        useRIRRPE: ex.use_rir_rpe,
+        use_rir_rpe: ex.use_rir_rpe,
       };
       return acc;
     }, {} as Record<string, Exercise>);
@@ -47,13 +48,14 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
   const startPlannedWorkout = () => {
     if (!selectedMesocycle) return;
 
-    const workout: Partial<WorkoutLog> = {
-      mesocycleId: selectedMesocycle.id,
-      week: selectedWeek,
-      day: selectedDay,
-      date: new Date().toISOString(),
+    const workout: Partial<WorkoutLogCreatePayload> = {
+      mesocycle_id: selectedMesocycle.id,
+      week_number: selectedWeek,
+      day_number: selectedDay,
+      workout_date: new Date().toISOString().split('T')[0],
       exercises: [],
-      customGoalEntry: customGoal
+      custom_goal_entry: customGoal,
+      started_at: startTime?.toISOString(),
     };
 
     setCurrentWorkout(workout);
@@ -63,10 +65,11 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
   };
 
   const startFreestyleWorkout = () => {
-    const workout: Partial<WorkoutLog> = {
-      date: new Date().toISOString(),
+    const workout: Partial<WorkoutLogCreatePayload> = {
+      workout_date: new Date().toISOString().split('T')[0],
       exercises: [],
-      customGoalEntry: customGoal
+      custom_goal_entry: customGoal,
+      started_at: startTime?.toISOString(),
     };
 
     setCurrentWorkout(workout);
@@ -106,17 +109,39 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
   const completeWorkout = async () => {
     if (!currentWorkout) return;
 
-    const completedWorkout: WorkoutLog = {
-      ...currentWorkout,
+    const completedWorkoutPayload: WorkoutLogCreatePayload = {
+      mesocycle_id: currentWorkout.mesocycle_id || null,
+      week_number: currentWorkout.week_number || null,
+      day_number: currentWorkout.day_number || null,
+      workout_date: currentWorkout.workout_date || new Date().toISOString().split('T')[0],
+      custom_goal_entry: currentWorkout.custom_goal_entry || null,
       exercises: loggedExercises,
-    } as WorkoutLog;
+      started_at: startTime?.toISOString() || null,
+      completed_at: new Date().toISOString(),
+      log_data: currentWorkout.log_data, // Keep log_data if it was set
+    };
 
-    // await createWorkoutLog(completedWorkout);
+    // Call API to save workout log
+    const response = await fetch('/api/fitness/workout-logs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(completedWorkoutPayload),
+    });
 
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Failed to save workout log:', errorData);
+      // Handle error, show toast etc.
+      return;
+    }
+
+    const savedWorkout: WorkoutLogResponse = await response.json();
+
+    setFinalizedWorkout(savedWorkout);
     setShowSummary(true);
 
     if (onWorkoutComplete) {
-      onWorkoutComplete(completedWorkout);
+      onWorkoutComplete(savedWorkout);
     }
   };
 
@@ -140,10 +165,10 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
     return hours > 0 ? `${hours}:${remainingMinutes.toString().padStart(2, '0')}` : `${minutes}:00`;
   };
 
-  if (showSummary && currentWorkout) {
+  if (showSummary && finalizedWorkout) {
     return (
       <WorkoutSummary
-        workout={currentWorkout as WorkoutLog}
+        workout={finalizedWorkout}
         exercises={allExercises}
         duration={getWorkoutDuration()}
         onClose={() => {
@@ -153,6 +178,7 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
           setWorkoutMode(null);
           setCustomGoal('');
           setStartTime(null);
+          setFinalizedWorkout(null);
         }}
       />
     );
@@ -170,7 +196,7 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
               <div>
                 {workoutMode === 'planned' ? (
                   <span>
-                    {selectedMesocycle?.name} - Week {selectedWeek}, Day {selectedDay}
+                    {selectedMesocycle?.name} - Week {currentWorkout.week_number}, Day {currentWorkout.day_number}
                   </span>
                 ) : (
                   <span>Freestyle Workout</span>
@@ -189,11 +215,11 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
               </div>
             </CardTitle>
           </CardHeader>
-          {customGoal && (
+          {currentWorkout.custom_goal_entry && (
             <CardContent>
               <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
                 <p className="text-sm text-blue-800">
-                  <strong>Goal:</strong> {customGoal}
+                  <strong>Goal:</strong> {currentWorkout.custom_goal_entry}
                 </p>
               </div>
             </CardContent>
@@ -291,15 +317,16 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
                     if (mesocycleRow) {
                         const planData = mesocycleRow.plan_data as { days?: DayPlan[], exerciseDB?: Record<string, Exercise> } | null;
                         const mesocycle: Mesocycle = {
-                            id: mesocycleRow.id,
-                            name: mesocycleRow.name,
-                            weeks: mesocycleRow.weeks,
-                            daysPerWeek: mesocycleRow.days_per_week,
-                            specialization: mesocycleRow.specialization as MuscleGroup[],
-                            goalStatement: mesocycleRow.goal_statement || undefined,
-                            days: planData?.days || [],
-                            exerciseDB: planData?.exerciseDB || {},
-                        };
+                        id: mesocycleRow.id,
+                        name: mesocycleRow.name,
+                        weeks: mesocycleRow.weeks,
+                        days_per_week: mesocycleRow.days_per_week,
+                        specialization: mesocycleRow.specialization as MuscleGroup[],
+                        goal_statement: mesocycleRow.goal_statement || undefined,
+                        days: planData?.days || [],
+                        exerciseDB: planData?.exerciseDB || {},
+                        plan_data: mesocycleRow.plan_data as MesocyclePlanData | null // Ensure plan_data is passed
+                    };
                         setSelectedMesocycle(mesocycle);
                     } else {
                         setSelectedMesocycle(null);
@@ -350,7 +377,7 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {Array.from({ length: selectedMesocycle.daysPerWeek }, (_, i) => i + 1).map((day: number) => (
+                        {Array.from({ length: selectedMesocycle.days_per_week }, (_, i) => i + 1).map((day: number) => (
                           <SelectItem key={day} value={day.toString()}>
                             Day {day}
                           </SelectItem>

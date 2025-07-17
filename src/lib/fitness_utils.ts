@@ -32,10 +32,10 @@ export function calculateMuscleGroupVolume(exercises: Exercise[], exerciseIds: s
     const exercise = exercises.find(ex => ex.id === exerciseId);
     if (exercise) {
       // Primary muscle group gets 1 set
-      volume[exercise.primary] += 1;
+      volume[exercise.primary_muscle_group] += 1;
       
       // Secondary muscle groups get 0.5 sets each
-      exercise.secondary.forEach(secondaryGroup => {
+      exercise.secondary_muscle_groups.forEach((secondaryGroup: MuscleGroup) => {
         volume[secondaryGroup] += 0.5;
       });
     }
@@ -59,7 +59,7 @@ export function calculateWeeklyMuscleVolume(mesocycle: MesocyclePlan): MuscleGro
       day.exercises
     );
     
-    MUSCLE_GROUPS.forEach(group => {
+    MUSCLE_GROUPS.forEach((group: MuscleGroup) => {
       weeklyVolume[group] += dayVolume[group];
     });
   });
@@ -111,12 +111,16 @@ export function validateMesocyclePlan(plan: Partial<MesocyclePlan>): string[] {
     errors.push('Weeks must be between 2 and 16');
   }
 
-  if (!plan.daysPerWeek || plan.daysPerWeek < 1 || plan.daysPerWeek > 7) {
+  if (!plan.days_per_week || plan.days_per_week < 1 || plan.days_per_week > 7) {
     errors.push('Days per week must be between 1 and 7');
   }
 
   if (plan.specialization && plan.specialization.length > 2) {
     errors.push('Maximum 2 muscle groups can be specialized');
+  }
+
+  if (plan.goal_statement !== undefined && plan.goal_statement.trim() === '') {
+    errors.push('Goal statement cannot be empty if provided');
   }
 
   return errors;

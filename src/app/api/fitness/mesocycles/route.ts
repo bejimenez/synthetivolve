@@ -25,6 +25,7 @@ const mesocycleCreateSchema = z.object({
   goal_statement: z.string().optional(),
   is_template: z.boolean().optional(),
   days: z.array(dayPlanSchema),
+  plan_data: z.any().optional(), // Added plan_data to schema
 })
 
 export async function GET() {
@@ -43,7 +44,7 @@ export async function GET() {
     // This is a simplified GET. A real implementation would fetch and join related data.
     const { data, error } = await supabase
       .from('mesocycles')
-      .select('*')
+      .select('*, plan_data')
       .eq('user_id', user.id)
       .is('deleted_at', null)
       .order('created_at', { ascending: false })

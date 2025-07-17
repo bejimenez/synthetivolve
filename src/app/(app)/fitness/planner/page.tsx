@@ -4,13 +4,13 @@
 import { useRouter } from 'next/navigation';
 import MesocyclePlanner from '@/components/fitness/MesocyclePlanner';
 import { useFitness } from '@/hooks/useFitness';
-import { MesocyclePlan } from '@/lib/fitness.types';
+import { MesocycleSavePayload } from '@/lib/fitness.types';
 
 export default function PlannerPage() {
   const router = useRouter();
   const { createMesocycle } = useFitness();
 
-  const handleSave = async (mesocycle: MesocyclePlan) => {
+  const handleSave = async (mesocycle: MesocycleSavePayload) => {
     await createMesocycle(mesocycle);
     router.push('/');
   };

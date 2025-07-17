@@ -43,7 +43,7 @@ export async function middleware(request: NextRequest) {
   } else {
     // Protect other app routes (e.g., /fitness, /profile)
     // If user is not logged in and tries to access any other app route, redirect to auth
-    const protectedRoutes = ['/fitness', '/profile']; // Add other protected routes here
+    const protectedRoutes = ['/fitness', '/profile', '/nutrition']; // Add other protected routes here
     const isProtectedRoute = protectedRoutes.some(route => request.nextUrl.pathname.startsWith(route));
 
     if (isProtectedRoute && !user) {

@@ -82,12 +82,12 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
                 <CardTitle className="text-lg">{template.name}</CardTitle>
                 <div className="flex flex-wrap gap-1">
                   <Badge variant="outline" className="text-xs">
-                    <Calendar className="w-3 h-3 mr-1" />
-                    {template.weeks}w
-                  </Badge>
-                  <Badge variant="outline" className="text-xs">
-                    {template.days_per_week}d/week
-                  </Badge>
+            <Calendar className="w-3 h-3 mr-1" />
+            {template.weeks}w
+          </Badge>
+          <Badge variant="outline" className="text-xs">
+            {template.days_per_week}d/week
+          </Badge>
                   <Badge variant="outline" className="text-xs">
                     {stats.uniqueExercises} exercises
                   </Badge>
@@ -104,13 +104,13 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
                   </div>
                 )}
 
-                {template.specialization.length > 0 && (
+                {template.specialization && template.specialization.length > 0 && (
                   <div>
                     <p className="text-sm font-medium text-gray-700 mb-2">Specialization:</p>
                     <div className="flex flex-wrap gap-1">
-                      {template.specialization.map(muscle => (
+                      {(template.specialization as MuscleGroup[]).map((muscle: MuscleGroup) => (
                         <Badge key={muscle} variant="default" className="text-xs">
-                          {formatMuscleGroupName(muscle as MuscleGroup)}
+                          {formatMuscleGroupName(muscle)}
                         </Badge>
                       ))}
                     </div>

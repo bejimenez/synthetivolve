@@ -27,6 +27,9 @@ const workoutLogCreateSchema = z.object({
   workout_date: z.string().date(),
   custom_goal_entry: z.string().optional().nullable(),
   exercises: z.array(exerciseLogSchema),
+  started_at: z.string().datetime().optional().nullable(), // Added
+  completed_at: z.string().datetime().optional().nullable(), // Added
+  log_data: z.any().optional().nullable(), // Added
 });
 
 export async function GET() {
@@ -77,7 +80,7 @@ export async function POST(request: NextRequest) {
     // 1. Create the main workout log
     const { data: newLog, error: logError } = await supabase
         .from('workout_logs')
-        .insert({ ...workoutData, user_id: user.id, completed_at: new Date().toISOString() })
+        .insert({ ...workoutData, user_id: user.id })
         .select()
         .single();
 

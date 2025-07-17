@@ -134,8 +134,8 @@ export function GoalProgressWidget({ onCreateGoal, onManageGoals }: GoalProgress
             </div>
             <Progress value={progressData.progressPercent} className="h-2" />
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Started {new Date(activeGoal.start_date).toLocaleDateString()}</span>
-              <span>Ends {new Date(activeGoal.end_date).toLocaleDateString()}</span>
+              <span>Started {new Date(activeGoal.start_date || '').toLocaleDateString()}</span>
+            <span>Ends {new Date(activeGoal.end_date || '').toLocaleDateString()}</span>
             </div>
           </div>
         )}
