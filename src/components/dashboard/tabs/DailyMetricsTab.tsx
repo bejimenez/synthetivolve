@@ -3,7 +3,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/components/auth/AuthProvider'
 import { useProfile } from '@/hooks/useProfile'
 import { WeightEntryForm } from '@/components/weight/WeightEntryForm'
 import { WeightHistory } from '@/components/weight/WeightHistory'
@@ -16,7 +15,6 @@ import { Button } from '@/components/ui/button'
 import { AlertTriangle } from 'lucide-react'
 
 export function DailyMetricsTab() {
-  const { user } = useAuth()
   const { isProfileComplete } = useProfile()
   const [showGoalCreation, setShowGoalCreation] = useState(false)
   const router = useRouter()

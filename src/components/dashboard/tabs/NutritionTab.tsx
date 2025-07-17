@@ -1,22 +1,21 @@
 // src/components/dashboard/tabs/NutritionTab.tsx
 'use client'
 
-import { NutritionOverview } from '@/components/nutrition/NutritionOverview'
+import { IntegratedNutritionOverview } from '@/components/dashboard/nutrition/IntegratedNutritionOverview'
 import { NutritionDataProvider } from '@/components/nutrition/NutritionDataProvider'
-import { Button } from '@/components/ui/button'
-import { useRouter } from 'next/navigation'
+import { NutritionQuickActions } from '@/components/dashboard/nutrition/NutritionQuickActions'
 
 export function NutritionTab() {
-  const router = useRouter()
-
   return (
-    <div className="mt-4 space-y-4">
-      <div className="flex justify-end gap-2">
-        <Button onClick={() => router.push('/nutrition/logger')}>Log Food</Button>
-        <Button variant="outline" onClick={() => router.push('/nutrition/overview')}>View Nutrition Overview</Button>
-      </div>
+    <div className="mt-4 space-y-6">
       <NutritionDataProvider>
-        <NutritionOverview />
+        <IntegratedNutritionOverview />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            {/* Placeholder for future charts or data, e.g., calorie sources pie chart */}
+          </div>
+          <NutritionQuickActions />
+        </div>
       </NutritionDataProvider>
     </div>
   )
