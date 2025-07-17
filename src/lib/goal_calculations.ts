@@ -122,6 +122,7 @@ export function calculateGoalMacros(
   const carbs = remainingCalories / 4
 
   return {
+    calories: Math.round(adjustedCalories),
     protein: Math.round(protein),
     fat: Math.round(fat),
     carbs: Math.round(carbs),
