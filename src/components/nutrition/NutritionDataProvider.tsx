@@ -1,3 +1,4 @@
+// src/components/nutrition/NutritionDataProvider.tsx
 'use client'
 
 import { createContext, useContext, useReducer, useCallback, useEffect } from 'react'
@@ -24,19 +25,21 @@ type NutritionAction =
 
 import { FoodSearchResult, FoodDetails } from '@/lib/nutrition/usda'
 
+// Updated interface to handle manual foods
+interface FoodLogData {
+  fdcId: number | null  // Changed from number to number | null to support manual foods
+  quantity: number
+  unit: string
+  logged_at: string
+  logged_date: string
+  foodDetails: FoodDetails | FoodSearchResult  // Support both types
+}
+
 interface NutritionContextType extends NutritionState {
-  addFoodLog: (log: {
-    fdcId: number;
-    quantity: number;
-    unit: string;
-    logged_at: string;
-    logged_date: string;
-    foodDetails: FoodDetails;
-  }) => Promise<FoodLogWithFood | null>
+  addFoodLog: (log: FoodLogData) => Promise<FoodLogWithFood | null>
   updateFoodLog: (id: string, updates: Partial<FoodLogInsert>) => Promise<FoodLogWithFood | null>
   removeFoodLog: (id: string) => Promise<boolean>
   searchFoods: (query: string) => Promise<FoodSearchResult[]>
-  // getFoodDetails: (fdcId: number) => Promise<Food | null> // Commented out for now
   refreshLogs: () => Promise<void>
 }
 
@@ -133,17 +136,13 @@ export function NutritionDataProvider({ children }: { children: React.ReactNode 
     refreshLogs()
   }, [refreshLogs])
 
-  const addFoodLog = async (log: {
-    fdcId: number;
-    quantity: number;
-    unit: string;
-    logged_at: string;
-    logged_date: string;
-    foodDetails: FoodDetails;
-  }) => {
+  // Updated addFoodLog function to handle both USDA and manual foods
+  const addFoodLog = async (log: FoodLogData) => {
     if (!user) return null
 
     try {
+      dispatch({ type: 'SET_LOADING', payload: true })
+
       const response = await fetch('/api/nutrition/log-entry', {
         method: 'POST',
         headers: {
@@ -159,27 +158,32 @@ export function NutritionDataProvider({ children }: { children: React.ReactNode 
 
       const newLog = await response.json()
 
-      // The newLog from the API will be a FoodLog, but we need FoodLogWithFood for the state.
-      // We'll need to fetch the full food details or rely on the API to return it.
-      // For now, we'll assume the API returns enough to construct FoodLogWithFood.
-      // In a real scenario, the API might return the joined data directly.
-      const foodData = await supabase.from('foods').select('*').eq('id', newLog.food_id).single()
-      if (foodData.error) throw foodData.error
+      // Fetch the full food details to construct the response
+      const { data: foodData, error: foodError } = await supabase
+        .from('foods')
+        .select('*')
+        .eq('id', newLog.food_id)
+        .single()
+
+      if (foodError) throw foodError
 
       const logWithNutrients: FoodLogWithFood = {
         ...newLog,
-        food: foodData.data,
-        nutrients: calculateNutrients(foodData.data, newLog.quantity, newLog.unit)
+        food: foodData,
+        nutrients: calculateNutrients(foodData, newLog.quantity, newLog.unit)
       }
 
       dispatch({ type: 'ADD_FOOD_LOG', payload: logWithNutrients })
-
-      // Recent food usage is now handled by the /api/nutrition/log-entry route
-
       return logWithNutrients
+
     } catch (err) {
-      dispatch({ type: 'SET_ERROR', payload: err instanceof Error ? err.message : 'Failed to add food log' })
+      dispatch({ 
+        type: 'SET_ERROR', 
+        payload: err instanceof Error ? err.message : 'Failed to add food log' 
+      })
       return null
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false })
     }
   }
 
@@ -232,28 +236,15 @@ export function NutritionDataProvider({ children }: { children: React.ReactNode 
     try {
       const response = await fetch(`/api/nutrition/search?query=${encodeURIComponent(query)}`)
       if (!response.ok) {
-        throw new Error('Failed to search USDA foods');
+        throw new Error('Failed to search USDA foods')
       }
-      const usdaResults: FoodSearchResult[] = await response.json();
-      return usdaResults;
+      const usdaResults: FoodSearchResult[] = await response.json()
+      return usdaResults
     } catch (err) {
-      console.error('Food search error:', err);
-      return [];
+      console.error('Food search error:', err)
+      return []
     }
   }
-
-  // const getFoodDetails = async (fdcId: number): Promise<Food | null> => {
-  //   try {
-  //     // This function would ideally call a new API route like /api/nutrition/food/[id]
-  //     // that handles fetching from USDA and inserting into our DB if not found.
-  //     // For now, it's commented out as it's not directly used by AddFoodDialog
-  //     // and requires a new API route to be implemented.
-  //     return null;
-  //   } catch (err) {
-  //     console.error('Food details error:', err);
-  //     return null;
-  //   }
-  // }
 
   const value: NutritionContextType = {
     ...state,
