@@ -34,6 +34,7 @@ export function DailyMetricsTab() {
   const { isProfileComplete } = useProfile()
   const [showGoalCreation, setShowGoalCreation] = useState(false)
   const [isWeightHistoryOpen, setIsWeightHistoryOpen] = useState(true) // Default open
+  const [isGoalProgressChartOpen, setIsGoalProgressChartOpen] = useState(true) // Default open
   const router = useRouter()
 
   return (
@@ -75,12 +76,12 @@ export function DailyMetricsTab() {
       {/* Goal Progress */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <GoalProgressWidget onCreateGoal={() => setShowGoalCreation(true)} />
-        <Collapsible className="lg:col-span-1">
+        <Collapsible open={isGoalProgressChartOpen} onOpenChange={setIsGoalProgressChartOpen} className="lg:col-span-1">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">Goal Progress Chart</h3>
             <CollapsibleTrigger asChild>
               <Button variant="ghost" size="sm" className="w-9 p-0">
-                <ChevronDown className={cn("h-4 w-4 transition-transform", isWeightHistoryOpen ? "rotate-180" : "rotate-0")} />
+                <ChevronDown className={cn("h-4 w-4 transition-transform", isGoalProgressChartOpen ? "rotate-180" : "rotate-0")} />
                 <span className="sr-only">Toggle Goal Progress Chart</span>
               </Button>
             </CollapsibleTrigger>

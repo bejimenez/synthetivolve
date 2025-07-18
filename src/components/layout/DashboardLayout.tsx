@@ -67,7 +67,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+      <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full pb-20 md:pb-0">
         {children}
       </main>
     </div>
