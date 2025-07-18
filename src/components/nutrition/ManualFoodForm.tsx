@@ -24,8 +24,26 @@ interface ManualFoodData {
   sodium_per_100g?: number
 }
 
+interface Food {
+  id: string
+  fdc_id: number | null
+  description: string
+  brand_name: string | null
+  serving_size: number | null
+  serving_unit: string | null
+  calories_per_100g: number | null
+  protein_per_100g: number | null
+  fat_per_100g: number | null
+  carbs_per_100g: number | null
+  fiber_per_100g: number | null
+  sugar_per_100g: number | null
+  sodium_per_100g: number | null
+  created_at: string | null
+  updated_at: string | null
+}
+
 interface ManualFoodFormProps {
-  onFoodCreated: (food: any) => void
+  onFoodCreated: (food: Food) => void
   onCancel: () => void
 }
 
@@ -73,10 +91,10 @@ export function ManualFoodForm({ onFoodCreated, onCancel }: ManualFoodFormProps)
       // Prepare data for API (remove empty strings and undefined values)
       const cleanedData = Object.entries(formData).reduce((acc, [key, value]) => {
         if (value !== undefined && value !== '') {
-          acc[key] = value
+          acc[key as keyof ManualFoodData] = value
         }
         return acc
-      }, {} as any)
+      }, {} as Partial<ManualFoodData>)
 
       const response = await fetch('/api/nutrition/foods/manual', {
         method: 'POST',
