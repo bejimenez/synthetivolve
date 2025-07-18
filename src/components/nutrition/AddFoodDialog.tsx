@@ -4,7 +4,6 @@
 import { useState, useEffect } from 'react'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useNutrition } from './NutritionDataProvider'
-import { useNutritionSettings } from '@/hooks/useNutritionSettings'
 import { FoodSearchResult } from '@/lib/nutrition/usda'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
