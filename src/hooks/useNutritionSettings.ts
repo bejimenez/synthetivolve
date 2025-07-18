@@ -46,9 +46,9 @@ export function useNutritionSettings(): UseNutritionSettingsReturn {
         .from('nutrition_settings')
         .select('*')
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle() // Use maybeSingle instead of single to handle no records gracefully
 
-      if (fetchError && fetchError.code !== 'PGRST116') {
+      if (fetchError) {
         throw fetchError
       }
 
@@ -67,8 +67,23 @@ export function useNutritionSettings(): UseNutritionSettingsReturn {
           .select()
           .single()
 
-        if (createError) throw createError
-        setSettings(newSettings)
+        if (createError) {
+          // If we get a duplicate key error, try to fetch the existing record
+          if (createError.code === '23505') {
+            const { data: existingSettings, error: existingError } = await supabase
+              .from('nutrition_settings')
+              .select('*')
+              .eq('user_id', user.id)
+              .single()
+            
+            if (existingError) throw existingError
+            setSettings(existingSettings)
+          } else {
+            throw createError
+          }
+        } else {
+          setSettings(newSettings)
+        }
       } else {
         setSettings(data)
       }

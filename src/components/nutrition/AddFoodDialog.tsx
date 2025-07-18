@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useNutrition } from './NutritionDataProvider'
+import { useNutritionSettings } from '@/hooks/useNutritionSettings'
 import { FoodSearchResult } from '@/lib/nutrition/usda'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -12,6 +13,7 @@ import { Loader2, Search, Plus } from 'lucide-react'
 import { format } from 'date-fns'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ManualFoodForm } from './ManualFoodForm'
+import { createTimezoneAwareLoggedAt } from '@/lib/nutrition/timezone-utils'
 import type { RecentFood, Food } from './NutritionDataProvider'
 
 interface AddFoodDialogProps {
@@ -38,6 +40,7 @@ export function AddFoodDialog({ open, onClose, onFoodAdded, selectedDate, initia
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500)
   const { searchFoods, addFoodLog, recentFoods, refreshLogs } = useNutrition()
+  const { settings: nutritionSettings } = useNutritionSettings()
 
   // 🔥 FIX: Set the intended logging hour when dialog opens and preserve it
   useEffect(() => {
@@ -64,41 +67,48 @@ export function AddFoodDialog({ open, onClose, onFoodAdded, selectedDate, initia
     }
   }, [debouncedSearchTerm, searchFoods])
 
-  const handleAddFood = async () => {
-    if (!selectedFood) return
+  // Simple fix for AddFoodDialog.tsx handleAddFood function
+// Replace the existing handleAddFood function with this:
 
-    const loggedAtDate = new Date(selectedDate)
-    
-    // 🔥 FIX: Use intendedLoggingHour instead of initialHour to ensure consistency
-    if (intendedLoggingHour !== null) {
-      loggedAtDate.setHours(intendedLoggingHour, 0, 0, 0)
-    } else {
-      // Fallback to current time if no intended hour is preserved
-      loggedAtDate.setHours(new Date().getHours(), new Date().getMinutes(), 0, 0)
-    }
+const handleAddFood = async () => {
+  if (!selectedFood) return
 
-    // 🔥 DEBUG: Log the timestamps to understand timezone conversion
-    console.log('🔍 DEBUG - Time logging analysis:')
-    console.log('Selected date:', selectedDate)
-    console.log('Intended hour:', intendedLoggingHour)
-    console.log('Local logged_at date:', loggedAtDate)
-    console.log('ISO string sent to API:', loggedAtDate.toISOString())
-    console.log('Local hour after setHours:', loggedAtDate.getHours())
-    console.log('UTC hour from ISO:', new Date(loggedAtDate.toISOString()).getUTCHours())
+  // 🔥 SIMPLE FIX: Create date in local timezone and adjust for UTC conversion
+  const localDate = new Date(selectedDate)
+  const targetHour = intendedLoggingHour ?? new Date().getHours()
+  
+  // Set the time in local timezone
+  localDate.setHours(targetHour, 0, 0, 0)
+  
+  // Get timezone offset in minutes
+  const timezoneOffset = localDate.getTimezoneOffset()
+  
+  // Create a new date that accounts for the timezone offset
+  // This ensures that when converted to UTC, it maintains the intended local hour
+  const adjustedDate = new Date(localDate.getTime() - (timezoneOffset * 60000))
+  
+  // 🔥 DEBUG: Log the conversion
+  console.log('🔍 DEBUG - Simple timezone fix:')
+  console.log('Target hour:', targetHour)
+  console.log('Local date after setHours:', localDate)
+  console.log('Timezone offset (minutes):', timezoneOffset)
+  console.log('Adjusted date:', adjustedDate)
+  console.log('Final ISO string:', adjustedDate.toISOString())
+  console.log('Expected hour in local time:', targetHour)
 
-    const newLog = {
-      fdcId: selectedFood.fdcId === 0 ? null : selectedFood.fdcId, // Ensure manual foods have fdcId: null
-      quantity,
-      unit,
-      logged_at: loggedAtDate.toISOString(),
-      logged_date: format(selectedDate, 'yyyy-MM-dd'),
-      foodDetails: selectedFood,
-    }
-    
-    await addFoodLog(newLog)
-    onFoodAdded()
-    handleClose()
+  const newLog = {
+    fdcId: selectedFood.fdcId === 0 ? null : selectedFood.fdcId,
+    quantity,
+    unit,
+    logged_at: adjustedDate.toISOString(),
+    logged_date: format(selectedDate, 'yyyy-MM-dd'),
+    foodDetails: selectedFood,
   }
+  
+  await addFoodLog(newLog)
+  onFoodAdded()
+  handleClose()
+}
 
   const handleManualFoodCreated = (newFood: Food) => {
     // Transform the created food into a FoodSearchResult for logging
