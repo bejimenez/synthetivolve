@@ -134,60 +134,174 @@ export function NutritionDataProvider({ children }: { children: React.ReactNode 
 
   useEffect(() => {
     refreshLogs()
-  }, [refreshLogs])
+
+    const channel = supabase
+      .channel('food_logs_realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'food_logs', filter: `user_id=eq.${user?.id}` },
+        async (payload) => {
+          if (!user) return;
+
+          // Helper to fetch food details for a log
+          const fetchFoodDetails = async (log: FoodLog): Promise<FoodLogWithFood | null> => {
+            const { data: foodData, error: foodError } = await supabase
+              .from('foods')
+              .select('*')
+              .eq('id', log.food_id)
+              .single();
+
+            if (foodError) {
+              console.error('Error fetching food details for real-time update:', foodError);
+              return null;
+            }
+
+            return {
+              ...log,
+              food: foodData,
+              nutrients: calculateNutrients(foodData, log.quantity, log.unit),
+            };
+          };
+
+          if (payload.eventType === 'INSERT') {
+            const newLog = payload.new as FoodLog;
+            const logWithFood = await fetchFoodDetails(newLog);
+            if (logWithFood) {
+              dispatch({ type: 'ADD_FOOD_LOG', payload: logWithFood });
+            }
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedLog = payload.new as FoodLog;
+            const logWithFood = await fetchFoodDetails(updatedLog);
+            if (logWithFood) {
+              dispatch({ type: 'UPDATE_FOOD_LOG', payload: logWithFood });
+            }
+          } else if (payload.eventType === 'DELETE') {
+            const deletedLogId = payload.old.id as string;
+            dispatch({ type: 'REMOVE_FOOD_LOG', payload: deletedLogId });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refreshLogs, user, supabase]);
 
   // Updated addFoodLog function to handle both USDA and manual foods
   const addFoodLog = async (log: FoodLogData) => {
-    if (!user) return null
+    if (!user) return null;
+
+    // Optimistic update
+    const tempId = `temp-${Date.now()}`;
+    const optimisticLog: FoodLogWithFood = {
+      id: tempId,
+      user_id: user.id,
+      food_id: '', // Will be replaced by actual food_id from backend
+      quantity: log.quantity,
+      unit: log.unit,
+      logged_at: log.logged_at,
+      logged_date: log.logged_date,
+      food: {
+        id: '', // Will be replaced
+        description: (log.foodDetails as FoodDetails).description || (log.foodDetails as FoodSearchResult).description,
+        created_at: new Date().toISOString(),
+        fdc_id: log.fdcId,
+        brand_name: (log.foodDetails as FoodDetails).brandName || null,
+        serving_size: (log.foodDetails as FoodDetails).servingSize || null,
+        serving_unit: (log.foodDetails as FoodDetails).servingUnit || null,
+        calories_per_100g: null,
+        protein_per_100g: null,
+        fat_per_100g: null,
+        carbs_per_100g: null,
+        fiber_per_100g: null,
+        sugar_per_100g: null,
+        sodium_per_100g: null,
+        updated_at: null,
+      },
+      nutrients: calculateNutrients(
+        {
+          id: '', // Will be replaced
+          description: (log.foodDetails as FoodDetails).description || (log.foodDetails as FoodSearchResult).description,
+          created_at: new Date().toISOString(),
+          fdc_id: log.fdcId,
+          brand_name: (log.foodDetails as FoodDetails).brandName || null,
+          serving_size: (log.foodDetails as FoodDetails).servingSize || null,
+          serving_unit: (log.foodDetails as FoodDetails).servingUnit || null,
+          calories_per_100g: null,
+          protein_per_100g: null,
+          fat_per_100g: null,
+          carbs_per_100g: null,
+          fiber_per_100g: null,
+          sugar_per_100g: null,
+          sodium_per_100g: null,
+          updated_at: null,
+        },
+        log.quantity,
+        log.unit
+      ),
+      created_at: new Date().toISOString(),
+      updated_at: null,
+    };
+    dispatch({ type: 'ADD_FOOD_LOG', payload: optimisticLog });
 
     try {
-      dispatch({ type: 'SET_LOADING', payload: true })
-
       const response = await fetch('/api/nutrition/log-entry', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(log),
-      })
+      });
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to add food log')
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to add food log');
       }
 
-      const newLog = await response.json()
+      const newLog = await response.json();
 
       // Fetch the full food details to construct the response
       const { data: foodData, error: foodError } = await supabase
         .from('foods')
         .select('*')
         .eq('id', newLog.food_id)
-        .single()
+        .single();
 
-      if (foodError) throw foodError
+      if (foodError) throw foodError;
 
       const logWithNutrients: FoodLogWithFood = {
         ...newLog,
         food: foodData,
-        nutrients: calculateNutrients(foodData, newLog.quantity, newLog.unit)
-      }
+        nutrients: calculateNutrients(foodData, newLog.quantity, newLog.unit),
+      };
 
-      dispatch({ type: 'ADD_FOOD_LOG', payload: logWithNutrients })
-      return logWithNutrients
-
+      // Replace optimistic log with actual log
+      dispatch({ type: 'REMOVE_FOOD_LOG', payload: tempId }); // Remove optimistic
+      dispatch({ type: 'ADD_FOOD_LOG', payload: logWithNutrients }); // Add actual
+      return logWithNutrients;
     } catch (err) {
-      dispatch({ 
-        type: 'SET_ERROR', 
-        payload: err instanceof Error ? err.message : 'Failed to add food log' 
-      })
-      return null
-    } finally {
-      dispatch({ type: 'SET_LOADING', payload: false })
+      dispatch({ type: 'REMOVE_FOOD_LOG', payload: tempId }); // Revert optimistic update on error
+      dispatch({
+        type: 'SET_ERROR',
+        payload: err instanceof Error ? err.message : 'Failed to add food log',
+      });
+      return null;
     }
   }
 
   const updateFoodLog = async (id: string, updates: Partial<FoodLogInsert>) => {
+    // Optimistic update
+    const originalLog = state.foodLogs.find(log => log.id === id);
+    if (!originalLog) return null;
+
+    const updatedOptimisticLog: FoodLogWithFood = {
+      ...originalLog,
+      ...updates,
+      nutrients: calculateNutrients(originalLog.food, updates.quantity || originalLog.quantity, updates.unit || originalLog.unit),
+    };
+    dispatch({ type: 'UPDATE_FOOD_LOG', payload: updatedOptimisticLog });
+
     try {
       const { data, error } = await supabase
         .from('food_logs')
@@ -197,38 +311,49 @@ export function NutritionDataProvider({ children }: { children: React.ReactNode 
           *,
           food:foods(*)
         `)
-        .single()
+        .single();
 
-      if (error) throw error
+      if (error) throw error;
 
       const logWithNutrients: FoodLogWithFood = {
         ...data,
         food: data.food,
-        nutrients: calculateNutrients(data.food, data.quantity, data.unit)
-      }
+        nutrients: calculateNutrients(data.food, data.quantity, data.unit),
+      };
 
-      dispatch({ type: 'UPDATE_FOOD_LOG', payload: logWithNutrients })
-      return logWithNutrients
+      dispatch({ type: 'UPDATE_FOOD_LOG', payload: logWithNutrients }); // Confirm with actual data
+      return logWithNutrients;
     } catch (err) {
-      dispatch({ type: 'SET_ERROR', payload: err instanceof Error ? err.message : 'Failed to update food log' })
-      return null
+      dispatch({ type: 'UPDATE_FOOD_LOG', payload: originalLog }); // Revert optimistic update on error
+      dispatch({
+        type: 'SET_ERROR',
+        payload: err instanceof Error ? err.message : 'Failed to update food log',
+      });
+      return null;
     }
   }
 
   const removeFoodLog = async (id: string) => {
+    // Optimistic update
+    const originalFoodLogs = state.foodLogs;
+    dispatch({ type: 'REMOVE_FOOD_LOG', payload: id });
+
     try {
       const { error } = await supabase
         .from('food_logs')
         .delete()
-        .eq('id', id)
+        .eq('id', id);
 
-      if (error) throw error
+      if (error) throw error;
 
-      dispatch({ type: 'REMOVE_FOOD_LOG', payload: id })
-      return true
+      return true;
     } catch (err) {
-      dispatch({ type: 'SET_ERROR', payload: err instanceof Error ? err.message : 'Failed to remove food log' })
-      return false
+      dispatch({ type: 'SET_FOOD_LOGS', payload: originalFoodLogs }); // Revert optimistic update on error
+      dispatch({
+        type: 'SET_ERROR',
+        payload: err instanceof Error ? err.message : 'Failed to remove food log',
+      });
+      return false;
     }
   }
 

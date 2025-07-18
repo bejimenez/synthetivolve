@@ -4,21 +4,48 @@
 import { EnhancedNutritionDisplay } from '@/components/dashboard/nutrition/EnhancedNutritionDisplay'
 import { NutritionDataProvider, useNutrition } from '@/components/nutrition/NutritionDataProvider'
 import { NutritionQuickActions } from '@/components/dashboard/nutrition/NutritionQuickActions'
+import { useNutritionStreak } from '@/hooks/useNutritionStreak'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Flame } from 'lucide-react'
+import { format } from 'date-fns'
 
 // Separate component to use the nutrition hook
 function FullNutritionDisplay() {
   const { foodLogs, loading } = useNutrition()
-  
+  const { streak, lastLoggedDate, loading: streakLoading } = useNutritionStreak()
+
   return (
-    <EnhancedNutritionDisplay 
-      foodLogs={foodLogs}
-      nutritionLoading={loading}
-      variant="full"
-    />
+    <>
+      <EnhancedNutritionDisplay 
+        foodLogs={foodLogs}
+        nutritionLoading={loading}
+        variant="full"
+      />
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Nutrition Streak</CardTitle>
+          <Flame className="h-4 w-4 text-orange-500" />
+        </CardHeader>
+        <CardContent>
+          {streakLoading ? (
+            <p className="text-muted-foreground">Loading streak...</p>
+          ) : (
+            <div className="text-2xl font-bold">
+              {streak} Day{streak === 1 ? '' : 's'}
+              {lastLoggedDate && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Last logged: {format(lastLoggedDate, 'PPP')}
+                </p>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </>
   )
 }
 
-export function NutritionTab() {
+export default function NutritionTab() {
   return (
     <div className="mt-4 space-y-6">
       <NutritionDataProvider>

@@ -1,7 +1,7 @@
 // src/components/dashboard/tabs/DailyMetricsTab.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useProfile } from '@/hooks/useProfile'
 import { WeightEntryForm } from '@/components/weight/WeightEntryForm'
@@ -10,32 +10,74 @@ import { GoalProgressWidget } from '@/components/goals/GoalProgressWidget'
 import { GoalProgressChart } from '@/components/goals/GoalProgressChart'
 import { GoalCreationForm } from '@/components/goals/GoalCreationForm'
 import { EnhancedNutritionDisplay } from '@/components/dashboard/nutrition/EnhancedNutritionDisplay'
-import { NutritionDataProvider, useNutrition } from '@/components/nutrition/NutritionDataProvider'
+import { useNutrition } from '@/components/nutrition/NutritionDataProvider'
+import { useGoals } from '@/hooks/useGoals'
+import { useWeightEntries } from '@/hooks/useWeightEntries'
+import { calculateGoalCalories } from '@/lib/goal_calculations'
+import { DailySummary } from '@/components/dashboard/shared/DailySummary'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { AlertTriangle, ChevronDown } from 'lucide-react'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { cn } from "@/lib/utils"
+import { FoodLogWithFood } from '@/lib/nutrition/nutrition.types'
 
 // Separate component to use the nutrition hook
-function CompactNutritionSummary() {
-  const { foodLogs, loading } = useNutrition()
-  
+function CompactNutritionSummary({ foodLogs, nutritionLoading }: { foodLogs: FoodLogWithFood[], nutritionLoading: boolean }) {
   return (
     <EnhancedNutritionDisplay 
       foodLogs={foodLogs}
-      nutritionLoading={loading}
+      nutritionLoading={nutritionLoading}
       variant="compact"
     />
   )
 }
 
-export function DailyMetricsTab() {
-  const { isProfileComplete } = useProfile()
+export default function DailyMetricsTab() {
   const [showGoalCreation, setShowGoalCreation] = useState(false)
   const [isWeightHistoryOpen, setIsWeightHistoryOpen] = useState(true) // Default open
   const [isGoalProgressChartOpen, setIsGoalProgressChartOpen] = useState(true) // Default open
   const router = useRouter()
+
+  // Fetch nutrition data and calculate calorie goal
+  const { foodLogs, loading: nutritionLoading } = useNutrition()
+  const { activeGoal } = useGoals()
+  const { profile, isProfileComplete } = useProfile()
+  const { weightEntries } = useWeightEntries()
+
+  const calorieGoal = useMemo(() => {
+    if (!profile || !isProfileComplete || weightEntries.length === 0 || !activeGoal) {
+      return 2000 // Default or loading state
+    }
+
+    const currentWeight = weightEntries.sort(
+      (a, b) => new Date(b.entry_date).getTime() - new Date(a.entry_date).getTime()
+    )[0].weight_lbs
+
+    const birthDate = new Date(profile.birth_date!)
+    const age = Math.floor(
+      (new Date().getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25)
+    )
+
+    const ACTIVITY_MULTIPLIERS = {
+      sedentary: 1.2,
+      lightly_active: 1.375,
+      moderately_active: 1.55,
+      very_active: 1.725,
+      extremely_active: 1.9,
+    } as const
+
+    let bmr: number
+    if (profile.biological_sex === 'male') {
+      bmr = 10 * (currentWeight / 2.205) + 6.25 * (profile.height_inches! * 2.54) - 5 * age + 5
+    } else {
+      bmr = 10 * (currentWeight / 2.205) + 6.25 * (profile.height_inches! * 2.54) - 5 * age - 161
+    }
+
+    const tdee = bmr * ACTIVITY_MULTIPLIERS[profile.activity_level!]
+    const goalCals = calculateGoalCalories(tdee, currentWeight, activeGoal)
+    return goalCals.adjustedCalories
+  }, [profile, isProfileComplete, weightEntries, activeGoal])
 
   return (
     <div className="space-y-8 mt-4">
@@ -68,10 +110,11 @@ export function DailyMetricsTab() {
         </Collapsible>
       </div>
 
+      {/* Daily Summary Card */}
+      <DailySummary foodLogs={foodLogs} calorieGoal={calorieGoal} />
+
       {/* Compact Nutrition Summary - replaces CompactCalorieCalculator */}
-      <NutritionDataProvider>
-        <CompactNutritionSummary />
-      </NutritionDataProvider>
+      <CompactNutritionSummary foodLogs={foodLogs} nutritionLoading={nutritionLoading} />
 
       {/* Goal Progress */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

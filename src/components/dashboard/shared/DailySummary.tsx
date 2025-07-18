@@ -2,16 +2,17 @@
 'use client'
 
 import { useMemo } from 'react'
+import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { FoodLogWithFood } from './NutritionDataProvider'
+import { FoodLogWithFood } from '@/lib/nutrition/nutrition.types'
 
 interface DailySummaryProps {
   foodLogs: FoodLogWithFood[]
   calorieGoal: number
 }
 
-export function DailySummary({ foodLogs, calorieGoal }: DailySummaryProps) {
+export const DailySummary = React.memo(function DailySummary({ foodLogs, calorieGoal }: DailySummaryProps) {
   const totals = useMemo(() => {
     const result = { calories: 0, protein: 0, carbs: 0, fat: 0 }
     foodLogs.forEach(log => {
@@ -65,4 +66,4 @@ export function DailySummary({ foodLogs, calorieGoal }: DailySummaryProps) {
       </CardContent>
     </Card>
   )
-}
+})

@@ -2,6 +2,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import React from 'react'
 import { useProfile } from '@/hooks/useProfile'
 import { useWeightEntries } from '@/hooks/useWeightEntries'
 import { useGoals } from '@/hooks/useGoals'
@@ -33,7 +34,7 @@ interface EnhancedNutritionDisplayProps {
 }
 
 // Enhanced circular progress component with dynamic filling
-function CircularProgress({ 
+const CircularProgress = React.memo(function CircularProgress({ 
   value, 
   max, 
   label,
@@ -102,7 +103,7 @@ function CircularProgress({
       </p>
     </div>
   )
-}
+})
 
 export function EnhancedNutritionDisplay({ 
   foodLogs, 

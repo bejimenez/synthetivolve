@@ -3,6 +3,7 @@
 
 import { useAuth } from '@/components/auth/AuthProvider'
 import { DashboardTabs } from '@/components/dashboard/DashboardTabs'
+import { NutritionDataProvider } from '@/components/nutrition/NutritionDataProvider'
 
 export default function HomePage() {
   const { user } = useAuth()
@@ -18,8 +19,9 @@ export default function HomePage() {
           Track your health journey with personalized insights and recommendations.
         </p>
       </div>
-
-      <DashboardTabs />
+      <NutritionDataProvider>
+        <DashboardTabs />
+      </NutritionDataProvider>
     </div>
   )
 }
