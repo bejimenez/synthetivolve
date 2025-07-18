@@ -19,11 +19,12 @@ interface AddFoodDialogProps {
   onClose: () => void
   onFoodAdded: () => void
   selectedDate: Date
+  initialHour: number | null
 }
 
 type TabType = 'search' | 'recent' | 'manual'
 
-export function AddFoodDialog({ open, onClose, onFoodAdded, selectedDate }: AddFoodDialogProps) {
+export function AddFoodDialog({ open, onClose, onFoodAdded, selectedDate, initialHour }: AddFoodDialogProps) {
   const [activeTab, setActiveTab] = useState<TabType>('search')
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState<FoodSearchResult[]>([])
@@ -56,11 +57,19 @@ export function AddFoodDialog({ open, onClose, onFoodAdded, selectedDate }: AddF
   const handleAddFood = async () => {
     if (!selectedFood) return
 
+    const loggedAtDate = new Date(selectedDate)
+    if (initialHour !== null) {
+      loggedAtDate.setHours(initialHour, 0, 0, 0)
+    } else {
+      // Fallback to current time if no initialHour is provided
+      loggedAtDate.setHours(new Date().getHours(), new Date().getMinutes(), 0, 0)
+    }
+
     const newLog = {
-      fdcId: selectedFood.fdcId,
+      fdcId: selectedFood.fdcId === 0 ? null : selectedFood.fdcId, // Ensure manual foods have fdcId: null
       quantity,
       unit,
-      logged_at: new Date().toISOString(),
+      logged_at: loggedAtDate.toISOString(),
       logged_date: format(selectedDate, 'yyyy-MM-dd'),
       foodDetails: selectedFood,
     }

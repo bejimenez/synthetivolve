@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { parseISO } from 'date-fns'
-import { useNutrition } from './NutritionDataProvider'
+import { useNutrition, FoodLogWithFood } from './NutritionDataProvider'
 import { useGoals } from '@/hooks/useGoals'
 import { useProfile } from '@/hooks/useProfile'
 import { useWeightEntries } from '@/hooks/useWeightEntries'
@@ -13,12 +13,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2, Trash2, Edit } from 'lucide-react'
 import { DailySummary } from './DailySummary'
 import { AddFoodDialog } from './AddFoodDialog'
+import { EditFoodLogDialog } from './EditFoodLogDialog'
+import { Toaster } from '@/components/ui/sonner'
+import { toast } from 'sonner'
 
 const timeSlots = Array.from({ length: 18 }, (_, i) => i + 3); // 3 AM to 8 PM
 
 export function NutritionLogger() {
   const [selectedDate] = useState(new Date())
   const [isAddFoodOpen, setAddFoodOpen] = useState(false)
+  const [isEditFoodOpen, setEditFoodOpen] = useState(false)
+  const [editingFoodLog, setEditingFoodLog] = useState<FoodLogWithFood | null>(null)
+  const [currentLoggingHour, setCurrentLoggingHour] = useState<number | null>(null)
   
   const { foodLogs, refreshLogs, loading, error, removeFoodLog } = useNutrition()
   const { activeGoal } = useGoals()
@@ -62,17 +68,35 @@ export function NutritionLogger() {
     return 2000 // Default goal
   }, [activeGoal, profile, isProfileComplete, weightEntries])
 
-  const handleAddFoodClick = () => {
+  const handleAddFoodClick = (hour: number) => {
+    setCurrentLoggingHour(hour)
     setAddFoodOpen(true)
   }
 
   const handleFoodAdded = () => {
     refreshLogs()
     setAddFoodOpen(false)
+    setCurrentLoggingHour(null)
+  }
+
+  const handleEditLog = (log: FoodLogWithFood) => {
+    setEditingFoodLog(log)
+    setEditFoodOpen(true)
+  }
+
+  const handleFoodLogUpdated = () => {
+    refreshLogs()
+    setEditFoodOpen(false)
+    setEditingFoodLog(null)
   }
 
   const handleDeleteLog = async (id: string) => {
-    await removeFoodLog(id)
+    const success = await removeFoodLog(id)
+    if (success) {
+      toast.success('Food log deleted successfully!')
+    } else {
+      toast.error('Failed to delete food log.')
+    }
   }
 
   if (loading) {
@@ -98,7 +122,7 @@ export function NutritionLogger() {
             <Card key={hour}>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-base">{hour.toString().padStart(2, '0')}:00</CardTitle>
-                <Button size="sm" onClick={handleAddFoodClick}>+</Button>
+                <Button size="sm" onClick={() => handleAddFoodClick(hour)}>+</Button>
               </CardHeader>
               {logsForHour.length > 0 && (
                 <CardContent>
@@ -109,7 +133,7 @@ export function NutritionLogger() {
                         <p className="text-sm text-muted-foreground">{log.quantity}{log.unit}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditLog(log)}>
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDeleteLog(log.id)}>
@@ -130,7 +154,16 @@ export function NutritionLogger() {
         onClose={() => setAddFoodOpen(false)}
         onFoodAdded={handleFoodAdded}
         selectedDate={selectedDate}
+        initialHour={currentLoggingHour}
       />
+
+      <EditFoodLogDialog
+        open={isEditFoodOpen}
+        onClose={() => setEditFoodOpen(false)}
+        onFoodLogUpdated={handleFoodLogUpdated}
+        foodLog={editingFoodLog}
+      />
+      <Toaster />
     </div>
   )
 }
