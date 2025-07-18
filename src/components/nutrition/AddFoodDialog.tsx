@@ -13,7 +13,6 @@ import { Loader2, Search, Plus } from 'lucide-react'
 import { format } from 'date-fns'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ManualFoodForm } from './ManualFoodForm'
-import { createTimezoneAwareLoggedAt } from '@/lib/nutrition/timezone-utils'
 import type { RecentFood, Food } from './NutritionDataProvider'
 
 interface AddFoodDialogProps {
@@ -40,7 +39,7 @@ export function AddFoodDialog({ open, onClose, onFoodAdded, selectedDate, initia
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500)
   const { searchFoods, addFoodLog, recentFoods, refreshLogs } = useNutrition()
-  const { settings: nutritionSettings } = useNutritionSettings()
+  
 
   // 🔥 FIX: Set the intended logging hour when dialog opens and preserve it
   useEffect(() => {

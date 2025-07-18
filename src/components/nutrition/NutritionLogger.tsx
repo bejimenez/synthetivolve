@@ -2,7 +2,6 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { parseISO } from 'date-fns'
 import { useNutrition, FoodLogWithFood } from './NutritionDataProvider'
 import { useNutritionSettings } from '@/hooks/useNutritionSettings'
 import { useGoals } from '@/hooks/useGoals'
