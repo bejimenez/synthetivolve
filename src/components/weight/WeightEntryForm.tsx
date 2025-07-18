@@ -121,7 +121,7 @@ export function WeightEntryForm({ onSuccess }: WeightEntryFormProps) {
 
           {/* Compact form layout */}
           <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="weight_lbs" className="text-sm font-medium">
                   Weight (lbs)

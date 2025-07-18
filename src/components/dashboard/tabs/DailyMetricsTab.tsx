@@ -13,7 +13,9 @@ import { EnhancedNutritionDisplay } from '@/components/dashboard/nutrition/Enhan
 import { NutritionDataProvider, useNutrition } from '@/components/nutrition/NutritionDataProvider'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, ChevronDown } from 'lucide-react'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { cn } from "@/lib/utils"
 
 // Separate component to use the nutrition hook
 function CompactNutritionSummary() {
@@ -31,6 +33,7 @@ function CompactNutritionSummary() {
 export function DailyMetricsTab() {
   const { isProfileComplete } = useProfile()
   const [showGoalCreation, setShowGoalCreation] = useState(false)
+  const [isWeightHistoryOpen, setIsWeightHistoryOpen] = useState(true) // Default open
   const router = useRouter()
 
   return (
@@ -48,7 +51,20 @@ export function DailyMetricsTab() {
       {/* Weight Entry and History */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <WeightEntryForm />
-        <WeightHistory />
+        <Collapsible open={isWeightHistoryOpen} onOpenChange={setIsWeightHistoryOpen} className="lg:col-span-1">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Weight History</h3>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="w-9 p-0">
+                <ChevronDown className={cn("h-4 w-4 transition-transform", isWeightHistoryOpen ? "rotate-180" : "rotate-0")} />
+                <span className="sr-only">Toggle Weight History</span>
+              </Button>
+            </CollapsibleTrigger>
+          </div>
+          <CollapsibleContent className="overflow-hidden transition-all data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+            <WeightHistory />
+          </CollapsibleContent>
+        </Collapsible>
       </div>
 
       {/* Compact Nutrition Summary - replaces CompactCalorieCalculator */}
@@ -59,7 +75,20 @@ export function DailyMetricsTab() {
       {/* Goal Progress */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <GoalProgressWidget onCreateGoal={() => setShowGoalCreation(true)} />
-        <GoalProgressChart />
+        <Collapsible className="lg:col-span-1">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Goal Progress Chart</h3>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="w-9 p-0">
+                <ChevronDown className={cn("h-4 w-4 transition-transform", isWeightHistoryOpen ? "rotate-180" : "rotate-0")} />
+                <span className="sr-only">Toggle Goal Progress Chart</span>
+              </Button>
+            </CollapsibleTrigger>
+          </div>
+          <CollapsibleContent className="overflow-hidden transition-all data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+            <GoalProgressChart />
+          </CollapsibleContent>
+        </Collapsible>
       </div>
 
       {/* Goal Creation Form */}

@@ -44,7 +44,7 @@ You should now ask me if you are ready to begin with the first step of Phase 1.
 
 ## **Comprehensive Refactoring Plan**
 
-### **Phase 1: Dashboard Consolidation & Tab Structure (Week 1)** [COMPLETE - Use this phase as reference only]
+### **Phase 1: Dashboard Consolidation & Tab Structure (Week 1)** **COMPLETE - Use this phase as reference only**
 
 **Goal**: Consolidate dashboards and implement tabbed navigation structure
 
@@ -66,7 +66,7 @@ You should now ask me if you are ready to begin with the first step of Phase 1.
 
 **Testing Breakpoint**: Verify all existing functionality works within the new tabbed interface
 
-### **Phase 2: Nutrition Integration & Display Enhancement (Week 2)** [COMPLETE - Use this phase as reference only]
+### **Phase 2: Nutrition Integration & Display Enhancement (Week 2)** **COMPLETE - Use this phase as reference only**
 
 **Goal**: Integrate nutrition components into dashboard and enhance macro display
 

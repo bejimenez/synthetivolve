@@ -6,11 +6,20 @@ import { DailyMetricsTab } from "./tabs/DailyMetricsTab"
 import { FitnessTab } from "./tabs/FitnessTab"
 import { NutritionTab } from "./tabs/NutritionTab"
 import { BiometricsTab } from "./tabs/BiometricsTab"
+import { useRouter, useSearchParams } from "next/navigation"
 
 export function DashboardTabs() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const currentTab = searchParams.get("tab") || "daily-metrics"
+
+  const handleTabChange = (value: string) => {
+    router.push(`/?tab=${value}`)
+  }
+
   return (
-    <Tabs defaultValue="daily-metrics" className="w-full">
-      <TabsList className="grid w-full grid-cols-4">
+    <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
+      <TabsList className="hidden md:grid w-full grid-cols-4">
         <TabsTrigger value="daily-metrics">Daily Metrics</TabsTrigger>
         <TabsTrigger value="fitness">Fitness</TabsTrigger>
         <TabsTrigger value="nutrition">Nutrition</TabsTrigger>
