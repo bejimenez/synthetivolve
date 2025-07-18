@@ -32,9 +32,19 @@ export function AddFoodDialog({ open, onClose, onFoodAdded, selectedDate, initia
   const [quantity, setQuantity] = useState(100)
   const [unit, setUnit] = useState('g')
   const [loading, setLoading] = useState(false)
+  
+  // 🔥 FIX: Store the intended logging hour in local state to preserve it throughout the workflow
+  const [intendedLoggingHour, setIntendedLoggingHour] = useState<number | null>(null)
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500)
   const { searchFoods, addFoodLog, recentFoods, refreshLogs } = useNutrition()
+
+  // 🔥 FIX: Set the intended logging hour when dialog opens and preserve it
+  useEffect(() => {
+    if (open && initialHour !== null) {
+      setIntendedLoggingHour(initialHour)
+    }
+  }, [open, initialHour])
 
   useEffect(() => {
     if (open && activeTab === 'recent') {
@@ -58,12 +68,23 @@ export function AddFoodDialog({ open, onClose, onFoodAdded, selectedDate, initia
     if (!selectedFood) return
 
     const loggedAtDate = new Date(selectedDate)
-    if (initialHour !== null) {
-      loggedAtDate.setHours(initialHour, 0, 0, 0)
+    
+    // 🔥 FIX: Use intendedLoggingHour instead of initialHour to ensure consistency
+    if (intendedLoggingHour !== null) {
+      loggedAtDate.setHours(intendedLoggingHour, 0, 0, 0)
     } else {
-      // Fallback to current time if no initialHour is provided
+      // Fallback to current time if no intended hour is preserved
       loggedAtDate.setHours(new Date().getHours(), new Date().getMinutes(), 0, 0)
     }
+
+    // 🔥 DEBUG: Log the timestamps to understand timezone conversion
+    console.log('🔍 DEBUG - Time logging analysis:')
+    console.log('Selected date:', selectedDate)
+    console.log('Intended hour:', intendedLoggingHour)
+    console.log('Local logged_at date:', loggedAtDate)
+    console.log('ISO string sent to API:', loggedAtDate.toISOString())
+    console.log('Local hour after setHours:', loggedAtDate.getHours())
+    console.log('UTC hour from ISO:', new Date(loggedAtDate.toISOString()).getUTCHours())
 
     const newLog = {
       fdcId: selectedFood.fdcId === 0 ? null : selectedFood.fdcId, // Ensure manual foods have fdcId: null
@@ -99,6 +120,7 @@ export function AddFoodDialog({ open, onClose, onFoodAdded, selectedDate, initia
     
     setSelectedFood(transformedFood)
     setActiveTab('search') // Switch to quantity selection view
+    // 🔥 NOTE: intendedLoggingHour is now preserved across this tab switch
   }
 
   const handleClose = () => {
@@ -107,6 +129,8 @@ export function AddFoodDialog({ open, onClose, onFoodAdded, selectedDate, initia
     setSelectedFood(null)
     setQuantity(100)
     setActiveTab('search')
+    // 🔥 FIX: Reset intended logging hour when dialog closes
+    setIntendedLoggingHour(null)
     onClose()
   }
 
@@ -142,6 +166,12 @@ export function AddFoodDialog({ open, onClose, onFoodAdded, selectedDate, initia
         <DialogHeader>
           <DialogTitle>
             {selectedFood ? `Log "${selectedFood.description}"` : 'Add Food'}
+            {/* 🔥 DEBUG: Temporary display to verify intended time is preserved */}
+            {intendedLoggingHour !== null && (
+              <span className="text-sm text-muted-foreground ml-2">
+                → {intendedLoggingHour.toString().padStart(2, '0')}:00
+              </span>
+            )}
           </DialogTitle>
         </DialogHeader>
         
@@ -210,11 +240,13 @@ export function AddFoodDialog({ open, onClose, onFoodAdded, selectedDate, initia
             {activeTab === 'recent' && (
               <div className="max-h-64 overflow-y-auto space-y-2">
                 {recentFoods.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-4">No recent foods.</p>
+                  <p className="text-center text-muted-foreground py-4">
+                    No recent foods found.
+                  </p>
                 ) : (
                   recentFoods.map(recent => (
                     <div
-                      key={recent.food_id}
+                      key={recent.id}
                       onClick={() => handleSelectRecent(recent)}
                       className="p-3 border rounded-lg hover:bg-accent cursor-pointer transition-colors"
                     >
@@ -223,7 +255,7 @@ export function AddFoodDialog({ open, onClose, onFoodAdded, selectedDate, initia
                         <p className="text-sm text-muted-foreground">{recent.food.brand_name}</p>
                       )}
                       <p className="text-xs text-muted-foreground">
-                        {recent.food.fdc_id ? 'USDA Database' : 'Manual Entry'}
+                        Last used: {format(new Date(recent.last_used || recent.created_at || new Date()), 'MMM d, yyyy')}
                       </p>
                     </div>
                   ))
@@ -232,88 +264,56 @@ export function AddFoodDialog({ open, onClose, onFoodAdded, selectedDate, initia
             )}
 
             {activeTab === 'manual' && (
-              <ManualFoodForm
-                onFoodCreated={handleManualFoodCreated}
+              <ManualFoodForm 
+                onFoodCreated={handleManualFoodCreated} 
                 onCancel={() => setActiveTab('search')}
               />
             )}
           </div>
         ) : (
-          // Quantity Selection Step
           <div className="space-y-4">
-            <div className="p-4 bg-muted rounded-lg">
-              <h3 className="font-semibold">{selectedFood.description}</h3>
+            <div>
+              <h3 className="font-semibold text-lg">{selectedFood.description}</h3>
               {selectedFood.brandName && (
                 <p className="text-sm text-muted-foreground">{selectedFood.brandName}</p>
               )}
-              <p className="text-xs text-muted-foreground mt-1">
-                {selectedFood.dataType === 'Manual' ? 'Manual Entry' : 'USDA Database'}
-              </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="quantity" className="block text-sm font-medium mb-2">
-                  Quantity
-                </label>
-                <Input
-                  id="quantity"
-                  type="number"
-                  step="0.1"
-                  value={quantity}
-                  onChange={e => setQuantity(parseFloat(e.target.value) || 0)}
-                  min="0"
-                />
-              </div>
-              <div>
-                <label htmlFor="unit" className="block text-sm font-medium mb-2">
-                  Unit
-                </label>
-                <Select value={unit} onValueChange={setUnit}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="g">grams (g)</SelectItem>
-                    <SelectItem value="oz">ounces (oz)</SelectItem>
-                    <SelectItem value="cup">cup</SelectItem>
-                    <SelectItem value="tbsp">tablespoon</SelectItem>
-                    <SelectItem value="tsp">teaspoon</SelectItem>
-                    <SelectItem value="piece">piece</SelectItem>
-                    <SelectItem value="serving">serving</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="quantity" className="text-right">
+                Quantity
+              </label>
+              <Input
+                id="quantity"
+                type="number"
+                step="0.1"
+                value={quantity}
+                onChange={e => setQuantity(parseFloat(e.target.value) || 0)}
+                className="col-span-2"
+                min="0"
+              />
+              <Select value={unit} onValueChange={setUnit}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="g">grams</SelectItem>
+                  <SelectItem value="oz">ounces</SelectItem>
+                  <SelectItem value="cup">cup</SelectItem>
+                  <SelectItem value="tbsp">tablespoon</SelectItem>
+                  <SelectItem value="tsp">teaspoon</SelectItem>
+                  <SelectItem value="piece">piece</SelectItem>
+                  <SelectItem value="serving">serving</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Nutrition Preview */}
-            <div className="p-4 bg-muted rounded-lg">
-              <h4 className="font-medium mb-2">Nutrition Preview</h4>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                {selectedFood.foodNutrients?.map(nutrient => {
-                  const value = (nutrient.value * quantity) / 100
-                  return (
-                    <div key={nutrient.nutrientId} className="flex justify-between">
-                      <span>{nutrient.nutrientName}:</span>
-                      <span>
-                        {value.toFixed(1)} {nutrient.unitName.toLowerCase()}
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-
-            <div className="flex gap-3 justify-end">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setSelectedFood(null)}
-              >
-                Back
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={handleClose}>
+                Cancel
               </Button>
               <Button onClick={handleAddFood}>
-                Add to Log
+                Add Food
               </Button>
             </div>
           </div>

@@ -4,10 +4,12 @@
 import { useState, useEffect, useMemo } from 'react'
 import { parseISO } from 'date-fns'
 import { useNutrition, FoodLogWithFood } from './NutritionDataProvider'
+import { useNutritionSettings } from '@/hooks/useNutritionSettings'
 import { useGoals } from '@/hooks/useGoals'
 import { useProfile } from '@/hooks/useProfile'
 import { useWeightEntries } from '@/hooks/useWeightEntries'
 import { calculateGoalCalories } from '@/lib/goal_calculations'
+import { getHourInTimezone } from '@/lib/nutrition/timezone-utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2, Trash2, Edit } from 'lucide-react'
@@ -27,6 +29,7 @@ export function NutritionLogger() {
   const [currentLoggingHour, setCurrentLoggingHour] = useState<number | null>(null)
   
   const { foodLogs, refreshLogs, loading, error, removeFoodLog } = useNutrition()
+  const { settings: nutritionSettings, loading: settingsLoading } = useNutritionSettings()
   const { activeGoal } = useGoals()
   const { profile, isProfileComplete } = useProfile()
   const { weightEntries } = useWeightEntries()
@@ -99,7 +102,21 @@ export function NutritionLogger() {
     }
   }
 
-  if (loading) {
+  // Group food logs by timezone-aware hour
+  const groupedFoodLogs = useMemo(() => {
+    if (!nutritionSettings) return {}
+    
+    return foodLogs.reduce((groups, log) => {
+      const hourInTimezone = getHourInTimezone(log.logged_at, nutritionSettings.timezone)
+      if (!groups[hourInTimezone]) {
+        groups[hourInTimezone] = []
+      }
+      groups[hourInTimezone].push(log)
+      return groups
+    }, {} as Record<number, FoodLogWithFood[]>)
+  }, [foodLogs, nutritionSettings])
+
+  if (loading || settingsLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -111,17 +128,27 @@ export function NutritionLogger() {
     return <div className="text-red-500">Error: {error}</div>
   }
 
+  if (!nutritionSettings) {
+    return <div className="text-red-500">Unable to load nutrition settings</div>
+  }
+
   return (
     <div className="space-y-6">
       <DailySummary foodLogs={foodLogs} calorieGoal={calorieGoal} />
 
       <div className="space-y-4">
         {timeSlots.map(hour => {
-          const logsForHour = foodLogs.filter(log => parseISO(log.logged_at).getHours() === hour)
+          const logsForHour = groupedFoodLogs[hour] || []
           return (
             <Card key={hour}>
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-base">{hour.toString().padStart(2, '0')}:00</CardTitle>
+                <CardTitle className="text-base">
+                  {hour.toString().padStart(2, '0')}:00
+                  {/* 🔥 DEBUG: Show timezone info temporarily */}
+                  <span className="text-xs text-muted-foreground ml-2">
+                    ({nutritionSettings.timezone})
+                  </span>
+                </CardTitle>
                 <Button size="sm" onClick={() => handleAddFoodClick(hour)}>+</Button>
               </CardHeader>
               {logsForHour.length > 0 && (
