@@ -12,6 +12,7 @@ import { useFitness } from '@/hooks/useFitness';
 import ExerciseLogger from './ExerciseLogger';
 import WorkoutSummary from './WorkoutSummary';
 import { type MesocyclePlan as Mesocycle, type WorkoutLog, type LoggedExercise, type SetLog, type Exercise } from '@/lib/fitness.types';
+import ExerciseLibrary from './ExerciseLibrary';
 
 interface WorkoutLoggerProps {
   onWorkoutComplete?: (log: WorkoutLog) => void;
@@ -28,6 +29,7 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
   const [customGoal, setCustomGoal] = useState<string>('');
   const [showSummary, setShowSummary] = useState(false);
   const [startTime, setStartTime] = useState<Date | null>(null);
+  const [showExerciseLibrary, setShowExerciseLibrary] = useState<boolean>(false);
 
   const allExercises = useMemo(() => {
     return rawExercises.reduce((acc, ex) => {
@@ -98,6 +100,37 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
     setLoggedExercises(updatedExercises);
   };
 
+  // Function to handle adding an exercise from the library
+const handleAddExercise = (exercise: Exercise) => {
+  // Check if exercise is already logged
+  if (loggedExercises.find(ex => ex.exercise_id === exercise.id)) {
+    console.log('Exercise already added to workout');
+    setShowExerciseLibrary(false);
+    return;
+  }
+
+  // Calculate the next order index
+  const nextOrderIndex = loggedExercises.length > 0 
+    ? Math.max(...loggedExercises.map(ex => ex.order_index)) + 1 
+    : 0;
+
+  // Create a new logged exercise entry
+  const newLoggedExercise: LoggedExercise = {
+    exercise_id: exercise.id,
+    order_index: nextOrderIndex,
+    sets: [],
+    was_accessory: workoutMode === 'freestyle' || !plannedExercises.some(pe => pe.id === exercise.id)
+  };
+
+  // Add to logged exercises
+  setLoggedExercises(prev => [...prev, newLoggedExercise]);
+  
+  // Close the exercise library
+  setShowExerciseLibrary(false);
+  
+  console.log(`Added exercise: ${exercise.name} to ${workoutMode} workout at order ${nextOrderIndex}`);
+  };
+
   const completeWorkout = async () => {
     if (!currentWorkout) return;
 
@@ -141,6 +174,10 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
     return hours > 0 ? `${hours}:${remainingMinutes.toString().padStart(2, '0')}` : `${minutes}:00`;
   };
 
+
+  // Always define plannedExercises so it is available for all functions
+  const plannedExercises = getPlannedExercises();
+
   if (showSummary && currentWorkout) {
     return (
       <WorkoutSummary
@@ -160,8 +197,6 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
   }
 
   if (currentWorkout && workoutMode) {
-    const plannedExercises = getPlannedExercises();
-
     return (
       <div className="space-y-6">
         {/* Workout Header */}
@@ -238,9 +273,7 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
             <CardContent className="pt-6">
               <Button
                 variant="outline"
-                onClick={() => {
-                  // This would open the exercise library
-                }}
+                onClick={() => setShowExerciseLibrary(true)}
                 className="w-full"
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -391,6 +424,16 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
           </Button>
         </CardContent>
       </Card>
+      {showExerciseLibrary && (
+        <ExerciseLibrary
+          onExerciseAdd={handleAddExercise}
+          onClose={() => setShowExerciseLibrary(false)}
+          existingExercises={loggedExercises
+            .filter(ex => ex.exercise_id)
+            .map(ex => allExercises[ex.exercise_id!])
+            .filter(Boolean)}
+        />
+      )}
     </div>
   );
 };
