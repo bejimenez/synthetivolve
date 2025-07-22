@@ -281,6 +281,16 @@ const handleAddExercise = (exercise: Exercise) => {
               </Button>
             </CardContent>
           </Card>
+          {showExerciseLibrary && (
+        <ExerciseLibrary
+          onExerciseAdd={handleAddExercise}
+          onClose={() => setShowExerciseLibrary(false)}
+          existingExercises={loggedExercises
+            .filter(ex => ex.exercise_id)
+            .map(ex => allExercises[ex.exercise_id!])
+            .filter(Boolean)}
+        />
+      )}
         </div>
       </div>
     );
@@ -424,16 +434,7 @@ const handleAddExercise = (exercise: Exercise) => {
           </Button>
         </CardContent>
       </Card>
-      {showExerciseLibrary && (
-        <ExerciseLibrary
-          onExerciseAdd={handleAddExercise}
-          onClose={() => setShowExerciseLibrary(false)}
-          existingExercises={loggedExercises
-            .filter(ex => ex.exercise_id)
-            .map(ex => allExercises[ex.exercise_id!])
-            .filter(Boolean)}
-        />
-      )}
+      
     </div>
   );
 };

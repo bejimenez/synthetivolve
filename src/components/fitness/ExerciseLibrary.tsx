@@ -125,42 +125,70 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
   };
 
   return (
+    // 1. Main Dialog Container
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto 
+                              bg-white dark:bg-gray-900 
+                              border-gray-200 dark:border-gray-700">
         <DialogHeader>
-          <DialogTitle>Exercise Library</DialogTitle>
+          <DialogTitle className="text-gray-900 dark:text-gray-100">
+            Exercise Library
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Search and Filter */}
+          {/* Search and Filter with dark mode support */}
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 
+                                  text-gray-400 dark:text-gray-500 w-4 h-4" />
                 <Input
                   placeholder="Search exercises..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 bg-white dark:bg-gray-800 
+                            border-gray-200 dark:border-gray-700
+                            text-gray-900 dark:text-gray-100
+                            placeholder-gray-500 dark:placeholder-gray-400"
                 />
               </div>
             </div>
             
             <Select value={filterMuscle} onValueChange={(value) => setFilterMuscle(value as MuscleGroup | 'ALL')}>
-              <SelectTrigger className="w-full sm:w-48">
+              <SelectTrigger className="w-full sm:w-48 
+                                      bg-white dark:bg-gray-800 
+                                      border-gray-200 dark:border-gray-700
+                                      text-gray-900 dark:text-gray-100">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">All Muscles</SelectItem>
+              <SelectContent className="bg-white dark:bg-gray-800 
+                                        border-gray-200 dark:border-gray-700">
+                <SelectItem value="ALL" className="text-gray-900 dark:text-gray-100 
+                                                  hover:bg-gray-100 dark:hover:bg-gray-700">
+                  All Muscles
+                </SelectItem>
                 {MUSCLE_GROUPS.map(muscle => (
-                  <SelectItem key={muscle} value={muscle}>
+                  <SelectItem 
+                    key={muscle} 
+                    value={muscle}
+                    className="text-gray-900 dark:text-gray-100 
+                              hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
                     {formatMuscleGroupName(muscle)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
-            <Button onClick={() => setShowCreateForm(true)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowCreateForm(true)}
+              className="bg-white dark:bg-gray-800 
+                        border-gray-200 dark:border-gray-700
+                        text-gray-900 dark:text-gray-100
+                        hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
               <Plus className="w-4 h-4 mr-2" />
               New Exercise
             </Button>
@@ -262,12 +290,21 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
             </Card>
           )}
 
-          {/* Exercise List */}
+          {/* Exercise List with improved dark mode hover states */}
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {filteredExercises.map(exercise => (
-              <div key={exercise.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+              <div 
+                key={exercise.id} 
+                className="flex items-center justify-between p-3 rounded-lg 
+                          border border-gray-200 dark:border-gray-700
+                          bg-white dark:bg-gray-900
+                          hover:bg-gray-50 dark:hover:bg-gray-800 
+                          transition-colors duration-150"
+              >
                 <div className="flex-1">
-                  <h3 className="font-medium">{exercise.name}</h3>
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100">
+                    {exercise.name}
+                  </h3>
                   <div className="flex flex-wrap items-center space-x-1 mt-1">
                     <Badge variant="default" className="text-xs">
                       {formatMuscleGroupName(exercise.primary)}
@@ -297,6 +334,8 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
                       onClose();
                     }}
                     disabled={isExerciseInMesocycle(exercise.id)}
+                    className="hover:bg-gray-100 dark:hover:bg-gray-700
+                              border-gray-200 dark:border-gray-600"
                   >
                     {isExerciseInMesocycle(exercise.id) ? (
                       <Check className="w-4 h-4" />
@@ -308,6 +347,7 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
                     size="sm"
                     variant="ghost"
                     onClick={() => handleEditClick(exercise)}
+                    className="hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     <Edit className="w-4 h-4" />
                   </Button>
@@ -315,7 +355,9 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
                     size="sm"
                     variant="ghost"
                     onClick={() => handleDeleteExercise(exercise.id)}
-                    className="text-red-500 hover:text-red-700"
+                    className="text-red-500 hover:text-red-700 
+                              dark:text-red-400 dark:hover:text-red-300
+                              hover:bg-red-50 dark:hover:bg-red-900/20"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -324,13 +366,18 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
             ))}
           </div>
 
+          {/* Empty state with dark mode support */}
           {filteredExercises.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               <p>No exercises found matching your criteria.</p>
               <Button
                 variant="outline"
                 onClick={() => setShowCreateForm(true)}
-                className="mt-2"
+                className="mt-2 
+                          bg-white dark:bg-gray-800 
+                          border-gray-200 dark:border-gray-700
+                          text-gray-900 dark:text-gray-100
+                          hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Create New Exercise
