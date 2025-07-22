@@ -15,6 +15,7 @@ import WorkoutSummary from './WorkoutSummary';
 import { type MesocyclePlan as Mesocycle, type WorkoutLog, type LoggedExercise, type SetLog, type Exercise } from '@/lib/fitness.types';
 import ExerciseLibrary from './ExerciseLibrary';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useTabPersistence } from '@/hooks/useTabPersistence';
 
 interface WorkoutLoggerProps {
   onWorkoutComplete?: (log: WorkoutLog) => void;
@@ -46,13 +47,19 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
 
   const { draft, saveDraft, clearDraft, isLoaded, hasDraft } = useFormDraft<WorkoutLoggerDraft>({
     key: 'workout-logger',
-  });
+    persistToUrl: true,        // Enable URL persistence
+    urlStateKey: 'workout',    // URL parameter name
+  })
+
+  const { setTab } = useTabPersistence()
 
   useEffect(() => {
-    if (isLoaded && hasDraft) {
-      setShowResumeDialog(true);
-    }
-  }, [isLoaded, hasDraft]);
+  if (isLoaded && hasDraft) {
+    // Auto-switch to fitness tab if workout is in progress
+    setTab('fitness')
+    setShowResumeDialog(true)
+  }
+}, [isLoaded, hasDraft, setTab])
 
   const resumeWorkout = () => {
     if (draft) {

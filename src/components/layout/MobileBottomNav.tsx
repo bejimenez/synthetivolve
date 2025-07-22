@@ -1,7 +1,6 @@
 // src/components/layout/MobileBottomNav.tsx
 'use client'
 
-import Link from "next/link"
 import { useTabPersistence } from "@/hooks/useTabPersistence"
 import { Home, Dumbbell, Utensils, HeartPulse } from "lucide-react"
 import { cn } from "@/lib/utils"
