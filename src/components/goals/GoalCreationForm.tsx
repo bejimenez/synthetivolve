@@ -121,7 +121,7 @@ export function GoalCreationForm({ onSuccess, onCancel }: GoalCreationFormProps)
     return (
       <Card>
         <CardContent className="pt-6">
-          <Alert>
+          <Alert className="dark:bg-gray-900 dark:border-gray-700">
             <Info className="h-4 w-4" />
             <AlertDescription>
               Please log your current weight before setting goals.
@@ -150,24 +150,24 @@ export function GoalCreationForm({ onSuccess, onCancel }: GoalCreationFormProps)
               onValueChange={(value: 'fat_loss' | 'maintenance' | 'muscle_gain') => setValue('goal_type', value)}
               className="grid grid-cols-1 md:grid-cols-3 gap-4"
             >
-              <div className="flex items-center space-x-2 border rounded-lg p-4">
+              <div className="flex items-center space-x-2 border rounded-lg p-4 dark:border-gray-700 dark:bg-gray-900">
                 <RadioGroupItem value="fat_loss" id="fat_loss" />
                 <Label htmlFor="fat_loss" className="flex-1 cursor-pointer">
-                  <div className="font-medium">Fat Loss</div>
+                  <div className="font-medium dark:text-gray-100">Fat Loss</div>
                   <div className="text-sm text-muted-foreground">Lose weight and maintain muscle</div>
                 </Label>
               </div>
-              <div className="flex items-center space-x-2 border rounded-lg p-4">
+              <div className="flex items-center space-x-2 border rounded-lg p-4 dark:border-gray-700 dark:bg-gray-900">
                 <RadioGroupItem value="maintenance" id="maintenance" />
                 <Label htmlFor="maintenance" className="flex-1 cursor-pointer">
-                  <div className="font-medium">Maintenance</div>
+                  <div className="font-medium dark:text-gray-100">Maintenance</div>
                   <div className="text-sm text-muted-foreground">Maintain current weight</div>
                 </Label>
               </div>
-              <div className="flex items-center space-x-2 border rounded-lg p-4">
+              <div className="flex items-center space-x-2 border rounded-lg p-4 dark:border-gray-700 dark:bg-gray-900">
                 <RadioGroupItem value="muscle_gain" id="muscle_gain" />
                 <Label htmlFor="muscle_gain" className="flex-1 cursor-pointer">
-                  <div className="font-medium">Muscle Gain</div>
+                  <div className="font-medium dark:text-gray-100">Muscle Gain</div>
                   <div className="text-sm text-muted-foreground">Gain muscle with minimal fat</div>
                 </Label>
               </div>
@@ -195,8 +195,8 @@ export function GoalCreationForm({ onSuccess, onCancel }: GoalCreationFormProps)
 
           {/* Fat Loss Specific Settings */}
           {goalType === 'fat_loss' && (
-            <div className="space-y-4 border rounded-lg p-4 bg-red-50">
-              <Label className="text-base font-semibold">Weight Loss Rate</Label>
+            <div className="space-y-4 border rounded-lg p-4 bg-red-50 dark:bg-red-950/30 dark:border-red-900">
+              <Label className="text-base font-semibold dark:text-gray-100">Weight Loss Rate</Label>
               
               <RadioGroup
                 value={rateType}
@@ -205,7 +205,7 @@ export function GoalCreationForm({ onSuccess, onCancel }: GoalCreationFormProps)
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="absolute" id="absolute" />
-                  <Label htmlFor="absolute" className="flex-1">
+                  <Label htmlFor="absolute" className="flex-1 dark:text-gray-100">
                     Fixed amount (lbs per week)
                   </Label>
                 </div>
@@ -227,7 +227,7 @@ export function GoalCreationForm({ onSuccess, onCancel }: GoalCreationFormProps)
 
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="percentage" id="percentage" />
-                  <Label htmlFor="percentage" className="flex-1">
+                  <Label htmlFor="percentage" className="flex-1 dark:text-gray-100">
                     Percentage of body weight per week
                   </Label>
                 </div>
@@ -252,10 +252,10 @@ export function GoalCreationForm({ onSuccess, onCancel }: GoalCreationFormProps)
 
           {/* Muscle Gain Specific Settings */}
           {goalType === 'muscle_gain' && (
-            <div className="space-y-4 border rounded-lg p-4 bg-green-50">
-              <Label className="text-base font-semibold">Calorie Surplus</Label>
+            <div className="space-y-4 border rounded-lg p-4 bg-green-50 dark:bg-green-950/30 dark:border-green-900">
+              <Label className="text-base font-semibold dark:text-gray-100">Calorie Surplus</Label>
               <div className="space-y-3">
-                <Label htmlFor="surplus">
+                <Label htmlFor="surplus" className="dark:text-gray-100">
                   Daily Surplus: {surplusCalories} calories
                 </Label>
                 <Slider
@@ -279,9 +279,9 @@ export function GoalCreationForm({ onSuccess, onCancel }: GoalCreationFormProps)
 
           {/* Warnings */}
           {getWarnings().length > 0 && (
-            <Alert className="border-amber-200 bg-amber-50">
-              <AlertTriangle className="h-4 w-4 text-amber-600" />
-              <AlertDescription className="text-amber-800">
+            <Alert className="border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30">
+              <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <AlertDescription className="text-amber-800 dark:text-amber-300">
                 <ul className="list-disc pl-4 space-y-1">
                   {getWarnings().map((warning, index) => (
                     <li key={index}>{warning}</li>
@@ -293,9 +293,9 @@ export function GoalCreationForm({ onSuccess, onCancel }: GoalCreationFormProps)
 
           {/* Form Errors */}
           {errors.root && (
-            <Alert className="border-red-200 bg-red-50">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-800">
+            <Alert className="border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30">
+              <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+              <AlertDescription className="text-red-800 dark:text-red-300">
                 {errors.root.message}
               </AlertDescription>
             </Alert>

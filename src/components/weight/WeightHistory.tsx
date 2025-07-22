@@ -123,15 +123,15 @@ export function WeightHistory() {
 
   if (error) {
     return (
-      <Card>
+      <Card className="dark:bg-gray-900 dark:border-gray-700">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 dark:text-gray-100">
             <Scale className="h-5 w-5" />
             Weight History
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Alert variant="destructive">
+          <Alert variant="destructive" className="dark:bg-destructive/20 dark:border-destructive/40">
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         </CardContent>
@@ -141,9 +141,9 @@ export function WeightHistory() {
 
   if (!weightEntries.length) {
     return (
-      <Card>
+      <Card className="dark:bg-gray-900 dark:border-gray-700">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 dark:text-gray-100">
             <Scale className="h-5 w-5" />
             Weight History
           </CardTitle>
@@ -171,9 +171,9 @@ export function WeightHistory() {
   }
 
   return (
-    <Card>
+    <Card className="dark:bg-gray-900 dark:border-gray-700">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 dark:text-gray-100">
           <Scale className="h-5 w-5" />
           Weight History
         </CardTitle>
@@ -183,13 +183,13 @@ export function WeightHistory() {
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">
-              <p className="text-2xl font-bold">{stats.currentWeight}</p>
+              <p className="text-2xl font-bold dark:text-gray-100">{stats.currentWeight}</p>
               <p className="text-sm text-muted-foreground">Current Weight</p>
             </div>
             <div className="text-center">
               <div className={`flex items-center justify-center gap-1 ${getTrendColor(stats.recentChange)}`}>
                 {getTrendIcon(stats.recentChange)}
-                <span className="font-bold">
+                <span className="font-bold dark:text-gray-100">
                   {stats.recentChange > 0 ? '+' : ''}{stats.recentChange.toFixed(1)} lbs
                 </span>
               </div>
@@ -198,14 +198,14 @@ export function WeightHistory() {
             <div className="text-center">
               <div className={`flex items-center justify-center gap-1 ${getTrendColor(stats.totalChange)}`}>
                 {getTrendIcon(stats.totalChange)}
-                <span className="font-bold">
+                <span className="font-bold dark:text-gray-100">
                   {stats.totalChange > 0 ? '+' : ''}{stats.totalChange.toFixed(1)} lbs
                 </span>
               </div>
               <p className="text-sm text-muted-foreground">Total Change</p>
             </div>
             <div className="text-center">
-              <p className="text-lg font-bold">{stats.entryCount}</p>
+              <p className="text-lg font-bold dark:text-gray-100">{stats.entryCount}</p>
               <p className="text-sm text-muted-foreground">Entries</p>
             </div>
           </div>

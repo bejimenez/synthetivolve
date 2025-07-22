@@ -122,10 +122,10 @@ ${summaryData.prs.length > 0 ? `🏆 PRs: ${summaryData.prs.join(', ')}` : ''}
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-gray-900 dark:border-gray-700">
         <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
-            <Trophy className="w-5 h-5 text-yellow-500" />
+          <DialogTitle className="flex items-center space-x-2 dark:text-gray-100">
+            <Trophy className="w-5 h-5 text-yellow-500 dark:text-yellow-400" />
             <span>Workout Complete!</span>
           </DialogTitle>
         </DialogHeader>
@@ -133,43 +133,43 @@ ${summaryData.prs.length > 0 ? `🏆 PRs: ${summaryData.prs.join(', ')}` : ''}
         <div className="space-y-6">
           {/* Overview Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card>
+            <Card className="dark:bg-gray-900 dark:border-gray-700">
               <CardContent className="pt-4 text-center">
-                <Clock className="w-6 h-6 mx-auto mb-2 text-blue-500" />
-                <div className="text-2xl font-bold">{duration}</div>
-                <div className="text-sm text-gray-600">Duration</div>
+                <Clock className="w-6 h-6 mx-auto mb-2 text-blue-500 dark:text-blue-400" />
+                <div className="text-2xl font-bold dark:text-gray-100">{duration}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Duration</div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="dark:bg-gray-900 dark:border-gray-700">
               <CardContent className="pt-4 text-center">
-                <Weight className="w-6 h-6 mx-auto mb-2 text-green-500" />
-                <div className="text-2xl font-bold">{summaryData.totalVolume.toFixed(0)}</div>
-                <div className="text-sm text-gray-600">Total Volume (kg)</div>
+                <Weight className="w-6 h-6 mx-auto mb-2 text-green-500 dark:text-green-400" />
+                <div className="text-2xl font-bold dark:text-gray-100">{summaryData.totalVolume.toFixed(0)}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Total Volume (kg)</div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="dark:bg-gray-900 dark:border-gray-700">
               <CardContent className="pt-4 text-center">
-                <Target className="w-6 h-6 mx-auto mb-2 text-purple-500" />
-                <div className="text-2xl font-bold">{summaryData.totalSets}</div>
-                <div className="text-sm text-gray-600">Total Sets</div>
+                <Target className="w-6 h-6 mx-auto mb-2 text-purple-500 dark:text-purple-400" />
+                <div className="text-2xl font-bold dark:text-gray-100">{summaryData.totalSets}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Total Sets</div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="dark:bg-gray-900 dark:border-gray-700">
               <CardContent className="pt-4 text-center">
-                <Trophy className="w-6 h-6 mx-auto mb-2 text-orange-500" />
-                <div className="text-2xl font-bold">{summaryData.totalReps}</div>
-                <div className="text-sm text-gray-600">Total Reps</div>
+                <Trophy className="w-6 h-6 mx-auto mb-2 text-orange-500 dark:text-orange-400" />
+                <div className="text-2xl font-bold dark:text-gray-100">{summaryData.totalReps}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Total Reps</div>
               </CardContent>
             </Card>
           </div>
 
           {/* Muscle Group Volume */}
-          <Card>
+          <Card className="dark:bg-gray-900 dark:border-gray-700">
             <CardHeader>
-              <CardTitle>Muscle Group Volume</CardTitle>
+              <CardTitle className="dark:text-gray-100">Muscle Group Volume</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -180,10 +180,10 @@ ${summaryData.prs.length > 0 ? `🏆 PRs: ${summaryData.prs.join(', ')}` : ''}
                   return (
                     <div key={muscle} className="space-y-1">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">
+                        <span className="text-sm font-medium dark:text-gray-100">
                           {formatMuscleGroupName(muscle as MuscleGroup)}
                         </span>
-                        <span className="text-sm text-gray-600">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
                           {(volume as number).toFixed(0)} kg
                         </span>
                       </div>
@@ -197,10 +197,10 @@ ${summaryData.prs.length > 0 ? `🏆 PRs: ${summaryData.prs.join(', ')}` : ''}
 
           {/* Personal Records */}
           {summaryData.prs.length > 0 && (
-            <Card>
+            <Card className="dark:bg-gray-900 dark:border-gray-700">
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Trophy className="w-5 h-5 text-yellow-500" />
+                <CardTitle className="flex items-center space-x-2 dark:text-gray-100">
+                  <Trophy className="w-5 h-5 text-yellow-500 dark:text-yellow-400" />
                   <span>Personal Records</span>
                 </CardTitle>
               </CardHeader>
@@ -208,10 +208,10 @@ ${summaryData.prs.length > 0 ? `🏆 PRs: ${summaryData.prs.join(', ')}` : ''}
                 <div className="space-y-2">
                   {summaryData.prs.map((pr, index) => (
                     <div key={index} className="flex items-center space-x-2">
-                      <Badge variant="default" className="bg-yellow-500">
+                      <Badge variant="default" className="bg-yellow-500 dark:bg-yellow-600">
                         PR
                       </Badge>
-                      <span className="text-sm">{pr}</span>
+                      <span className="text-sm dark:text-gray-100">{pr}</span>
                     </div>
                   ))}
                 </div>
@@ -220,9 +220,9 @@ ${summaryData.prs.length > 0 ? `🏆 PRs: ${summaryData.prs.join(', ')}` : ''}
           )}
 
           {/* Exercise Breakdown */}
-          <Card>
+          <Card className="dark:bg-gray-900 dark:border-gray-700">
             <CardHeader>
-              <CardTitle>Exercise Breakdown</CardTitle>
+              <CardTitle className="dark:text-gray-100">Exercise Breakdown</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -236,16 +236,16 @@ ${summaryData.prs.length > 0 ? `🏆 PRs: ${summaryData.prs.join(', ')}` : ''}
                   );
 
                   return (
-                    <div key={exercise.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <div key={exercise.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg dark:bg-gray-800">
                       <div>
-                        <div className="font-medium">{exercise.name}</div>
-                        <div className="text-sm text-gray-600">
+                        <div className="font-medium dark:text-gray-100">{exercise.name}</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
                           {loggedExercise.sets.length} sets
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="font-medium">{exerciseVolume.toFixed(0)} kg</div>
-                        <div className="text-sm text-gray-600">volume</div>
+                        <div className="font-medium dark:text-gray-100">{exerciseVolume.toFixed(0)} kg</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">volume</div>
                       </div>
                     </div>
                   );
@@ -256,13 +256,13 @@ ${summaryData.prs.length > 0 ? `🏆 PRs: ${summaryData.prs.join(', ')}` : ''}
 
           {/* Goal Achievement */}
           {workout.custom_goal_entry && (
-            <Card>
+            <Card className="dark:bg-gray-900 dark:border-gray-700">
               <CardHeader>
-                <CardTitle>Session Goal</CardTitle>
+                <CardTitle className="dark:text-gray-100">Session Goal</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-                  <p className="text-blue-800">{workout.custom_goal_entry}</p>
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-3 dark:bg-blue-950/30 dark:border-blue-900">
+                  <p className="text-blue-800 dark:text-blue-300">{workout.custom_goal_entry}</p>
                 </div>
               </CardContent>
             </Card>
@@ -270,15 +270,15 @@ ${summaryData.prs.length > 0 ? `🏆 PRs: ${summaryData.prs.join(', ')}` : ''}
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3">
-            <Button onClick={handleShare} className="flex-1">
+            <Button onClick={handleShare} className="flex-1 dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90">
               <Share2 className="w-4 h-4 mr-2" />
               Share Workout
             </Button>
-            <Button onClick={handleExport} variant="outline" className="flex-1">
+            <Button onClick={handleExport} variant="outline" className="flex-1 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700">
               <Download className="w-4 h-4 mr-2" />
               Export Data
             </Button>
-            <Button onClick={onClose} variant="outline" className="flex-1">
+            <Button onClick={onClose} variant="outline" className="flex-1 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700">
               Close
             </Button>
           </div>

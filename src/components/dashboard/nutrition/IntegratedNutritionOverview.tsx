@@ -110,7 +110,7 @@ export function IntegratedNutritionOverview() {
       </CardHeader>
       <CardContent className="flex flex-col md:flex-row justify-around items-center gap-8 py-6">
         <div className="flex flex-col items-center">
-            <span className="text-4xl font-bold text-orange-500">{Math.round(loggedMacros.calories)}</span>
+            <span className="text-4xl font-bold text-orange-500 dark:text-orange-400">{Math.round(loggedMacros.calories)}</span>
             <span className="text-muted-foreground">/ {macroTargets.calories} kcal</span>
         </div>
         <CircularProgress
@@ -118,21 +118,21 @@ export function IntegratedNutritionOverview() {
           max={macroTargets.protein}
           label="Protein"
           unit="grams"
-          color="#ef4444" // red-500
+          color="var(--chart-weight-loss)"
         />
         <CircularProgress
           value={loggedMacros.carbs}
           max={macroTargets.carbs}
           label="Carbs"
           unit="grams"
-          color="#f59e0b" // amber-500
+          color="var(--chart-5)"
         />
         <CircularProgress
           value={loggedMacros.fat}
           max={macroTargets.fat}
           label="Fat"
           unit="grams"
-          color="#eab308" // yellow-500
+          color="var(--chart-4)"
         />
       </CardContent>
     </Card>

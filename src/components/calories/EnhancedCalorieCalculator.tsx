@@ -111,13 +111,13 @@ export function EnhancedCalorieCalculator() {
   const getGoalTypeDisplay = (goalType: string) => {
     switch (goalType) {
       case 'fat_loss':
-        return { label: 'Fat Loss', color: 'bg-red-100 text-red-800 border-red-200' }
+        return { label: 'Fat Loss', color: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-950/30 dark:text-red-300 dark:border-red-900' }
       case 'muscle_gain':
-        return { label: 'Muscle Gain', color: 'bg-green-100 text-green-800 border-green-200' }
+        return { label: 'Muscle Gain', color: 'bg-green-100 text-green-800 border-green-200 dark:bg-green-950/30 dark:text-green-300 dark:border-green-900' }
       case 'maintenance':
-        return { label: 'Maintenance', color: 'bg-blue-100 text-blue-800 border-blue-200' }
+        return { label: 'Maintenance', color: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/30 dark:text-blue-300 dark:border-blue-900' }
       default:
-        return { label: goalType, color: 'bg-gray-100 text-gray-800 border-gray-200' }
+        return { label: goalType, color: 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700' }
     }
   }
 
@@ -217,41 +217,41 @@ export function EnhancedCalorieCalculator() {
       <CardContent className="space-y-6">
         {/* Goal-Adjusted Calorie Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200 dark:bg-blue-950/30 dark:border-blue-900">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <Zap className="h-5 w-5 text-blue-600" />
-              <span className="font-semibold text-blue-900">BMR</span>
+              <Zap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <span className="font-semibold text-blue-900 dark:text-blue-100">BMR</span>
             </div>
-            <p className="text-2xl font-bold text-blue-900">
+            <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
               {calculatedData.bmr.toLocaleString()}
             </p>
-            <p className="text-sm text-blue-700">calories/day at rest</p>
+            <p className="text-sm text-blue-700 dark:text-blue-300">calories/day at rest</p>
           </div>
           
-          <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
+          <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200 dark:bg-green-950/30 dark:border-green-900">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <Target className="h-5 w-5 text-green-600" />
-              <span className="font-semibold text-green-900">TDEE</span>
+              <Target className="h-5 w-5 text-green-600 dark:text-green-400" />
+              <span className="font-semibold text-green-900 dark:text-green-100">TDEE</span>
             </div>
-            <p className="text-2xl font-bold text-green-900">
+            <p className="text-2xl font-bold text-green-900 dark:text-green-100">
               {calculatedData.tdee.toLocaleString()}
             </p>
-            <p className="text-sm text-green-700">maintenance calories</p>
+            <p className="text-sm text-green-700 dark:text-green-300">maintenance calories</p>
           </div>
           
-          <div className="text-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+          <div className="text-center p-4 bg-yellow-50 rounded-lg border border-yellow-200 dark:bg-yellow-950/30 dark:border-yellow-900">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <Apple className="h-5 w-5 text-yellow-600" />
-              <span className="font-semibold text-yellow-900">Calories</span>
+              <Apple className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+              <span className="font-semibold text-yellow-900 dark:text-yellow-100">Calories</span>
             </div>
-            <p className="text-2xl font-bold text-yellow-900">
+            <p className="text-2xl font-bold text-yellow-900 dark:text-yellow-100">
               {calculatedData.adjustedCalories.toLocaleString()}
             </p>
-            <p className="text-sm text-yellow-700">{calculatedData.adjustmentReason}</p>
+            <p className="text-sm text-yellow-700 dark:text-yellow-300">{calculatedData.adjustmentReason}</p>
             {calculatedData.warnings.length > 0 && (
               <div className="mt-2">
                 {calculatedData.warnings.map((warning, index) => (
-                  <p key={index} className="text-xs text-red-600">
+                  <p key={index} className="text-xs text-red-600 dark:text-red-400">
                     <AlertTriangle className="inline-block mr-1" />
                     {warning}
                   </p>
@@ -272,27 +272,27 @@ export function EnhancedCalorieCalculator() {
                   <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground" />
                 </button>
               </DialogTrigger>
-              <DialogContent className="max-w-md">
+              <DialogContent className="max-w-md dark:bg-gray-900 dark:border-gray-700">
                 <DialogHeader>
-                  <DialogTitle>How Macro Targets Are Calculated</DialogTitle>
+                  <DialogTitle className="dark:text-gray-100">How Macro Targets Are Calculated</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 text-sm">
                   <div>
-                    <h4 className="font-semibold text-green-600 mb-1">Protein</h4>
+                    <h4 className="font-semibold text-green-600 dark:text-green-400 mb-1">Protein</h4>
                     <p>1 gram per pound of body weight</p>
                     <p className="text-muted-foreground">Example: 150 lbs = 150g protein</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-yellow-600 mb-1">Fat</h4>
+                    <h4 className="font-semibold text-yellow-600 dark:text-yellow-400 mb-1">Fat</h4>
                     <p>Minimum 50g per day, or 0.25g per pound (whichever is higher)</p>
                     <p className="text-muted-foreground">Example: 150 lbs = max(50g, 37.5g) = 50g fat</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-red-600 mb-1">Carbohydrates</h4>
+                    <h4 className="font-semibold text-red-600 dark:text-red-400 mb-1">Carbohydrates</h4>
                     <p>Remaining calories after protein and fat allocation</p>
                     <p className="text-muted-foreground">Calculated as: (Total Calories - Protein Calories - Fat Calories) ÷ 4</p>
                   </div>
-                  <div className="pt-2 border-t">
+                  <div className="pt-2 border-t dark:border-gray-700">
                     <p className="text-xs text-muted-foreground">
                       <strong>Note:</strong> These calculations ensure adequate protein for muscle maintenance and minimum fat for hormonal health, while filling remaining calories with carbohydrates for energy.
                     </p>
@@ -302,15 +302,15 @@ export function EnhancedCalorieCalculator() {
             </Dialog>
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-4 bg-white rounded-lg border border-gray-200">
-            <h3 className="text-lg font-semibold mb-4">Protein</h3>
+          <div className="p-4 bg-white rounded-lg border border-gray-200 dark:bg-gray-900 dark:border-gray-700">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Protein</h3>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-2xl font-bold text-gray-900">
+              <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 {calculatedData.macros.protein.toLocaleString()}
               </span>
-              <span className="text-sm text-gray-500">grams</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">grams</span>
             </div>
-            <div className="h-2 bg-gray-200 rounded-full">
+            <div className="h-2 bg-gray-200 rounded-full dark:bg-gray-700">
               <div
                 className="h-full bg-green-600 rounded-full"
                 style={{ width: `${(calculatedData.macros.protein / 150) * 100}%` }}
@@ -318,15 +318,15 @@ export function EnhancedCalorieCalculator() {
             </div>
           </div>
 
-          <div className="p-4 bg-white rounded-lg border border-gray-200">
-            <h3 className="text-lg font-semibold mb-4">Fat</h3>
+          <div className="p-4 bg-white rounded-lg border border-gray-200 dark:bg-gray-900 dark:border-gray-700">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Fat</h3>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-2xl font-bold text-gray-900">
+              <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 {calculatedData.macros.fat.toLocaleString()}
               </span>
-              <span className="text-sm text-gray-500">grams</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">grams</span>
             </div>
-            <div className="h-2 bg-gray-200 rounded-full">
+            <div className="h-2 bg-gray-200 rounded-full dark:bg-gray-700">
               <div
                 className="h-full bg-yellow-600 rounded-full"
                 style={{ width: `${(calculatedData.macros.fat / 70) * 100}%` }}
@@ -334,15 +334,15 @@ export function EnhancedCalorieCalculator() {
             </div>
           </div>
 
-          <div className="p-4 bg-white rounded-lg border border-gray-200">
-            <h3 className="text-lg font-semibold mb-4">Carbs</h3>
+          <div className="p-4 bg-white rounded-lg border border-gray-200 dark:bg-gray-900 dark:border-gray-700">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Carbs</h3>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-2xl font-bold text-gray-900">
+              <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 {calculatedData.macros.carbs.toLocaleString()}
               </span>
-              <span className="text-sm text-gray-500">grams</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">grams</span>
             </div>
-            <div className="h-2 bg-gray-200 rounded-full">
+            <div className="h-2 bg-gray-200 rounded-full dark:bg-gray-700">
               <div
                 className="h-full bg-red-600 rounded-full"
                 style={{ width: `${(calculatedData.macros.carbs / 300) * 100}%` }}
@@ -353,30 +353,30 @@ export function EnhancedCalorieCalculator() {
         </div>
 
         {/* Detailed Calorie and Macro Breakdown */}
-        <div className="p-4 bg-white rounded-lg border border-gray-200">
-          <h3 className="text-lg font-semibold mb-4">Calorie and Macro Breakdown</h3>
+        <div className="p-4 bg-white rounded-lg border border-gray-200 dark:bg-gray-900 dark:border-gray-700">
+          <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Calorie and Macro Breakdown</h3>
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <p className="text-sm text-gray-500">Total Calories</p>
-              <p className="text-xl font-bold text-gray-900">
+              <p className="text-sm text-gray-500 dark:text-gray-400">Total Calories</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
                 {calculatedData.adjustedCalories.toLocaleString()}
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Protein</p>
-              <p className="text-xl font-bold text-gray-900">
+              <p className="text-sm text-gray-500 dark:text-gray-400">Protein</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
                 {calculatedData.macros.protein.toLocaleString()} g
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Fat</p>
-              <p className="text-xl font-bold text-gray-900">
+              <p className="text-sm text-gray-500 dark:text-gray-400">Fat</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
                 {calculatedData.macros.fat.toLocaleString()} g
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Carbs</p>
-              <p className="text-xl font-bold text-gray-900">
+              <p className="text-sm text-gray-500 dark:text-gray-400">Carbs</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
                 {calculatedData.macros.carbs.toLocaleString()} g
               </p>
             </div>
@@ -384,19 +384,19 @@ export function EnhancedCalorieCalculator() {
         </div>
 
         {/* Activity Level and Goal Information */}
-        <div className="p-4 bg-white rounded-lg border border-gray-200">
-          <h3 className="text-lg font-semibold mb-4">Activity Level and Goal</h3>
+        <div className="p-4 bg-white rounded-lg border border-gray-200 dark:bg-gray-900 dark:border-gray-700">
+          <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Activity Level and Goal</h3>
           <div className="flex flex-col md:flex-row md:justify-between">
             <div className="mb-4 md:mb-0">
-              <p className="text-sm text-gray-500">Activity Level</p>
-              <p className="text-xl font-bold text-gray-900">
+              <p className="text-sm text-gray-500 dark:text-gray-400">Activity Level</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
                 {profile && profile.activity_level && getActivityDescription(profile.activity_level)}
               </p>
             </div>
             {activeGoal && (
               <div>
-                <p className="text-sm text-gray-500">Current Goal</p>
-                <p className="text-xl font-bold text-gray-900">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Current Goal</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
                   {activeGoal.goal_type === 'fat_loss' && 'Fat Loss'}
                   {activeGoal.goal_type === 'muscle_gain' && 'Muscle Gain'}
                   {activeGoal.goal_type === 'maintenance' && 'Maintenance'}
@@ -407,16 +407,16 @@ export function EnhancedCalorieCalculator() {
         </div>
 
         {/* Recommendations */}
-        <div className="p-4 bg-white rounded-lg border border-gray-200">
-          <h3 className="text-lg font-semibold mb-4">Recommendations</h3>
+        <div className="p-4 bg-white rounded-lg border border-gray-200 dark:bg-gray-900 dark:border-gray-700">
+          <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Recommendations</h3>
           <div className="space-y-2">
             {calculatedData.warnings.length === 0 ? (
-              <p className="text-sm text-green-600">
+              <p className="text-sm text-green-600 dark:text-green-400">
                 Your calorie and macro settings are good to go!
               </p>
             ) : (
               calculatedData.warnings.map((warning, index) => (
-                <div key={index} className="flex items-center text-sm text-red-600">
+                <div key={index} className="flex items-center text-sm text-red-600 dark:text-red-400">
                   <AlertTriangle className="h-4 w-4 mr-2" />
                   {warning}
                 </div>

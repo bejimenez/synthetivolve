@@ -54,18 +54,18 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
         <div className="flex-1 w-full sm:w-auto">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
             <Input
               placeholder="Search templates..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
             />
           </div>
         </div>
         
         {onCreateNew && (
-          <Button onClick={onCreateNew}>
+          <Button onClick={onCreateNew} className="dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90">
             <Plus className="w-4 h-4 mr-2" />
             Create New
           </Button>
@@ -77,18 +77,18 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
           const stats = getTemplateStats(template);
           
           return (
-            <Card key={template.id} className="hover:shadow-lg transition-shadow">
+            <Card key={template.id} className="hover:shadow-lg transition-shadow dark:bg-gray-900 dark:border-gray-700">
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg">{template.name}</CardTitle>
+                <CardTitle className="text-lg dark:text-gray-100">{template.name}</CardTitle>
                 <div className="flex flex-wrap gap-1">
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="outline" className="text-xs dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
                     <Calendar className="w-3 h-3 mr-1" />
                     {template.weeks}w
                   </Badge>
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="outline" className="text-xs dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
                     {template.daysPerWeek}d/week
                   </Badge>
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="outline" className="text-xs dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
                     {stats.uniqueExercises} exercises
                   </Badge>
                 </div>
@@ -96,17 +96,17 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
 
               <CardContent className="space-y-4">
                 {template.goalStatement && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                  <div className="bg-blue-50 border border-blue-200 rounded-md p-3 dark:bg-blue-950/30 dark:border-blue-900">
                     <div className="flex items-start space-x-2">
-                      <Target className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                      <p className="text-sm text-blue-800">{template.goalStatement}</p>
+                      <Target className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-blue-800 dark:text-blue-300">{template.goalStatement}</p>
                     </div>
                   </div>
                 )}
 
                 {template.specialization.length > 0 && (
                   <div>
-                    <p className="text-sm font-medium text-gray-700 mb-2">Specialization:</p>
+                    <p className="text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">Specialization:</p>
                     <div className="flex flex-wrap gap-1">
                       {template.specialization.map(muscle => (
                         <Badge key={muscle} variant="default" className="text-xs">
@@ -117,7 +117,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
                   <div>
                     <span className="font-medium">Total Days:</span>
                     <br />
@@ -135,7 +135,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
                     <Button
                       onClick={() => onSelectTemplate(template)}
                       size="sm"
-                      className="flex-1"
+                      className="flex-1 dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90"
                     >
                       Use Template
                     </Button>
@@ -145,6 +145,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
                     onClick={() => handleDuplicate(template)}
                     size="sm"
                     variant="outline"
+                    className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700"
                   >
                     <Copy className="w-4 h-4" />
                   </Button>
@@ -153,7 +154,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
                     onClick={() => setShowDeleteDialog(template.id!)}
                     size="sm"
                     variant="outline"
-                    className="text-red-500 hover:text-red-700"
+                    className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -166,20 +167,20 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
 
       {filteredTemplates.length === 0 && (
         <div className="text-center py-12">
-          <div className="text-gray-400 mb-4">
+          <div className="text-gray-400 dark:text-gray-500 mb-4">
             <Target className="w-12 h-12 mx-auto" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
             {searchTerm ? 'No templates found' : 'No templates yet'}
           </h3>
-          <p className="text-gray-600 mb-4">
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
             {searchTerm 
               ? 'Try adjusting your search terms'
               : 'Create your first mesocycle template to get started'
             }
           </p>
           {onCreateNew && !searchTerm && (
-            <Button onClick={onCreateNew}>
+            <Button onClick={onCreateNew} className="dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90">
               <Plus className="w-4 h-4 mr-2" />
               Create Your First Template
             </Button>
@@ -190,18 +191,19 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
       {/* Delete Confirmation Dialog */}
       {showDeleteDialog && (
         <Dialog open={true} onOpenChange={() => setShowDeleteDialog(null)}>
-          <DialogContent>
+          <DialogContent className="dark:bg-gray-900 dark:border-gray-700">
             <DialogHeader>
-              <DialogTitle>Delete Template</DialogTitle>
+              <DialogTitle className="dark:text-gray-100">Delete Template</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-400">
                 Are you sure you want to delete this template? This action cannot be undone.
               </p>
               <div className="flex justify-end space-x-2">
                 <Button
                   variant="outline"
                   onClick={() => setShowDeleteDialog(null)}
+                  className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700"
                 >
                   Cancel
                 </Button>

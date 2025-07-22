@@ -94,9 +94,9 @@ export function WeightEntryForm({ onSuccess }: WeightEntryFormProps) {
   }
 
   return (
-    <Card className="w-full h-fit">
+    <Card className="w-full h-fit dark:bg-gray-900 dark:border-gray-700">
       <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-2 text-lg">
+        <CardTitle className="flex items-center gap-2 text-lg dark:text-gray-100">
           <Scale className="h-5 w-5" />
           Log Today&apos;s Weight
         </CardTitle>
@@ -105,15 +105,15 @@ export function WeightEntryForm({ onSuccess }: WeightEntryFormProps) {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Alert components remain the same */}
           {error && (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="dark:bg-destructive/20 dark:border-destructive/40">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
           {justSubmitted && (
-            <Alert className="border-green-200 bg-green-50">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-800">
+            <Alert className="border-green-200 bg-green-50 dark:bg-green-950/30 dark:text-green-300 dark:border-green-900">
+              <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <AlertDescription className="text-green-800 dark:text-green-300">
                 Weight entry saved successfully! 🎉
               </AlertDescription>
             </Alert>
@@ -123,7 +123,7 @@ export function WeightEntryForm({ onSuccess }: WeightEntryFormProps) {
           <div className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="weight_lbs" className="text-sm font-medium">
+                <Label htmlFor="weight_lbs" className="text-sm font-medium dark:text-gray-100">
                   Weight (lbs)
                 </Label>
                 <Input
@@ -141,7 +141,7 @@ export function WeightEntryForm({ onSuccess }: WeightEntryFormProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="entry_date" className="text-sm font-medium">
+                <Label htmlFor="entry_date" className="text-sm font-medium dark:text-gray-100">
                   Date
                 </Label>
                 <Input
@@ -158,7 +158,7 @@ export function WeightEntryForm({ onSuccess }: WeightEntryFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="notes" className="text-sm font-medium">
+              <Label htmlFor="notes" className="text-sm font-medium dark:text-gray-100">
                 Notes (optional)
               </Label>
               <Input
@@ -170,7 +170,7 @@ export function WeightEntryForm({ onSuccess }: WeightEntryFormProps) {
               />
             </div>
 
-            <Button type="submit" className="w-full h-9" disabled={submitting}>
+            <Button type="submit" className="w-full h-9 dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90" disabled={submitting}>
               {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {submitting ? 'Saving...' : 'Log Weight'}
             </Button>

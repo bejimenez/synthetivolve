@@ -98,7 +98,7 @@ const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
   };
 
   return (
-    <Card className={`${isAccessory ? 'border-blue-200 bg-blue-50' : ''}`}>
+    <Card className={`${isAccessory ? 'border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/30' : ''}`}>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -154,18 +154,18 @@ const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
         {showPreviousData && previousWorkout && (
           <Collapsible open={showPrevious} onOpenChange={setShowPrevious}>
             <CollapsibleContent>
-              <div className="bg-gray-50 border rounded-md p-3 mb-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">
+              <div className="bg-gray-50 border rounded-md p-3 mb-4 dark:bg-gray-900 dark:border-gray-700">
+                <h4 className="text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">
                   Previous Workout
                 </h4>
-                <div className="grid grid-cols-4 gap-2 text-xs text-gray-600 mb-2">
+                <div className="grid grid-cols-4 gap-2 text-xs text-gray-600 mb-2 dark:text-gray-400">
                   <span>Weight</span>
                   <span>Reps</span>
                   <span>{exercise.useRIRRPE ? 'RIR' : 'RPE'}</span>
                   <span>Volume</span>
                 </div>
                 {(previousWorkout.sets as SetLog[]).map((set, index) => (
-                  <div key={index} className="grid grid-cols-4 gap-2 text-sm">
+                  <div key={index} className="grid grid-cols-4 gap-2 text-sm text-gray-900 dark:text-gray-100">
                     <span>{set.weight} kg</span>
                     <span>{set.reps}</span>
                     <span>{exercise.useRIRRPE ? set.rir || '-' : set.rpe || '-'}</span>
@@ -179,7 +179,7 @@ const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
 
         {/* Current Sets */}
         <div className="space-y-3">
-          <div className="grid grid-cols-12 gap-2 text-sm font-medium text-gray-600">
+          <div className="grid grid-cols-12 gap-2 text-sm font-medium text-gray-600 dark:text-gray-400">
             <span className="col-span-1">Set</span>
             <span className="col-span-3">Weight (kg)</span>
             <span className="col-span-2">Reps</span>
@@ -190,7 +190,7 @@ const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
 
           {sets.map((set, index) => (
             <div key={index} className="grid grid-cols-12 gap-2 items-center">
-              <span className="col-span-1 text-sm font-medium">{index + 1}</span>
+              <span className="col-span-1 text-sm font-medium text-gray-900 dark:text-gray-100">{index + 1}</span>
               
               <div className="col-span-3">
                 <Input
@@ -230,7 +230,7 @@ const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
                 />
               </div>
               
-              <div className="col-span-2 text-sm text-gray-600">
+              <div className="col-span-2 text-sm text-gray-600 dark:text-gray-400">
                 {(set.weight * set.reps).toFixed(0)} kg
               </div>
               
@@ -259,7 +259,7 @@ const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
           ))}
 
           {sets.length === 0 && (
-            <div className="text-center py-4 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
+            <div className="text-center py-4 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg dark:text-gray-400 dark:border-gray-700">
               <p className="text-sm">No sets logged yet</p>
               <p className="text-xs mt-1">Click &quot;Add Set&quot; to start logging</p>
             </div>
@@ -279,8 +279,8 @@ const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
 
         {/* Exercise Notes */}
         {exercise.notes && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
-            <p className="text-sm text-yellow-800">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 dark:bg-yellow-950/30 dark:border-yellow-900">
+            <p className="text-sm text-yellow-800 dark:text-yellow-300">
               <strong>Notes:</strong> {exercise.notes}
             </p>
           </div>

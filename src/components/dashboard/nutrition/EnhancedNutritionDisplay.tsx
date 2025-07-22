@@ -33,77 +33,7 @@ interface EnhancedNutritionDisplayProps {
   variant?: 'full' | 'compact'
 }
 
-// Enhanced circular progress component with dynamic filling
-const CircularProgress = React.memo(function CircularProgress({ 
-  value, 
-  max, 
-  label,
-  unit = "g",
-  size = 120, 
-  strokeWidth = 8, 
-  color = "rgb(59, 130, 246)"
-}: {
-  value: number
-  max: number
-  label: string
-  unit?: string
-  size?: number
-  strokeWidth?: number
-  color?: string
-}) {
-  const normalizedValue = Math.min(value, max)
-  const percentage = max > 0 ? (normalizedValue / max) * 100 : 0
-  const radius = (size - strokeWidth) / 2
-  const circumference = radius * 2 * Math.PI
-  const strokeDasharray = circumference
-  const strokeDashoffset = circumference - (percentage / 100) * circumference
-
-  // Determine if over/under target for styling
-  const isOver = value > max
-  const displayColor = isOver ? "rgb(239, 68, 68)" : color // red if over
-
-  return (
-    <div className="flex flex-col items-center">
-      <div className="relative inline-flex items-center justify-center mb-2">
-        <svg width={size} height={size} className="transform -rotate-90">
-          {/* Background circle */}
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            stroke="rgb(229, 231, 235)"
-            strokeWidth={strokeWidth}
-            fill="transparent"
-          />
-          {/* Progress circle */}
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            stroke={displayColor}
-            strokeWidth={strokeWidth}
-            fill="transparent"
-            strokeDasharray={strokeDasharray}
-            strokeDashoffset={strokeDashoffset}
-            strokeLinecap="round"
-            className="transition-all duration-300 ease-in-out"
-          />
-        </svg>
-        {/* Center content */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-xl font-bold">{Math.round(value)}</span>
-          <span className="text-xs text-muted-foreground">/ {Math.round(max)}</span>
-        </div>
-      </div>
-      <h4 className="text-sm font-medium mb-1" style={{ color: displayColor }}>
-        {label}
-      </h4>
-      <p className="text-xs text-muted-foreground">
-        {Math.round(value)}{unit} {isOver && `(+${Math.round(value - max)})`}
-      </p>
-    </div>
-  )
-})
+import { CircularProgress } from '@/components/dashboard/shared/CircularProgress'
 
 export function EnhancedNutritionDisplay({ 
   foodLogs, 
@@ -232,19 +162,19 @@ export function EnhancedNutritionDisplay({
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             <div>
-              <p className="text-2xl font-bold text-orange-500">{Math.round(loggedMacros.calories)}</p>
+              <p className="text-2xl font-bold text-orange-500 dark:text-orange-400">{Math.round(loggedMacros.calories)}</p>
               <p className="text-sm text-muted-foreground">/ {calculatedTargets.calories} kcal</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-red-500">{Math.round(loggedMacros.protein)}</p>
+              <p className="text-2xl font-bold text-red-500 dark:text-red-400">{Math.round(loggedMacros.protein)}</p>
               <p className="text-sm text-muted-foreground">/ {calculatedTargets.protein}g protein</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-amber-500">{Math.round(loggedMacros.carbs)}</p>
+              <p className="text-2xl font-bold text-amber-500 dark:text-amber-400">{Math.round(loggedMacros.carbs)}</p>
               <p className="text-sm text-muted-foreground">/ {calculatedTargets.carbs}g carbs</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-yellow-500">{Math.round(loggedMacros.fat)}</p>
+              <p className="text-2xl font-bold text-yellow-500 dark:text-yellow-400">{Math.round(loggedMacros.fat)}</p>
               <p className="text-sm text-muted-foreground">/ {calculatedTargets.fat}g fat</p>
             </div>
           </div>
@@ -314,13 +244,13 @@ export function EnhancedNutritionDisplay({
             <h3 className="text-lg font-semibold">Macro Progress</h3>
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="p-1 h-auto">
+                <Button variant="ghost" size="sm" className="p-1 h-auto dark:hover:bg-gray-800">
                   <HelpCircle className="h-4 w-4" />
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="dark:bg-gray-900 dark:border-gray-700">
                 <DialogHeader>
-                  <DialogTitle>Macro Calculations</DialogTitle>
+                  <DialogTitle className="dark:text-gray-100">Macro Calculations</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-3 text-sm">
                   <p><strong>Protein:</strong> 1g per lb body weight</p>
@@ -339,19 +269,22 @@ export function EnhancedNutritionDisplay({
               value={loggedMacros.protein}
               max={calculatedTargets.protein}
               label="Protein"
-              color="#ef4444" // red-500
+              unit="g"
+              color="var(--chart-weight-loss)"
             />
             <CircularProgress
               value={loggedMacros.carbs}
               max={calculatedTargets.carbs}
               label="Carbs"
-              color="#f59e0b" // amber-500
+              unit="g"
+              color="var(--chart-5)"
             />
             <CircularProgress
               value={loggedMacros.fat}
               max={calculatedTargets.fat}
               label="Fat"
-              color="#eab308" // yellow-500
+              unit="g"
+              color="var(--chart-4)"
             />
           </div>
         </div>
@@ -359,21 +292,21 @@ export function EnhancedNutritionDisplay({
         {/* Progress Badges */}
         <div className="flex flex-wrap gap-2 justify-center">
           {loggedMacros.calories >= calculatedTargets.calories * 0.9 && (
-            <Badge variant="secondary" className="bg-green-100 text-green-800">
+            <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-300">
               Calorie target nearly reached
             </Badge>
           )}
           {loggedMacros.protein >= calculatedTargets.protein * 0.8 && (
-            <Badge variant="secondary" className="bg-red-100 text-red-800">
+            <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-950/30 dark:text-red-300">
               Good protein intake
             </Badge>
           )}
           {Object.values(loggedMacros).every(val => val === 0) && (
-            <Badge variant="outline">
+            <Badge variant="outline" className="dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700">
               Start logging food to see progress
             </Badge>
-          )}
-        </div>
+          )
+        }</div>
       </CardContent>
     </Card>
   )

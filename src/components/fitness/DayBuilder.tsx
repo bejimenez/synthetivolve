@@ -50,20 +50,20 @@ const SortableExerciseItem: React.FC<SortableExerciseItemProps> = ({ exercise, o
     <div
       ref={setNodeRef}
       style={style}
-      className="bg-white border rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow"
+      className="bg-white border rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow dark:bg-gray-900 dark:border-gray-700"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2 flex-1">
           <div
             {...attributes}
             {...listeners}
-            className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 rounded"
+            className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 rounded dark:hover:bg-gray-800"
           >
-            <GripVertical className="w-4 h-4 text-gray-400" />
+            <GripVertical className="w-4 h-4 text-gray-400 dark:text-gray-500" />
           </div>
           
           <div className="flex-1">
-            <div className="font-medium text-sm">{exercise.name}</div>
+            <div className="font-medium text-sm text-gray-900 dark:text-gray-100">{exercise.name}</div>
             <div className="flex items-center space-x-1 mt-1">
               <Badge variant="default" className="text-xs">
                 {formatMuscleGroupName(exercise.primary)}
@@ -75,7 +75,7 @@ const SortableExerciseItem: React.FC<SortableExerciseItemProps> = ({ exercise, o
               ))}
             </div>
             {exercise.equipment && (
-              <div className="text-xs text-gray-500 mt-1">{exercise.equipment}</div>
+              <div className="text-xs text-gray-500 mt-1 dark:text-gray-400">{exercise.equipment}</div>
             )}
           </div>
         </div>
@@ -84,7 +84,7 @@ const SortableExerciseItem: React.FC<SortableExerciseItemProps> = ({ exercise, o
           variant="ghost"
           size="sm"
           onClick={() => onRemove(exercise.id)}
-          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+          className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
         >
           <X className="w-4 h-4" />
         </Button>
@@ -166,7 +166,7 @@ const DayBuilder: React.FC<DayBuilderProps> = ({
           >
             <div className="space-y-2 min-h-[100px]">
               {dayExercises.length === 0 ? (
-                <div className="text-center text-gray-500 py-8 border-2 border-dashed border-gray-200 rounded-lg">
+                <div className="text-center text-gray-500 py-8 border-2 border-dashed border-gray-200 rounded-lg dark:text-gray-400 dark:border-gray-700">
                   <p className="text-sm">No exercises added</p>
                   <p className="text-xs mt-1">Click &quot;Add Exercise&quot; to get started</p>
                 </div>

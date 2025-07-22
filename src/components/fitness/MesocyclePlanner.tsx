@@ -45,6 +45,12 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
 
   const initializeDays = useCallback((daysPerWeek: number, existingDays?: DayPlan[]) => {
     if (!daysPerWeek) return [];
+
+    // Check if existingDays already match the expected structure
+    if (existingDays && existingDays.length === daysPerWeek &&
+        existingDays.every((day, index) => day.day === index + 1)) {
+      return existingDays; // Return the same instance if already correct
+    }
     
     const days: DayPlan[] = [];
     for (let i = 1; i <= daysPerWeek; i++) {
@@ -168,8 +174,8 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
         </CardHeader>
         <CardContent className="space-y-4">
           {errors.length > 0 && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-3">
-              <ul className="text-red-600 text-sm space-y-1">
+            <div className="bg-red-50 border border-red-200 rounded-md p-3 dark:bg-red-950/30 dark:border-red-900">
+              <ul className="text-red-600 text-sm space-y-1 dark:text-red-300">
                 {errors.map((error, index) => (
                   <li key={index}>• {error}</li>
                 ))}
@@ -296,16 +302,16 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
                   <div key={muscle} className="space-y-1">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                           {formatMuscleGroupName(muscle as MuscleGroup)}
                         </span>
                         {isSpecialized && (
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge variant="secondary" className="text-xs dark:bg-secondary/20 dark:text-secondary-foreground">
                             Specialized
                           </Badge>
                         )}
                       </div>
-                      <span className="text-sm text-gray-600">{count} sets/week</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">{count} sets/week</span>
                     </div>
                     <Progress
                       value={(Number(count) / 30) * 100}

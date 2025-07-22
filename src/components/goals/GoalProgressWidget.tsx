@@ -32,13 +32,13 @@ export function GoalProgressWidget({ onCreateGoal, onManageGoals }: GoalProgress
   const getGoalTypeDisplay = (goalType: string) => {
     switch (goalType) {
       case 'fat_loss':
-        return { label: 'Fat Loss', icon: TrendingDown, color: 'bg-red-100 text-red-800 border-red-200' }
+        return { label: 'Fat Loss', icon: TrendingDown, color: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-950/30 dark:text-red-300 dark:border-red-900' }
       case 'muscle_gain':
-        return { label: 'Muscle Gain', icon: TrendingUp, color: 'bg-green-100 text-green-800 border-green-200' }
+        return { label: 'Muscle Gain', icon: TrendingUp, color: 'bg-green-100 text-green-800 border-green-200 dark:bg-green-950/30 dark:text-green-300 dark:border-green-900' }
       case 'maintenance':
-        return { label: 'Maintenance', icon: Minus, color: 'bg-blue-100 text-blue-800 border-blue-200' }
+        return { label: 'Maintenance', icon: Minus, color: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/30 dark:border-blue-900' }
       default:
-        return { label: goalType, icon: Target, color: 'bg-gray-100 text-gray-800 border-gray-200' }
+        return { label: goalType, icon: Target, color: 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700' }
     }
   }
 
@@ -143,19 +143,19 @@ export function GoalProgressWidget({ onCreateGoal, onManageGoals }: GoalProgress
         {/* Timeline */}
         {progressData && (
           <div className="grid grid-cols-2 gap-4">
-            <div className="text-center p-3 bg-gray-50 rounded-lg">
+            <div className="text-center p-3 bg-gray-50 rounded-lg dark:bg-gray-900">
               <div className="flex items-center justify-center gap-1 mb-1">
-                <Calendar className="h-4 w-4 text-gray-600" />
-                <span className="font-semibold text-gray-900">{progressData.daysElapsed}</span>
+                <Calendar className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                <span className="font-semibold text-gray-900 dark:text-gray-100">{progressData.daysElapsed}</span>
               </div>
-              <p className="text-xs text-gray-600">Days Completed</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">Days Completed</p>
             </div>
-            <div className="text-center p-3 bg-blue-50 rounded-lg">
+            <div className="text-center p-3 bg-blue-50 rounded-lg dark:bg-blue-950/30">
               <div className="flex items-center justify-center gap-1 mb-1">
-                <Calendar className="h-4 w-4 text-blue-600" />
-                <span className="font-semibold text-blue-900">{progressData.daysRemaining}</span>
+                <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <span className="font-semibold text-blue-900 dark:text-blue-100">{progressData.daysRemaining}</span>
               </div>
-              <p className="text-xs text-blue-700">Days Remaining</p>
+              <p className="text-xs text-blue-700 dark:text-blue-300">Days Remaining</p>
             </div>
           </div>
         )}
@@ -163,18 +163,18 @@ export function GoalProgressWidget({ onCreateGoal, onManageGoals }: GoalProgress
         {/* Weight Progress */}
         {progressData && progressData.currentWeightChange !== null && (
           <div className="space-y-2">
-            <h4 className="font-semibold text-sm">Weight Progress</h4>
+            <h4 className="font-semibold text-sm dark:text-gray-100">Weight Progress</h4>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <p className="text-muted-foreground">Expected Change</p>
-                <p className="font-semibold">
+                <p className="font-semibold dark:text-gray-100">
                   {progressData.expectedWeightChange > 0 ? '+' : ''}
                   {progressData.expectedWeightChange.toFixed(1)} lbs
                 </p>
               </div>
               <div>
                 <p className="text-muted-foreground">Actual Change</p>
-                <p className="font-semibold">
+                <p className="font-semibold dark:text-gray-100">
                   {progressData.currentWeightChange > 0 ? '+' : ''}
                   {progressData.currentWeightChange.toFixed(1)} lbs
                 </p>
@@ -190,16 +190,16 @@ export function GoalProgressWidget({ onCreateGoal, onManageGoals }: GoalProgress
         </div>
 
         {/* Goal Details */}
-        <div className="space-y-2 text-sm border-t pt-4">
+        <div className="space-y-2 text-sm border-t pt-4 dark:border-gray-700">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Start Weight:</span>
-            <span className="font-medium">{activeGoal.start_weight} lbs</span>
+            <span className="font-medium dark:text-gray-100">{activeGoal.start_weight} lbs</span>
           </div>
           
           {activeGoal.goal_type === 'fat_loss' && (
             <div className="flex justify-between">
               <span className="text-muted-foreground">Target Rate:</span>
-              <span className="font-medium">
+              <span className="font-medium dark:text-gray-100">
                 {activeGoal.rate_type === 'absolute' 
                   ? `${activeGoal.target_rate_lbs} lbs/week`
                   : `${activeGoal.target_rate_percent}% bodyweight/week`
@@ -211,7 +211,7 @@ export function GoalProgressWidget({ onCreateGoal, onManageGoals }: GoalProgress
           {activeGoal.goal_type === 'muscle_gain' && (
             <div className="flex justify-between">
               <span className="text-muted-foreground">Calorie Surplus:</span>
-              <span className="font-medium">+{activeGoal.surplus_calories} cal/day</span>
+              <span className="font-medium dark:text-gray-100">+{activeGoal.surplus_calories} cal/day</span>
             </div>
           )}
         </div>
@@ -219,12 +219,12 @@ export function GoalProgressWidget({ onCreateGoal, onManageGoals }: GoalProgress
         {/* Actions */}
         <div className="flex gap-2 pt-2">
           {onManageGoals && (
-            <Button variant="outline" onClick={onManageGoals} className="flex-1">
+            <Button variant="outline" onClick={onManageGoals} className="flex-1 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700">
               Manage Goals
             </Button>
           )}
           {onCreateGoal && (
-            <Button variant="outline" onClick={onCreateGoal} size="sm">
+            <Button variant="outline" onClick={onCreateGoal} size="sm" className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700">
               New Goal
             </Button>
           )}

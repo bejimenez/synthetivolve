@@ -1,7 +1,7 @@
 // src/components/nutrition/AddFoodDialog.tsx
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useFormDraft } from '@/hooks/useFormDraft'
 import { useNutrition } from './NutritionDataProvider'
@@ -56,12 +56,15 @@ export function AddFoodDialog({ open, onClose, onFoodAdded, selectedDate, initia
     },
   })
 
+  const isInitialLoadRef = useRef(true)
+
   useEffect(() => {
-    if (isLoaded && draft) {
+    if (isLoaded && isInitialLoadRef.current && draft) {
       setSearchTerm(draft.searchTerm)
       setQuantity(draft.quantity)
       setUnit(draft.unit)
       setActiveTab(draft.activeTab)
+      isInitialLoadRef.current = false
     }
   }, [isLoaded, draft])
 
@@ -179,9 +182,9 @@ const handleAddFood = async () => {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto dark:bg-gray-900 dark:border-gray-700">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="dark:text-gray-100">
             {selectedFood ? `Log "${selectedFood.description}"` : 'Add Food'}
             {intendedLoggingHour !== null && (
               <span className="text-sm text-muted-foreground ml-2">
@@ -194,7 +197,7 @@ const handleAddFood = async () => {
         {!selectedFood ? (
           <div className="space-y-4">
             {/* Tab Navigation */}
-            <div className="flex border-b">
+            <div className="flex border-b dark:border-gray-700">
               {tabConfig.map(tab => {
                 const Icon = tab.icon
                 return (
@@ -204,7 +207,7 @@ const handleAddFood = async () => {
                     className={`flex-1 flex items-center justify-center gap-2 p-3 text-sm font-medium transition-colors ${
                       activeTab === tab.id
                         ? 'border-b-2 border-primary text-primary'
-                        : 'text-muted-foreground hover:text-foreground'
+                        : 'text-muted-foreground hover:text-foreground dark:hover:text-gray-100'
                     }`}
                   >
                     {Icon && <Icon className="h-4 w-4" />}
@@ -223,7 +226,7 @@ const handleAddFood = async () => {
                     placeholder="Search USDA food database..."
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                   />
                 </div>
                 {loading && (
@@ -236,9 +239,9 @@ const handleAddFood = async () => {
                     <div
                       key={food.fdcId}
                       onClick={() => setSelectedFood(food)}
-                      className="p-3 border rounded-lg hover:bg-accent cursor-pointer transition-colors"
+                      className="p-3 border rounded-lg hover:bg-accent cursor-pointer transition-colors dark:border-gray-700 dark:hover:bg-gray-800"
                     >
-                      <p className="font-semibold">{food.description}</p>
+                      <p className="font-semibold dark:text-gray-100">{food.description}</p>
                       {food.brandName && (
                         <p className="text-sm text-muted-foreground">{food.brandName}</p>
                       )}
@@ -264,9 +267,9 @@ const handleAddFood = async () => {
                     <div
                       key={recent.id}
                       onClick={() => handleSelectRecent(recent)}
-                      className="p-3 border rounded-lg hover:bg-accent cursor-pointer transition-colors"
+                      className="p-3 border rounded-lg hover:bg-accent cursor-pointer transition-colors dark:border-gray-700 dark:hover:bg-gray-800"
                     >
-                      <p className="font-semibold">{recent.food.description}</p>
+                      <p className="font-semibold dark:text-gray-100">{recent.food.description}</p>
                       {recent.food.brand_name && (
                         <p className="text-sm text-muted-foreground">{recent.food.brand_name}</p>
                       )}
@@ -289,14 +292,14 @@ const handleAddFood = async () => {
         ) : (
           <div className="space-y-4">
             <div>
-              <h3 className="font-semibold text-lg">{selectedFood.description}</h3>
+              <h3 className="font-semibold text-lg dark:text-gray-100">{selectedFood.description}</h3>
               {selectedFood.brandName && (
                 <p className="text-sm text-muted-foreground">{selectedFood.brandName}</p>
               )}
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="quantity" className="text-right">
+              <label htmlFor="quantity" className="text-right dark:text-gray-100">
                 Quantity
               </label>
               <Input
@@ -309,26 +312,26 @@ const handleAddFood = async () => {
                 min="0"
               />
               <Select value={unit} onValueChange={setUnit}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="g">grams</SelectItem>
-                  <SelectItem value="oz">ounces</SelectItem>
-                  <SelectItem value="cup">cup</SelectItem>
-                  <SelectItem value="tbsp">tablespoon</SelectItem>
-                  <SelectItem value="tsp">teaspoon</SelectItem>
-                  <SelectItem value="piece">piece</SelectItem>
-                  <SelectItem value="serving">serving</SelectItem>
+                <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                  <SelectItem value="g" className="dark:text-gray-100 dark:hover:bg-gray-700">grams</SelectItem>
+                  <SelectItem value="oz" className="dark:text-gray-100 dark:hover:bg-gray-700">ounces</SelectItem>
+                  <SelectItem value="cup" className="dark:text-gray-100 dark:hover:bg-gray-700">cup</SelectItem>
+                  <SelectItem value="tbsp" className="dark:text-gray-100 dark:hover:bg-gray-700">tablespoon</SelectItem>
+                  <SelectItem value="tsp" className="dark:text-gray-100 dark:hover:bg-gray-700">teaspoon</SelectItem>
+                  <SelectItem value="piece" className="dark:text-gray-100 dark:hover:bg-gray-700">piece</SelectItem>
+                  <SelectItem value="serving" className="dark:text-gray-100 dark:hover:bg-gray-700">serving</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setSelectedFood(null)}>
+              <Button variant="outline" onClick={() => setSelectedFood(null)} className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700">
                 Back
               </Button>
-              <Button onClick={handleAddFood}>
+              <Button onClick={handleAddFood} className="dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90">
                 Add Food
               </Button>
             </div>

@@ -77,15 +77,30 @@ export function useNutritionSettings(): UseNutritionSettingsReturn {
               .single()
             
             if (existingError) throw existingError
-            setSettings(existingSettings)
+            setSettings(prevSettings => {
+              if (JSON.stringify(prevSettings) !== JSON.stringify(existingSettings)) {
+                return existingSettings;
+              }
+              return prevSettings;
+            });
           } else {
             throw createError
           }
         } else {
-          setSettings(newSettings)
+          setSettings(prevSettings => {
+            if (JSON.stringify(prevSettings) !== JSON.stringify(newSettings)) {
+              return newSettings;
+            }
+            return prevSettings;
+          });
         }
       } else {
-        setSettings(data)
+        setSettings(prevSettings => {
+          if (JSON.stringify(prevSettings) !== JSON.stringify(data)) {
+            return data;
+          }
+          return prevSettings;
+        });
       }
     } catch (err) {
       console.error('Error loading nutrition settings:', err)

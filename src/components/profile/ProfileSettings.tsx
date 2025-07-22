@@ -137,13 +137,13 @@ export function ProfileSettings({ onSuccess, className }: ProfileSettingsProps) 
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {error && (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="dark:bg-destructive/20 dark:border-destructive/40">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
           {justSaved && (
-            <Alert className="border-green-200 bg-green-50 text-green-800">
+            <Alert className="border-green-200 bg-green-50 text-green-800 dark:bg-green-950/30 dark:text-green-300 dark:border-green-900">
               <AlertDescription>Profile updated successfully! 🎉</AlertDescription>
             </Alert>
           )}
@@ -151,7 +151,7 @@ export function ProfileSettings({ onSuccess, className }: ProfileSettingsProps) 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Height Input */}
             <div className="space-y-2">
-              <Label htmlFor="height_inches">Height</Label>
+              <Label htmlFor="height_inches" className="dark:text-gray-100">Height</Label>
               <div className="relative">
                 <Input
                   id="height_inches"
@@ -176,18 +176,18 @@ export function ProfileSettings({ onSuccess, className }: ProfileSettingsProps) 
 
             {/* Biological Sex */}
             <div className="space-y-2">
-              <Label htmlFor="biological_sex">Biological Sex</Label>
+              <Label htmlFor="biological_sex" className="dark:text-gray-100">Biological Sex</Label>
               <Select
                 onValueChange={(value: 'male' | 'female') => setValue('biological_sex', value, { shouldDirty: true })}
                 defaultValue={profile?.biological_sex || undefined}
                 disabled={submitting}
               >
-                <SelectTrigger>
+                <SelectTrigger className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100">
                   <SelectValue placeholder="Select sex" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="male">Male</SelectItem>
-                  <SelectItem value="female">Female</SelectItem>
+                <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                  <SelectItem value="male" className="dark:text-gray-100 dark:hover:bg-gray-700">Male</SelectItem>
+                  <SelectItem value="female" className="dark:text-gray-100 dark:hover:bg-gray-700">Female</SelectItem>
                 </SelectContent>
               </Select>
               {errors.biological_sex && (
@@ -199,7 +199,7 @@ export function ProfileSettings({ onSuccess, className }: ProfileSettingsProps) 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Birth Date */}
             <div className="space-y-2">
-              <Label htmlFor="birth_date">Birth Date</Label>
+              <Label htmlFor="birth_date" className="dark:text-gray-100">Birth Date</Label>
               <Input
                 id="birth_date"
                 type="date"
@@ -214,7 +214,7 @@ export function ProfileSettings({ onSuccess, className }: ProfileSettingsProps) 
 
             {/* Activity Level */}
             <div className="space-y-2">
-              <Label htmlFor="activity_level">Activity Level</Label>
+              <Label htmlFor="activity_level" className="dark:text-gray-100">Activity Level</Label>
               <Select
                 onValueChange={(value: ProfileFormData['activity_level']) => 
                   setValue('activity_level', value, { shouldDirty: true })
@@ -222,23 +222,23 @@ export function ProfileSettings({ onSuccess, className }: ProfileSettingsProps) 
                 defaultValue={profile?.activity_level || undefined}
                 disabled={submitting}
               >
-                <SelectTrigger>
+                <SelectTrigger className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100">
                   <SelectValue placeholder="Select activity level" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sedentary">
+                <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                  <SelectItem value="sedentary" className="dark:text-gray-100 dark:hover:bg-gray-700">
                     Sedentary (office job, no exercise)
                   </SelectItem>
-                  <SelectItem value="lightly_active">
+                  <SelectItem value="lightly_active" className="dark:text-gray-100 dark:hover:bg-gray-700">
                     Lightly Active (light exercise 1-3 days/week)
                   </SelectItem>
-                  <SelectItem value="moderately_active">
+                  <SelectItem value="moderately_active" className="dark:text-gray-100 dark:hover:bg-gray-700">
                     Moderately Active (moderate exercise 3-5 days/week)
                   </SelectItem>
-                  <SelectItem value="very_active">
+                  <SelectItem value="very_active" className="dark:text-gray-100 dark:hover:bg-gray-700">
                     Very Active (hard exercise 6-7 days/week)
                   </SelectItem>
-                  <SelectItem value="extremely_active">
+                  <SelectItem value="extremely_active" className="dark:text-gray-100 dark:hover:bg-gray-700">
                     Extremely Active (very hard exercise, 2x/day)
                   </SelectItem>
                 </SelectContent>
@@ -252,7 +252,7 @@ export function ProfileSettings({ onSuccess, className }: ProfileSettingsProps) 
           <Button 
             type="submit" 
             disabled={submitting || !isDirty}
-            className="w-full"
+            className="w-full dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90"
           >
             {submitting ? (
               <>

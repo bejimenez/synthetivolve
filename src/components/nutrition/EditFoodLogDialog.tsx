@@ -100,18 +100,18 @@ export function EditFoodLogDialog({ open, onClose, onFoodLogUpdated, foodLog }: 
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] dark:bg-gray-900 dark:border-gray-700">
         <DialogHeader>
-          <DialogTitle>Edit Food Log</DialogTitle>
+          <DialogTitle className="dark:text-gray-100">Edit Food Log</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="font-semibold text-lg">{foodLog.food.description}</div>
+          <div className="font-semibold text-lg dark:text-gray-100">{foodLog.food.description}</div>
           {foodLog.food.brand_name && (
             <p className="text-sm text-muted-foreground">{foodLog.food.brand_name}</p>
           )}
 
           <div className="grid grid-cols-4 items-center gap-4">
-            <label htmlFor="quantity" className="text-right">
+            <label htmlFor="quantity" className="text-right dark:text-gray-100">
               Quantity
             </label>
             <Input
@@ -126,27 +126,27 @@ export function EditFoodLogDialog({ open, onClose, onFoodLogUpdated, foodLog }: 
           </div>
 
           <div className="grid grid-cols-4 items-center gap-4">
-            <label htmlFor="unit" className="text-right">
+            <label htmlFor="unit" className="text-right dark:text-gray-100">
               Unit
             </label>
             <Select value={unit} onValueChange={setUnit}>
-              <SelectTrigger className="col-span-3">
+              <SelectTrigger className="col-span-3 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="g">grams (g)</SelectItem>
-                <SelectItem value="oz">ounces (oz)</SelectItem>
-                <SelectItem value="cup">cup</SelectItem>
-                <SelectItem value="tbsp">tablespoon</SelectItem>
-                <SelectItem value="tsp">teaspoon</SelectItem>
-                <SelectItem value="piece">piece</SelectItem>
-                <SelectItem value="serving">serving</SelectItem>
+              <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                <SelectItem value="g" className="dark:text-gray-100 dark:hover:bg-gray-700">grams (g)</SelectItem>
+                <SelectItem value="oz" className="dark:text-gray-100 dark:hover:bg-gray-700">ounces (oz)</SelectItem>
+                <SelectItem value="cup" className="dark:text-gray-100 dark:hover:bg-gray-700">cup</SelectItem>
+                <SelectItem value="tbsp" className="dark:text-gray-100 dark:hover:bg-gray-700">tablespoon</SelectItem>
+                <SelectItem value="tsp" className="dark:text-gray-100 dark:hover:bg-gray-700">teaspoon</SelectItem>
+                <SelectItem value="piece" className="dark:text-gray-100 dark:hover:bg-gray-700">piece</SelectItem>
+                <SelectItem value="serving" className="dark:text-gray-100 dark:hover:bg-gray-700">serving</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="grid grid-cols-4 items-center gap-4">
-            <label htmlFor="logged_at" className="text-right">
+            <label htmlFor="logged_at" className="text-right dark:text-gray-100">
               Time
             </label>
             <Input
@@ -159,10 +159,10 @@ export function EditFoodLogDialog({ open, onClose, onFoodLogUpdated, foodLog }: 
           </div>
         </div>
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={handleClose} disabled={loading}>
+          <Button variant="outline" onClick={handleClose} disabled={loading} className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700">
             Cancel
           </Button>
-          <Button onClick={handleUpdateFoodLog} disabled={loading}>
+          <Button onClick={handleUpdateFoodLog} disabled={loading} className="dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90">
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Save Changes
           </Button>

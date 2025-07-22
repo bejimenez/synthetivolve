@@ -123,22 +123,22 @@ export function GoalProgressChart({ className }: GoalProgressChartProps) {
       case 'fat_loss':
         return {
           icon: TrendingDown,
-          color: 'text-red-600',
-          bgColor: 'bg-red-50 border-red-200',
+          color: 'text-red-600 dark:text-red-400',
+          bgColor: 'bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-900',
           label: 'Fat Loss Goal'
         }
       case 'muscle_gain':
         return {
           icon: TrendingUp,
-          color: 'text-green-600',
-          bgColor: 'bg-green-50 border-green-200',
+          color: 'text-green-600 dark:text-green-400',
+          bgColor: 'bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-900',
           label: 'Muscle Gain Goal'
         }
       case 'maintenance':
         return {
           icon: Calendar,
-          color: 'text-blue-600',
-          bgColor: 'bg-blue-50 border-blue-200',
+          color: 'text-blue-600 dark:text-blue-400',
+          bgColor: 'bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-900',
           label: 'Maintenance Goal'
         }
       default:
@@ -204,15 +204,15 @@ export function GoalProgressChart({ className }: GoalProgressChartProps) {
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted-foreground/30" />
               <XAxis 
                 dataKey="week" 
-                className="text-xs"
+                className="text-xs fill-muted-foreground" // Added fill-muted-foreground
                 tick={{ fontSize: 12 }}
               />
               <YAxis 
                 domain={['dataMin - 2', 'dataMax + 2']}
-                className="text-xs"
+                className="text-xs fill-muted-foreground" // Added fill-muted-foreground
                 tick={{ fontSize: 12 }}
                 label={{ value: 'Weight (lbs)', angle: -90, position: 'insideLeft' }}
               />
@@ -223,9 +223,10 @@ export function GoalProgressChart({ className }: GoalProgressChartProps) {
                 ]}
                 labelFormatter={(label) => `Week of ${label}`}
                 contentStyle={{
-                  backgroundColor: 'white',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '6px'
+                  backgroundColor: 'var(--popover)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '6px',
+                  color: 'var(--popover-foreground)'
                 }}
               />
               
@@ -233,10 +234,10 @@ export function GoalProgressChart({ className }: GoalProgressChartProps) {
               <Line
                 type="monotone"
                 dataKey="expectedWeight"
-                stroke="#3b82f6"
+                stroke="var(--chart-maintenance)"
                 strokeWidth={2}
                 strokeDasharray="5 5"
-                dot={{ fill: '#3b82f6', strokeWidth: 0, r: 3 }}
+                dot={{ fill: 'var(--chart-maintenance)', strokeWidth: 0, r: 3 }}
                 name="Expected"
                 connectNulls={false}
               />
@@ -246,9 +247,9 @@ export function GoalProgressChart({ className }: GoalProgressChartProps) {
                 <Line
                   type="monotone"
                   dataKey="actualWeight"
-                  stroke="#10b981"
+                  stroke="var(--chart-weight-loss)"
                   strokeWidth={3}
-                  dot={{ fill: '#10b981', strokeWidth: 0, r: 4 }}
+                  dot={{ fill: 'var(--chart-weight-loss)', strokeWidth: 0, r: 4 }}
                   name="Actual"
                   connectNulls={false}
                 />
@@ -257,9 +258,9 @@ export function GoalProgressChart({ className }: GoalProgressChartProps) {
               {/* Starting weight reference line */}
               <ReferenceLine 
                 y={activeGoal.start_weight} 
-                stroke="#6b7280" 
+                stroke="var(--muted-foreground)" 
                 strokeDasharray="2 2"
-                label={{ value: "Start", position: "right" }}
+                label={{ value: "Start", position: "right", fill: 'var(--muted-foreground)' }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -268,21 +269,21 @@ export function GoalProgressChart({ className }: GoalProgressChartProps) {
         {/* Legend */}
         <div className="flex justify-center gap-6 text-sm">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-0.5 bg-blue-500 border-dashed border-t-2 border-blue-500"></div>
-            <span>Expected Progress</span>
+            <div className="w-4 h-0.5 bg-chart-maintenance border-dashed border-t-2 border-chart-maintenance"></div>
+            <span className="text-muted-foreground">Expected Progress</span>
           </div>
           {hasActualData && (
             <div className="flex items-center gap-2">
-              <div className="w-4 h-0.5 bg-green-500"></div>
-              <span>Actual Progress</span>
+              <div className="w-4 h-0.5 bg-chart-weight-loss"></div>
+              <span className="text-muted-foreground">Actual Progress</span>
             </div>
           )}
         </div>
 
         {/* Update Schedule Info */}
-        <Alert className="border-blue-200 bg-blue-50">
-          <Info className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-blue-800">
+        <Alert className="border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/30">
+          <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <AlertDescription className="text-blue-800 dark:text-blue-300">
             <strong>Weekly Updates:</strong> This chart updates every Sunday at 8:00 PM PST with your latest weigh-ins. 
             Next update: {getNextSundayUpdate()}
           </AlertDescription>
@@ -295,9 +296,9 @@ export function GoalProgressChart({ className }: GoalProgressChartProps) {
           
           if (goalStartDay !== 0) {
             return (
-              <Alert className="border-amber-200 bg-amber-50">
-                <Calendar className="h-4 w-4 text-amber-600" />
-                <AlertDescription className="text-amber-800">
+              <Alert className="border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30">
+                <Calendar className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                <AlertDescription className="text-amber-800 dark:text-amber-300">
                   Your goal started mid-week. The chart shows weekly progress starting from the first Sunday after your goal began.
                 </AlertDescription>
               </Alert>

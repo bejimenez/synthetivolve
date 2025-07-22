@@ -33,63 +33,7 @@ interface CalorieData {
   }
 }
 
-// Circular progress component
-function CircularProgress({ 
-  value, 
-  max, 
-  size = 120, 
-  strokeWidth = 8, 
-  color = "rgb(59, 130, 246)",
-  backgroundColor = "rgb(229, 231, 235)"
-}: {
-  value: number
-  max: number
-  size?: number
-  strokeWidth?: number
-  color?: string
-  backgroundColor?: string
-}) {
-  const normalizedValue = Math.min(value, max)
-  const percentage = (normalizedValue / max) * 100
-  const radius = (size - strokeWidth) / 2
-  const circumference = radius * 2 * Math.PI
-  const strokeDasharray = circumference
-  const strokeDashoffset = circumference - (percentage / 100) * circumference
-
-  return (
-    <div className="relative inline-flex items-center justify-center">
-      <svg width={size} height={size} className="transform -rotate-90">
-        {/* Background circle */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={backgroundColor}
-          strokeWidth={strokeWidth}
-          fill="transparent"
-        />
-        {/* Progress circle */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={color}
-          strokeWidth={strokeWidth}
-          fill="transparent"
-          strokeDasharray={strokeDasharray}
-          strokeDashoffset={strokeDashoffset}
-          strokeLinecap="round"
-          className="transition-all duration-300 ease-in-out"
-        />
-      </svg>
-      {/* Center content */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-bold text-foreground">{Math.round(value)}</span>
-        <span className="text-xs text-muted-foreground">g</span>
-      </div>
-    </div>
-  )
-}
+import { CircularProgress } from '@/components/dashboard/shared/CircularProgress'
 
 function getActivityDescription(level: string): string {
   const descriptions = {
@@ -213,7 +157,7 @@ export function CompactCalorieCalculator() {
       <CardContent className="space-y-6">
         {/* Warnings */}
         {calculatedData.warnings.length > 0 && (
-          <Alert variant="destructive">
+          <Alert variant="destructive" className="dark:bg-destructive/20 dark:border-destructive/40">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
               {calculatedData.warnings.join(' ')}
@@ -271,27 +215,27 @@ export function CompactCalorieCalculator() {
                   <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground" />
                 </button>
               </DialogTrigger>
-              <DialogContent className="max-w-md">
+              <DialogContent className="max-w-md dark:bg-gray-900 dark:border-gray-700">
                 <DialogHeader>
-                  <DialogTitle>How Macro Targets Are Calculated</DialogTitle>
+                  <DialogTitle className="dark:text-gray-100">How Macro Targets Are Calculated</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 text-sm">
                   <div>
-                    <h4 className="font-semibold text-green-600 mb-1">Protein</h4>
+                    <h4 className="font-semibold text-green-600 dark:text-green-400 mb-1">Protein</h4>
                     <p>1 gram per pound of body weight</p>
                     <p className="text-muted-foreground">Example: 150 lbs = 150g protein</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-yellow-600 mb-1">Fat</h4>
+                    <h4 className="font-semibold text-yellow-600 dark:text-yellow-400 mb-1">Fat</h4>
                     <p>Minimum 50g per day, or 0.25g per pound (whichever is higher)</p>
                     <p className="text-muted-foreground">Example: 150 lbs = max(50g, 37.5g) = 50g fat</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-red-600 mb-1">Carbohydrates</h4>
+                    <h4 className="font-semibold text-red-600 dark:text-red-400 mb-1">Carbohydrates</h4>
                     <p>Remaining calories after protein and fat allocation</p>
                     <p className="text-muted-foreground">Calculated as: (Total Calories - Protein Calories - Fat Calories) ÷ 4</p>
                   </div>
-                  <div className="pt-2 border-t">
+                  <div className="pt-2 border-t dark:border-gray-700">
                     <p className="text-xs text-muted-foreground">
                       <strong>Note:</strong> These calculations ensure adequate protein for muscle maintenance and minimum fat for hormonal health, while filling remaining calories with carbohydrates for energy.
                     </p>
@@ -306,7 +250,9 @@ export function CompactCalorieCalculator() {
               <CircularProgress
                 value={calculatedData.macros.protein}
                 max={calculatedData.macros.protein}
-                color="rgb(34, 197, 94)"
+                label="Protein"
+                unit="g"
+                color="var(--chart-weight-loss)"
                 size={100}
                 strokeWidth={6}
               />
@@ -321,7 +267,9 @@ export function CompactCalorieCalculator() {
               <CircularProgress
                 value={calculatedData.macros.fat}
                 max={calculatedData.macros.fat}
-                color="rgb(245, 158, 11)"
+                label="Fat"
+                unit="g"
+                color="var(--chart-5)"
                 size={100}
                 strokeWidth={6}
               />
@@ -336,7 +284,9 @@ export function CompactCalorieCalculator() {
               <CircularProgress
                 value={calculatedData.macros.carbs}
                 max={calculatedData.macros.carbs}
-                color="rgb(239, 68, 68)"
+                label="Carbs"
+                unit="g"
+                color="var(--chart-weight-gain)"
                 size={100}
                 strokeWidth={6}
               />
@@ -349,7 +299,7 @@ export function CompactCalorieCalculator() {
         </div>
 
         {/* Activity Level & Goal Info */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 bg-muted/50 rounded-lg">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 bg-muted/50 rounded-lg dark:bg-muted/20">
           <div>
             <p className="text-sm font-medium">Activity Level</p>
             <p className="text-sm text-muted-foreground">
@@ -357,7 +307,7 @@ export function CompactCalorieCalculator() {
             </p>
           </div>
           {calculatedData.warnings.length === 0 && (
-            <div className="flex items-center gap-2 text-green-600">
+            <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
               <div className="w-2 h-2 bg-green-500 rounded-full"></div>
               <span className="text-sm">Targets look good!</span>
             </div>

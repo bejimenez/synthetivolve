@@ -22,6 +22,38 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
   size = 120,
   strokeWidth = 10,
 }) => {
+  const [resolvedColor, setResolvedColor] = React.useState(color);
+
+  React.useEffect(() => {
+    const getResolvedColorValue = (variableName: string) => {
+      const style = getComputedStyle(document.documentElement);
+      const oklchValue = style.getPropertyValue(variableName);
+      if (!oklchValue) return '#000'; // Fallback
+      const tempEl = document.createElement('div');
+      tempEl.style.color = `var(${variableName})`;
+      document.body.appendChild(tempEl);
+      const resolved = window.getComputedStyle(tempEl).color;
+      document.body.removeChild(tempEl);
+      return resolved;
+    };
+
+    const updateColors = () => {
+      // Check if color is a CSS variable, if so, resolve it
+      if (color.startsWith('var(--')) {
+        setResolvedColor(getResolvedColorValue(color.replace('var(', '').replace(')', '')));
+      } else {
+        setResolvedColor(color); // Use as is if not a CSS variable
+      }
+    };
+
+    updateColors();
+
+    const observer = new MutationObserver(updateColors);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    return () => observer.disconnect();
+  }, [color]);
+
   const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius
   const progress = max > 0 ? (value / max) * circumference : 0
@@ -46,7 +78,7 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
             cy={size / 2}
             r={radius}
             strokeWidth={strokeWidth}
-            stroke={color}
+            stroke={resolvedColor}
             fill="transparent"
             strokeDasharray={circumference}
             strokeDashoffset={offset}
@@ -55,7 +87,7 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold" style={{ color }}>
+          <span className="text-2xl font-bold" style={{ color: resolvedColor }}>
             {Math.round(value)}
           </span>
           <span className="text-xs text-muted-foreground">{unit}</span>

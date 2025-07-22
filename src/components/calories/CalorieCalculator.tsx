@@ -202,37 +202,37 @@ export function CalorieCalculator() {
       <CardContent className="space-y-6">
         {/* Calorie Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200 dark:bg-blue-950/30 dark:border-blue-900">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <Zap className="h-5 w-5 text-blue-600" />
-              <span className="font-semibold text-blue-900">BMR</span>
+              <Zap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <span className="font-semibold text-blue-900 dark:text-blue-100">BMR</span>
             </div>
-            <p className="text-2xl font-bold text-blue-900">
+            <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
               {calculatedData.bmr.toLocaleString()}
             </p>
-            <p className="text-sm text-blue-700">calories/day at rest</p>
+            <p className="text-sm text-blue-700 dark:text-blue-300">calories/day at rest</p>
           </div>
           
-          <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
+          <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200 dark:bg-green-950/30 dark:border-green-900">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <Target className="h-5 w-5 text-green-600" />
-              <span className="font-semibold text-green-900">TDEE</span>
+              <Target className="h-5 w-5 text-green-600 dark:text-green-400" />
+              <span className="font-semibold text-green-900 dark:text-green-100">TDEE</span>
             </div>
-            <p className="text-2xl font-bold text-green-900">
+            <p className="text-2xl font-bold text-green-900 dark:text-green-100">
               {calculatedData.tdee.toLocaleString()}
             </p>
-            <p className="text-sm text-green-700">maintenance calories</p>
+            <p className="text-sm text-green-700 dark:text-green-300">maintenance calories</p>
           </div>
 
-          <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
+          <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200 dark:bg-orange-950/30 dark:border-orange-900">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <Apple className="h-5 w-5 text-orange-600" />
-              <span className="font-semibold text-orange-900">Target</span>
+              <Apple className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+              <span className="font-semibold text-orange-900 dark:text-orange-100">Target</span>
             </div>
-            <p className="text-2xl font-bold text-orange-900">
+            <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">
               {calculatedData.adjustedCalories.toLocaleString()}
             </p>
-            <p className="text-sm text-orange-700">{calculatedData.adjustmentReason}</p>
+            <p className="text-sm text-orange-700 dark:text-orange-300">{calculatedData.adjustmentReason}</p>
           </div>
         </div>
 
@@ -250,8 +250,8 @@ export function CalorieCalculator() {
         {calculatedData.warnings.length > 0 && (
           <div className="space-y-2">
             {calculatedData.warnings.map((warning, index) => (
-              <Alert key={index} className="border-yellow-200 bg-yellow-50">
-                <AlertDescription className="text-yellow-800">
+              <Alert key={index} className="border-yellow-200 bg-yellow-50 dark:border-yellow-900 dark:bg-yellow-950/30">
+                <AlertDescription className="text-yellow-800 dark:text-yellow-300">
                   {warning}
                 </AlertDescription>
               </Alert>
@@ -270,27 +270,27 @@ export function CalorieCalculator() {
                   <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground" />
                 </button>
               </DialogTrigger>
-              <DialogContent className="max-w-md">
+              <DialogContent className="max-w-md dark:bg-gray-900 dark:border-gray-700">
                 <DialogHeader>
-                  <DialogTitle>How Macro Targets Are Calculated</DialogTitle>
+                  <DialogTitle className="dark:text-gray-100">How Macro Targets Are Calculated</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 text-sm">
                   <div>
-                    <h4 className="font-semibold text-red-600 mb-1">Protein</h4>
+                    <h4 className="font-semibold text-red-600 dark:text-red-400 mb-1">Protein</h4>
                     <p>1 gram per pound of body weight</p>
                     <p className="text-muted-foreground">Example: 150 lbs = 150g protein</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-yellow-600 mb-1">Fat</h4>
+                    <h4 className="font-semibold text-yellow-600 dark:text-yellow-400 mb-1">Fat</h4>
                     <p>Minimum 50g per day, or 0.25g per pound (whichever is higher)</p>
                     <p className="text-muted-foreground">Example: 150 lbs = max(50g, 37.5g) = 50g fat</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-amber-600 mb-1">Carbohydrates</h4>
+                    <h4 className="font-semibold text-amber-600 dark:text-amber-400 mb-1">Carbohydrates</h4>
                     <p>Remaining calories after protein and fat allocation</p>
                     <p className="text-muted-foreground">Calculated as: (Total Calories - Protein Calories - Fat Calories) ÷ 4</p>
                   </div>
-                  <div className="pt-2 border-t">
+                  <div className="pt-2 border-t dark:border-gray-700">
                     <p className="text-xs text-muted-foreground">
                       <strong>Note:</strong> These calculations ensure adequate protein for muscle maintenance and minimum fat for hormonal health, while filling remaining calories with carbohydrates for energy.
                     </p>
@@ -302,43 +302,43 @@ export function CalorieCalculator() {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Protein */}
-            <div className="text-center p-4 bg-red-50 rounded-lg border border-red-200">
+            <div className="text-center p-4 bg-red-50 rounded-lg border border-red-200 dark:bg-red-950/30 dark:border-red-900">
               <div className="flex items-center justify-center gap-2 mb-2">
-                <Beef className="h-5 w-5 text-red-600" />
-                <span className="font-semibold text-red-900">Protein</span>
+                <Beef className="h-5 w-5 text-red-600 dark:text-red-400" />
+                <span className="font-semibold text-red-900 dark:text-red-100">Protein</span>
               </div>
-              <p className="text-xl font-bold text-red-900">
+              <p className="text-xl font-bold text-red-900 dark:text-red-100">
                 {calculatedData.macros.protein}g
               </p>
-              <p className="text-sm text-red-700">
+              <p className="text-sm text-red-700 dark:text-red-300">
                 {calculatedData.macroCalories.protein} calories
               </p>
             </div>
 
             {/* Fat */}
-            <div className="text-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+            <div className="text-center p-4 bg-yellow-50 rounded-lg border border-yellow-200 dark:bg-yellow-950/30 dark:border-yellow-900">
               <div className="flex items-center justify-center gap-2 mb-2">
-                <Target className="h-5 w-5 text-yellow-600" />
-                <span className="font-semibold text-yellow-900">Fat</span>
+                <Target className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                <span className="font-semibold text-yellow-900 dark:text-yellow-100">Fat</span>
               </div>
-              <p className="text-xl font-bold text-yellow-900">
+              <p className="text-xl font-bold text-yellow-900 dark:text-yellow-100">
                 {calculatedData.macros.fat}g
               </p>
-              <p className="text-sm text-yellow-700">
+              <p className="text-sm text-yellow-700 dark:text-yellow-300">
                 {calculatedData.macroCalories.fat} calories
               </p>
             </div>
 
             {/* Carbs */}
-            <div className="text-center p-4 bg-amber-50 rounded-lg border border-amber-200">
+            <div className="text-center p-4 bg-amber-50 rounded-lg border border-amber-200 dark:bg-amber-950/30 dark:border-amber-900">
               <div className="flex items-center justify-center gap-2 mb-2">
-                <Wheat className="h-5 w-5 text-amber-600" />
-                <span className="font-semibold text-amber-900">Carbs</span>
+                <Wheat className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                <span className="font-semibold text-amber-900 dark:text-amber-100">Carbs</span>
               </div>
-              <p className="text-xl font-bold text-amber-900">
+              <p className="text-xl font-bold text-amber-900 dark:text-amber-100">
                 {calculatedData.macros.carbs}g
               </p>
-              <p className="text-sm text-amber-700">
+              <p className="text-sm text-amber-700 dark:text-amber-300">
                 {calculatedData.macroCalories.carbs} calories
               </p>
             </div>
@@ -346,7 +346,7 @@ export function CalorieCalculator() {
         </div>
 
         {/* Calculation Info */}
-        <div className="text-xs text-muted-foreground space-y-1 p-3 bg-gray-50 rounded-lg">
+        <div className="text-xs text-muted-foreground space-y-1 p-3 bg-gray-50 rounded-lg dark:bg-gray-900">
           <p><strong>Calculations based on:</strong></p>
           <ul className="list-disc list-inside space-y-1 ml-2">
             <li>BMR: Mifflin-St Jeor equation</li>

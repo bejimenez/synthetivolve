@@ -142,7 +142,7 @@ export function ManualFoodForm({ onFoodCreated, onCancel }: ManualFoodFormProps)
 
   return (
     <div className="space-y-4">
-      <Alert>
+      <Alert className="dark:bg-gray-900 dark:border-gray-700">
         <Info className="h-4 w-4" />
         <AlertDescription>
           Enter nutrition information per 100g/100ml. Only food name is required - you can fill in nutrition details later.
@@ -151,13 +151,13 @@ export function ManualFoodForm({ onFoodCreated, onCancel }: ManualFoodFormProps)
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Basic Information */}
-        <Card>
+        <Card className="dark:bg-gray-900 dark:border-gray-700">
           <CardHeader>
-            <CardTitle className="text-lg">Basic Information</CardTitle>
+            <CardTitle className="text-lg dark:text-gray-100">Basic Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="description" className="text-sm font-medium">
+              <Label htmlFor="description" className="text-sm font-medium dark:text-gray-100">
                 Food Name *
               </Label>
               <Input
@@ -172,7 +172,7 @@ export function ManualFoodForm({ onFoodCreated, onCancel }: ManualFoodFormProps)
             </div>
 
             <div>
-              <Label htmlFor="brand_name" className="text-sm font-medium">
+              <Label htmlFor="brand_name" className="text-sm font-medium dark:text-gray-100">
                 Brand Name (Optional)
               </Label>
               <Input
@@ -187,7 +187,7 @@ export function ManualFoodForm({ onFoodCreated, onCancel }: ManualFoodFormProps)
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="serving_size" className="text-sm font-medium">
+                <Label htmlFor="serving_size" className="text-sm font-medium dark:text-gray-100">
                   Serving Size
                 </Label>
                 <Input
@@ -201,7 +201,7 @@ export function ManualFoodForm({ onFoodCreated, onCancel }: ManualFoodFormProps)
                 />
               </div>
               <div>
-                <Label htmlFor="serving_unit" className="text-sm font-medium">
+                <Label htmlFor="serving_unit" className="text-sm font-medium dark:text-gray-100">
                   Serving Unit
                 </Label>
                 <Input
@@ -218,14 +218,14 @@ export function ManualFoodForm({ onFoodCreated, onCancel }: ManualFoodFormProps)
         </Card>
 
         {/* Nutrition Information */}
-        <Card>
+        <Card className="dark:bg-gray-900 dark:border-gray-700">
           <CardHeader>
-            <CardTitle className="text-lg">Nutrition Information (per 100g)</CardTitle>
+            <CardTitle className="text-lg dark:text-gray-100">Nutrition Information (per 100g)</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="calories_per_100g" className="text-sm font-medium">
+                <Label htmlFor="calories_per_100g" className="text-sm font-medium dark:text-gray-100">
                   Calories
                 </Label>
                 <Input
@@ -239,7 +239,7 @@ export function ManualFoodForm({ onFoodCreated, onCancel }: ManualFoodFormProps)
                 />
               </div>
               <div>
-                <Label htmlFor="protein_per_100g" className="text-sm font-medium">
+                <Label htmlFor="protein_per_100g" className="text-sm font-medium dark:text-gray-100">
                   Protein (g)
                 </Label>
                 <Input
@@ -256,7 +256,7 @@ export function ManualFoodForm({ onFoodCreated, onCancel }: ManualFoodFormProps)
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="fat_per_100g" className="text-sm font-medium">
+                <Label htmlFor="fat_per_100g" className="text-sm font-medium dark:text-gray-100">
                   Fat (g)
                 </Label>
                 <Input
@@ -270,7 +270,7 @@ export function ManualFoodForm({ onFoodCreated, onCancel }: ManualFoodFormProps)
                 />
               </div>
               <div>
-                <Label htmlFor="carbs_per_100g" className="text-sm font-medium">
+                <Label htmlFor="carbs_per_100g" className="text-sm font-medium dark:text-gray-100">
                   Carbohydrates (g)
                 </Label>
                 <Input
@@ -285,11 +285,11 @@ export function ManualFoodForm({ onFoodCreated, onCancel }: ManualFoodFormProps)
               </div>
             </div>
 
-            <Separator />
+            <Separator className="dark:bg-gray-700" />
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="fiber_per_100g" className="text-sm font-medium">
+                <Label htmlFor="fiber_per_100g" className="text-sm font-medium dark:text-gray-100">
                   Fiber (g)
                 </Label>
                 <Input
@@ -303,7 +303,7 @@ export function ManualFoodForm({ onFoodCreated, onCancel }: ManualFoodFormProps)
                 />
               </div>
               <div>
-                <Label htmlFor="sugar_per_100g" className="text-sm font-medium">
+                <Label htmlFor="sugar_per_100g" className="text-sm font-medium dark:text-gray-100">
                   Sugar (g)
                 </Label>
                 <Input
@@ -319,7 +319,7 @@ export function ManualFoodForm({ onFoodCreated, onCancel }: ManualFoodFormProps)
             </div>
 
             <div>
-              <Label htmlFor="sodium_per_100g" className="text-sm font-medium">
+              <Label htmlFor="sodium_per_100g" className="text-sm font-medium dark:text-gray-100">
                 Sodium (mg)
               </Label>
               <Input
@@ -336,16 +336,16 @@ export function ManualFoodForm({ onFoodCreated, onCancel }: ManualFoodFormProps)
         </Card>
 
         {error && (
-          <Alert variant="destructive">
+          <Alert variant="destructive" className="dark:bg-destructive/20 dark:border-destructive/40">
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
 
         <div className="flex gap-3 justify-end">
-          <Button type="button" variant="outline" onClick={handleCancel}>
+          <Button type="button" variant="outline" onClick={handleCancel} className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700">
             Cancel
           </Button>
-          <Button type="submit" disabled={loading || !formData.description.trim()}>
+          <Button type="submit" disabled={loading || !formData.description.trim()} className="dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90">
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Create Food
           </Button>

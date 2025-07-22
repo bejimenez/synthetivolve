@@ -12,14 +12,14 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="text-center">
           <div className="mx-auto w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-6">
             <span className="text-white font-bold text-2xl">S</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Synthetivolve</h1>
-          <p className="text-gray-600">Your personalized health and wellness companion</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Synthetivolve</h1>
+          <p className="text-gray-600 dark:text-gray-400">Your personalized health and wellness companion</p>
         </div>
       </div>
 
@@ -28,7 +28,7 @@ export default function AuthPage() {
       </div>
 
       <div className="mt-8 text-center">
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           Start your journey to better health with data-driven insights
         </p>
       </div>

@@ -139,31 +139,31 @@ export function NutritionLogger() {
         {timeSlots.map(hour => {
           const logsForHour = groupedFoodLogs[hour] || []
           return (
-            <Card key={hour}>
+            <Card key={hour} className="dark:bg-gray-900 dark:border-gray-700">
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-base">
+                <CardTitle className="text-base dark:text-gray-100">
                   {hour.toString().padStart(2, '0')}:00
                   {/* 🔥 DEBUG: Show timezone info temporarily */}
                   <span className="text-xs text-muted-foreground ml-2">
                     ({nutritionSettings.timezone})
                   </span>
                 </CardTitle>
-                <Button size="sm" onClick={() => handleAddFoodClick(hour)}>+</Button>
+                <Button size="sm" onClick={() => handleAddFoodClick(hour)} className="dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90">+</Button>
               </CardHeader>
               {logsForHour.length > 0 && (
                 <CardContent>
                   {logsForHour.map(log => (
-                    <div key={log.id} className="flex items-center justify-between p-2 border-b">
+                    <div key={log.id} className="flex items-center justify-between p-2 border-b dark:border-gray-700">
                       <div>
-                        <p className="font-semibold">{log.food.description}</p>
+                        <p className="font-semibold dark:text-gray-100">{log.food.description}</p>
                         <p className="text-sm text-muted-foreground">{log.quantity}{log.unit}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditLog(log)}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 dark:hover:bg-gray-800" onClick={() => handleEditLog(log)}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDeleteLog(log.id)}>
-                          <Trash2 className="h-4 w-4 text-red-500" />
+                        <Button variant="ghost" size="icon" className="h-8 w-8 dark:hover:bg-gray-800" onClick={() => handleDeleteLog(log.id)}>
+                          <Trash2 className="h-4 w-4 text-red-500 dark:text-red-400" />
                         </Button>
                       </div>
                     </div>
@@ -172,8 +172,7 @@ export function NutritionLogger() {
               )}
             </Card>
           )
-        })}
-      </div>
+        })}</div>
 
       <AddFoodDialog
         open={isAddFoodOpen}

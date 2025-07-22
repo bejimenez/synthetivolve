@@ -1,7 +1,7 @@
 // src/hooks/useFormDraft.ts - Enhanced version
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 
 interface FormDraftOptions<T> {
@@ -45,14 +45,16 @@ export function useFormDraft<T extends object>({
       }
     }
     
-    if (savedDraft) {
-      setDraft(savedDraft)
-    } else if (defaultValues) {
-      setDraft(defaultValues)
-    }
+    setDraft(prevDraft => {
+      const newDraft = savedDraft || defaultValues || null;
+      if (JSON.stringify(prevDraft) !== JSON.stringify(newDraft)) {
+        return newDraft;
+      }
+      return prevDraft;
+    });
     
     setIsLoaded(true)
-  }, [key, defaultValues, persistToUrl, urlStateKey, searchParams])
+  }, [key, defaultValues, persistToUrl, urlStateKey, searchParams.toString()])
 
   // Auto-save draft with debouncing (memory + URL)
   const saveDraft = useCallback((values: T) => {
@@ -98,7 +100,7 @@ export function useFormDraft<T extends object>({
   }, [key, persistToUrl, urlStateKey, router, pathname, searchParams])
 
   // Check if draft has unsaved changes
-  const hasDraft = useCallback(() => {
+  const hasDraftValue = useMemo(() => {
     return draft !== null && Object.keys(draft).length > 0
   }, [draft])
 
@@ -116,6 +118,6 @@ export function useFormDraft<T extends object>({
     isLoaded,
     saveDraft,
     clearDraft,
-    hasDraft: hasDraft()
+    hasDraft: hasDraftValue
   }
 }

@@ -279,20 +279,20 @@ const handleAddExercise = (exercise: Exercise) => {
             <CardTitle className="flex items-center justify-between">
               <div>
                 {workoutMode === 'planned' ? (
-                  <span>
+                  <span className="dark:text-gray-100">
                     {selectedMesocycle?.name} - Week {selectedWeek}, Day {selectedDay}
                   </span>
                 ) : (
-                  <span>Freestyle Workout</span>
+                  <span className="dark:text-gray-100">Freestyle Workout</span>
                 )}
               </div>
               <div className="flex items-center space-x-4">
-                <Badge variant="outline">{getWorkoutDuration()}</Badge>
-                <Button variant="outline" onClick={cancelWorkout}>
+                <Badge variant="outline" className="dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">{getWorkoutDuration()}</Badge>
+                <Button variant="outline" onClick={cancelWorkout} className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700">
                   <RotateCcw className="w-4 h-4 mr-2" />
                   Cancel
                 </Button>
-                <Button onClick={completeWorkout}>
+                <Button onClick={completeWorkout} className="dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90">
                   <Save className="w-4 h-4 mr-2" />
                   Complete
                 </Button>
@@ -301,8 +301,8 @@ const handleAddExercise = (exercise: Exercise) => {
           </CardHeader>
           {customGoal && (
             <CardContent>
-              <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-                <p className="text-sm text-blue-800">
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3 dark:bg-blue-950/30 dark:border-blue-900">
+                <p className="text-sm text-blue-800 dark:text-blue-300">
                   <strong>Goal:</strong> {customGoal}
                 </p>
               </div>
@@ -348,7 +348,7 @@ const handleAddExercise = (exercise: Exercise) => {
               <Button
                 variant="outline"
                 onClick={() => setShowExerciseLibrary(true)}
-                className="w-full"
+                className="w-full dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Exercise
@@ -374,22 +374,26 @@ const handleAddExercise = (exercise: Exercise) => {
   return (
     <div className="space-y-6">
        <AlertDialog open={showResumeDialog} onOpenChange={setShowResumeDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="dark:bg-gray-900 dark:border-gray-700">
           <AlertDialogHeader>
-            <AlertDialogTitle>Resume Workout?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="dark:text-gray-100">Resume Workout?</AlertDialogTitle>
+            <AlertDialogDescription className="dark:text-gray-400">
               You have an unfinished workout. Would you like to resume where you left off?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={discardDraft}>Discard</AlertDialogCancel>
-            <AlertDialogAction onClick={resumeWorkout}>Resume</AlertDialogAction>
+            <AlertDialogCancel onClick={discardDraft} className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700">
+              Discard
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={resumeWorkout} className="dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90">
+              Resume
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <Card>
+      <Card className="dark:bg-gray-900 dark:border-gray-700">
         <CardHeader>
-          <CardTitle>Start Workout</CardTitle>
+          <CardTitle className="dark:text-gray-100">Start Workout</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -406,13 +410,13 @@ const handleAddExercise = (exercise: Exercise) => {
       </Card>
 
       {/* Planned Workout Option */}
-      <Card>
+      <Card className="dark:bg-gray-900 dark:border-gray-700">
         <CardHeader>
-          <CardTitle>Continue Planned Mesocycle</CardTitle>
+          <CardTitle className="dark:text-gray-100">Continue Planned Mesocycle</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {mesocycles.length === 0 ? (
-            <p className="text-gray-500">No mesocycles available. Create one first.</p>
+            <p className="text-gray-500 dark:text-gray-400">No mesocycles available. Create one first.</p>
           ) : (
             <>
               <div>
@@ -439,12 +443,12 @@ const handleAddExercise = (exercise: Exercise) => {
                     }
                   }}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100">
                     <SelectValue placeholder="Choose a mesocycle" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
                     {mesocycles.map(mesocycle => (
-                      <SelectItem key={mesocycle.id!} value={mesocycle.id!}>
+                      <SelectItem key={mesocycle.id!} value={mesocycle.id!} className="dark:text-gray-100 dark:hover:bg-gray-700">
                         {mesocycle.name}
                       </SelectItem>
                     ))}
@@ -460,12 +464,12 @@ const handleAddExercise = (exercise: Exercise) => {
                       value={selectedWeek.toString()}
                       onValueChange={(value) => setSelectedWeek(parseInt(value))}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
                         {Array.from({ length: selectedMesocycle.weeks }, (_, i) => i + 1).map(week => (
-                          <SelectItem key={week} value={week.toString()}>
+                          <SelectItem key={week} value={week.toString()} className="dark:text-gray-100 dark:hover:bg-gray-700">
                             Week {week}
                           </SelectItem>
                         ))}
@@ -479,12 +483,12 @@ const handleAddExercise = (exercise: Exercise) => {
                       value={selectedDay.toString()}
                       onValueChange={(value) => setSelectedDay(parseInt(value))}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
                         {Array.from({ length: selectedMesocycle.daysPerWeek }, (_, i) => i + 1).map((day: number) => (
-                          <SelectItem key={day} value={day.toString()}>
+                          <SelectItem key={day} value={day.toString()} className="dark:text-gray-100 dark:hover:bg-gray-700">
                             Day {day}
                           </SelectItem>
                         ))}
@@ -497,7 +501,7 @@ const handleAddExercise = (exercise: Exercise) => {
               <Button
                 onClick={startPlannedWorkout}
                 disabled={!selectedMesocycle}
-                className="w-full"
+                className="w-full dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90"
               >
                 <Play className="w-4 h-4 mr-2" />
                 Start Planned Workout
@@ -508,15 +512,15 @@ const handleAddExercise = (exercise: Exercise) => {
       </Card>
 
       {/* Freestyle Workout Option */}
-      <Card>
+      <Card className="dark:bg-gray-900 dark:border-gray-700">
         <CardHeader>
-          <CardTitle>Freestyle Workout</CardTitle>
+          <CardTitle className="dark:text-gray-100">Freestyle Workout</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-gray-600 mb-4">
+          <p className="text-gray-600 mb-4 dark:text-gray-400">
             Start a workout from scratch without following a planned mesocycle.
           </p>
-          <Button onClick={startFreestyleWorkout} variant="outline" className="w-full">
+          <Button onClick={startFreestyleWorkout} variant="outline" className="w-full dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700">
             <Play className="w-4 h-4 mr-2" />
             Start Freestyle Workout
           </Button>
