@@ -27,49 +27,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setMounted(true)
   }, [])
 
-  useEffect(() => {
-    if (!mounted) return
+useEffect(() => {
+  if (!mounted) return
 
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession()
-        setUser(session?.user ?? null)
-      } catch (error) {
-        console.error('Error getting session:', error)
-        setUser(null)
-      } finally {
-        setLoading(false)
+  // Get initial session
+  const getInitialSession = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      setUser(session?.user ?? null)
+    } catch (error) {
+      console.error('Error getting session:', error)
+      setUser(null)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  getInitialSession()
+
+  // Listen for auth changes
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    async (event, session) => {
+      const newUser = session?.user ?? null
+      setUser(newUser)
+      setLoading(false)
+
+      // Handle navigation after auth state changes
+      if (event === 'SIGNED_IN' && newUser) {
+        // Preserve current URL parameters when redirecting after sign in
+        const currentUrl = new URL(window.location.href)
+        const searchParams = currentUrl.searchParams.toString()
+        const redirectUrl = searchParams ? `/?${searchParams}` : '/'
+        
+        setTimeout(() => {
+          router.push(redirectUrl)
+          router.refresh()
+        }, 100)
+      } else if (event === 'SIGNED_OUT') {
+        setTimeout(() => {
+          router.push('/auth')
+          router.refresh()
+        }, 100)
       }
     }
+  )
 
-    getInitialSession()
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        const newUser = session?.user ?? null
-        setUser(newUser)
-        setLoading(false)
-
-        // Handle navigation after auth state changes
-        if (event === 'SIGNED_IN' && newUser) {
-          // Add small delay to ensure state is fully updated
-          setTimeout(() => {
-            router.push('/')
-            router.refresh() // Force a refresh to update middleware state
-          }, 100)
-        } else if (event === 'SIGNED_OUT') {
-          setTimeout(() => {
-            router.push('/auth')
-            router.refresh()
-          }, 100)
-        }
-      }
-    )
-
-    return () => subscription.unsubscribe()
-  }, [mounted, supabase.auth, router])
+  return () => subscription.unsubscribe()
+}, [mounted, supabase.auth, router])
 
   // Don't render anything until mounted to prevent hydration mismatch
   if (!mounted) {
