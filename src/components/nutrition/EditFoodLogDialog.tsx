@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react'
 import { format, parseISO } from 'date-fns'
+import { useFormDraft } from '@/hooks/useFormDraft'
 import { useNutrition, FoodLogWithFood } from './NutritionDataProvider'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -18,6 +19,12 @@ interface EditFoodLogDialogProps {
   foodLog: FoodLogWithFood | null
 }
 
+interface EditFoodLogDraft {
+  quantity: number
+  unit: string
+  loggedAt: string
+}
+
 export function EditFoodLogDialog({ open, onClose, onFoodLogUpdated, foodLog }: EditFoodLogDialogProps) {
   const [quantity, setQuantity] = useState(foodLog?.quantity || 0)
   const [unit, setUnit] = useState(foodLog?.unit || 'g')
@@ -26,13 +33,35 @@ export function EditFoodLogDialog({ open, onClose, onFoodLogUpdated, foodLog }: 
 
   const { updateFoodLog } = useNutrition()
 
+  const { draft, saveDraft, clearDraft, isLoaded } = useFormDraft<EditFoodLogDraft>({
+    key: `edit-food-log-${foodLog?.id}`,
+  })
+
   useEffect(() => {
     if (foodLog) {
-      setQuantity(foodLog.quantity)
-      setUnit(foodLog.unit)
-      setLoggedAt(foodLog.logged_at ? format(parseISO(foodLog.logged_at), "yyyy-MM-dd'T'HH:mm") : '')
+      const initialValues = {
+        quantity: foodLog.quantity,
+        unit: foodLog.unit,
+        loggedAt: foodLog.logged_at ? format(parseISO(foodLog.logged_at), "yyyy-MM-dd'T'HH:mm") : '',
+      }
+      
+      if (isLoaded && draft) {
+        setQuantity(draft.quantity)
+        setUnit(draft.unit)
+        setLoggedAt(draft.loggedAt)
+      } else {
+        setQuantity(initialValues.quantity)
+        setUnit(initialValues.unit)
+        setLoggedAt(initialValues.loggedAt)
+      }
     }
-  }, [foodLog])
+  }, [foodLog, isLoaded, draft])
+
+  useEffect(() => {
+    if (foodLog) {
+      saveDraft({ quantity, unit, loggedAt })
+    }
+  }, [quantity, unit, loggedAt, saveDraft, foodLog])
 
   const handleUpdateFoodLog = async () => {
     if (!foodLog) return
@@ -47,6 +76,7 @@ export function EditFoodLogDialog({ open, onClose, onFoodLogUpdated, foodLog }: 
 
       if (updatedLog) {
         toast.success('Food log updated successfully!')
+        clearDraft()
         onFoodLogUpdated()
         onClose()
       } else {
@@ -61,6 +91,7 @@ export function EditFoodLogDialog({ open, onClose, onFoodLogUpdated, foodLog }: 
   }
 
   const handleClose = () => {
+    clearDraft()
     setLoading(false)
     onClose()
   }

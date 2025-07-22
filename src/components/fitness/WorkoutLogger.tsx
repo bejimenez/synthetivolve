@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useFormDraft } from '@/hooks/useFormDraft';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,9 +14,20 @@ import ExerciseLogger from './ExerciseLogger';
 import WorkoutSummary from './WorkoutSummary';
 import { type MesocyclePlan as Mesocycle, type WorkoutLog, type LoggedExercise, type SetLog, type Exercise } from '@/lib/fitness.types';
 import ExerciseLibrary from './ExerciseLibrary';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface WorkoutLoggerProps {
   onWorkoutComplete?: (log: WorkoutLog) => void;
+}
+
+interface WorkoutLoggerDraft {
+  selectedMesocycle: Mesocycle | null;
+  selectedWeek: number;
+  selectedDay: number;
+  workoutMode: 'planned' | 'freestyle' | null;
+  loggedExercises: LoggedExercise[];
+  customGoal: string;
+  startTime: string | null;
 }
 
 const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
@@ -30,6 +42,58 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
   const [showSummary, setShowSummary] = useState(false);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [showExerciseLibrary, setShowExerciseLibrary] = useState<boolean>(false);
+  const [showResumeDialog, setShowResumeDialog] = useState(false);
+
+  const { draft, saveDraft, clearDraft, isLoaded, hasDraft } = useFormDraft<WorkoutLoggerDraft>({
+    key: 'workout-logger',
+  });
+
+  useEffect(() => {
+    if (isLoaded && hasDraft) {
+      setShowResumeDialog(true);
+    }
+  }, [isLoaded, hasDraft]);
+
+  const resumeWorkout = () => {
+    if (draft) {
+      setSelectedMesocycle(draft.selectedMesocycle);
+      setSelectedWeek(draft.selectedWeek);
+      setSelectedDay(draft.selectedDay);
+      setWorkoutMode(draft.workoutMode);
+      setLoggedExercises(draft.loggedExercises);
+      setCustomGoal(draft.customGoal);
+      setStartTime(draft.startTime ? new Date(draft.startTime) : null);
+      setCurrentWorkout({
+        mesocycle_id: draft.selectedMesocycle?.id,
+        week_number: draft.selectedWeek,
+        day_number: draft.selectedDay,
+        workout_date: new Date().toISOString().split('T')[0],
+        started_at: draft.startTime,
+        exercises: draft.loggedExercises,
+        custom_goal_entry: draft.customGoal,
+      });
+    }
+    setShowResumeDialog(false);
+  };
+
+  const discardDraft = () => {
+    clearDraft();
+    setShowResumeDialog(false);
+  };
+
+  useEffect(() => {
+    if (workoutMode) {
+      saveDraft({
+        selectedMesocycle,
+        selectedWeek,
+        selectedDay,
+        workoutMode,
+        loggedExercises,
+        customGoal,
+        startTime: startTime?.toISOString() || null,
+      });
+    }
+  }, [selectedMesocycle, selectedWeek, selectedDay, workoutMode, loggedExercises, customGoal, startTime, saveDraft]);
 
   const allExercises = useMemo(() => {
     return rawExercises.reduce((acc, ex) => {
@@ -40,34 +104,35 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ onWorkoutComplete }) => {
 
   const startPlannedWorkout = () => {
     if (!selectedMesocycle) return;
-
+    const newStartTime = new Date();
+    setStartTime(newStartTime);
     const workout: Partial<WorkoutLog> = {
       mesocycle_id: selectedMesocycle.id,
       week_number: selectedWeek,
       day_number: selectedDay,
       workout_date: new Date().toISOString().split('T')[0],
-      started_at: new Date().toISOString(),
+      started_at: newStartTime.toISOString(),
       exercises: [],
       custom_goal_entry: customGoal,
     };
 
     setCurrentWorkout(workout);
     setWorkoutMode('planned');
-    setStartTime(new Date());
     setLoggedExercises([]);
   };
 
   const startFreestyleWorkout = () => {
+    const newStartTime = new Date();
+    setStartTime(newStartTime);
     const workout: Partial<WorkoutLog> = {
       workout_date: new Date().toISOString().split('T')[0],
-      started_at: new Date().toISOString(),
+      started_at: newStartTime.toISOString(),
       exercises: [],
       custom_goal_entry: customGoal,
     };
 
     setCurrentWorkout(workout);
     setWorkoutMode('freestyle');
-    setStartTime(new Date());
     setLoggedExercises([]);
   };
 
@@ -148,6 +213,7 @@ const handleAddExercise = (exercise: Exercise) => {
     // await createWorkoutLog(completedWorkout);
 
     setShowSummary(true);
+    clearDraft();
 
     if (onWorkoutComplete) {
       onWorkoutComplete(completedWorkout);
@@ -160,6 +226,7 @@ const handleAddExercise = (exercise: Exercise) => {
     setWorkoutMode(null);
     setCustomGoal('');
     setStartTime(null);
+    clearDraft();
   };
 
   const getWorkoutDuration = (): string => {
@@ -299,6 +366,20 @@ const handleAddExercise = (exercise: Exercise) => {
   // Workout Selection Screen
   return (
     <div className="space-y-6">
+       <AlertDialog open={showResumeDialog} onOpenChange={setShowResumeDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Resume Workout?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have an unfinished workout. Would you like to resume where you left off?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={discardDraft}>Discard</AlertDialogCancel>
+            <AlertDialogAction onClick={resumeWorkout}>Resume</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <Card>
         <CardHeader>
           <CardTitle>Start Workout</CardTitle>

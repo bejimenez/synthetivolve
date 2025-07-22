@@ -1,7 +1,8 @@
 // src/components/nutrition/ManualFoodForm.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useFormDraft } from '@/hooks/useFormDraft'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -47,33 +48,48 @@ interface ManualFoodFormProps {
   onCancel: () => void
 }
 
+const defaultValues: ManualFoodData = {
+  description: '',
+  brand_name: '',
+  serving_size: undefined,
+  serving_unit: '',
+  calories_per_100g: undefined,
+  protein_per_100g: undefined,
+  fat_per_100g: undefined,
+  carbs_per_100g: undefined,
+  fiber_per_100g: undefined,
+  sugar_per_100g: undefined,
+  sodium_per_100g: undefined,
+}
+
 export function ManualFoodForm({ onFoodCreated, onCancel }: ManualFoodFormProps) {
-  const [formData, setFormData] = useState<ManualFoodData>({
-    description: '',
-    brand_name: '',
-    serving_size: undefined,
-    serving_unit: '',
-    calories_per_100g: undefined,
-    protein_per_100g: undefined,
-    fat_per_100g: undefined,
-    carbs_per_100g: undefined,
-    fiber_per_100g: undefined,
-    sugar_per_100g: undefined,
-    sodium_per_100g: undefined,
-  })
+  const [formData, setFormData] = useState<ManualFoodData>(defaultValues)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const { draft, saveDraft, clearDraft, isLoaded } = useFormDraft<ManualFoodData>({
+    key: 'manual-food-form',
+    defaultValues,
+  })
+
+  useEffect(() => {
+    if (isLoaded && draft) {
+      setFormData(draft)
+    }
+  }, [isLoaded, draft])
 
   const handleInputChange = (field: keyof ManualFoodData, value: string) => {
     setError(null)
     
+    let newFormData: ManualFoodData;
     if (field === 'description' || field === 'brand_name' || field === 'serving_unit') {
-      setFormData(prev => ({ ...prev, [field]: value }))
+      newFormData = { ...formData, [field]: value };
     } else {
-      // Handle numeric fields
       const numValue = value === '' ? undefined : parseFloat(value)
-      setFormData(prev => ({ ...prev, [field]: numValue }))
+      newFormData = { ...formData, [field]: numValue };
     }
+    setFormData(newFormData);
+    saveDraft(newFormData);
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -88,7 +104,6 @@ export function ManualFoodForm({ onFoodCreated, onCancel }: ManualFoodFormProps)
     setError(null)
 
     try {
-      // Prepare data for API (remove empty strings and undefined values)
       const cleanedData = Object.entries(formData).reduce((acc, [key, value]) => {
         if (value !== undefined && value !== '') {
           acc[key as keyof ManualFoodData] = value
@@ -110,6 +125,7 @@ export function ManualFoodForm({ onFoodCreated, onCancel }: ManualFoodFormProps)
         throw new Error(result.error || 'Failed to create food entry')
       }
 
+      clearDraft()
       onFoodCreated(result)
     } catch (err) {
       console.error('Error creating manual food:', err)
@@ -117,6 +133,11 @@ export function ManualFoodForm({ onFoodCreated, onCancel }: ManualFoodFormProps)
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleCancel = () => {
+    clearDraft();
+    onCancel();
   }
 
   return (
@@ -321,7 +342,7 @@ export function ManualFoodForm({ onFoodCreated, onCancel }: ManualFoodFormProps)
         )}
 
         <div className="flex gap-3 justify-end">
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button type="button" variant="outline" onClick={handleCancel}>
             Cancel
           </Button>
           <Button type="submit" disabled={loading || !formData.description.trim()}>

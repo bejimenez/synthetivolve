@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useFormDraft } from '@/hooks/useFormDraft';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,49 +21,60 @@ interface MesocyclePlannerProps {
   editingMesocycle?: MesocyclePlan | null;
 }
 
-const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMesocycle }) => {
-  const [mesocycle, setMesocycle] = useState<Partial<MesocyclePlan>>({
-    name: '',
-    weeks: 4,
-    daysPerWeek: 4,
-    specialization: [],
-    goalStatement: '',
-    days: [],
-    exerciseDB: {}
-  });
+const defaultValues: Partial<MesocyclePlan> = {
+  name: '',
+  weeks: 4,
+  daysPerWeek: 4,
+  specialization: [],
+  goalStatement: '',
+  days: [],
+  exerciseDB: {}
+};
 
+const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMesocycle }) => {
+  const [mesocycle, setMesocycle] = useState<Partial<MesocyclePlan>>(defaultValues);
   const [showExerciseLibrary, setShowExerciseLibrary] = useState(false);
   const [selectedDayForExercise, setSelectedDayForExercise] = useState<number | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
 
-  // Fixed: Remove circular dependency by not including mesocycle.days in dependencies
+  const draftKey = `mesocycle-planner-${editingMesocycle?.id || 'new'}`;
+  const { draft, saveDraft, clearDraft, isLoaded } = useFormDraft<Partial<MesocyclePlan>>({
+    key: draftKey,
+    defaultValues,
+  });
+
   const initializeDays = useCallback((daysPerWeek: number, existingDays?: DayPlan[]) => {
     if (!daysPerWeek) return [];
     
     const days: DayPlan[] = [];
     for (let i = 1; i <= daysPerWeek; i++) {
-      const existingDay = existingDays?.find(d => d.day === i); // Use day
-      days.push(existingDay || { day: i, exercises: [] }); // Use day
+      const existingDay = existingDays?.find(d => d.day === i);
+      days.push(existingDay || { day: i, exercises: [] });
     }
     
     return days;
   }, []);
 
-  // Initialize from editing mesocycle
   useEffect(() => {
     if (editingMesocycle) {
       setMesocycle(editingMesocycle);
+    } else if (isLoaded && draft) {
+      setMesocycle(draft);
     }
-  }, [editingMesocycle]);
+  }, [editingMesocycle, isLoaded, draft]);
 
-  // Handle days per week changes
+  useEffect(() => {
+    if (mesocycle && Object.keys(mesocycle).length > 0 && mesocycle.name !== '') { // only save if there is some data
+      saveDraft(mesocycle);
+    }
+  }, [mesocycle, saveDraft]);
+
   useEffect(() => {
     if (!editingMesocycle && mesocycle.daysPerWeek) {
-      const newDays = initializeDays(mesocycle.daysPerWeek, mesocycle.days); // Pass existing days
+      const newDays = initializeDays(mesocycle.daysPerWeek, mesocycle.days);
       setMesocycle(prev => ({ ...prev, days: newDays }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mesocycle.daysPerWeek, editingMesocycle, initializeDays]);
+  }, [mesocycle.daysPerWeek, editingMesocycle, initializeDays, mesocycle.days]);
 
   const handleInputChange = (field: keyof MesocyclePlan, value: string | number | string[]) => {
     setMesocycle(prev => ({ ...prev, [field]: value }));
@@ -92,20 +104,20 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
     let updatedDays = mesocycle.days;
     if (selectedDayForExercise !== null && updatedDays) {
       updatedDays = updatedDays.map(day =>
-        day.day === selectedDayForExercise // Use day
-          ? { ...day, exercises: [...day.exercises, { exercise_id: exercise.id, order_index: day.exercises.length }] } // Add as object
+        day.day === selectedDayForExercise
+          ? { ...day, exercises: [...day.exercises, { exercise_id: exercise.id, order_index: day.exercises.length }] }
           : day
       );
     }
 
     setMesocycle(prev => ({ ...prev, exerciseDB: updatedDB, days: updatedDays }));
-    setShowExerciseLibrary(false); // Close the library after adding
-    setSelectedDayForExercise(null); // Reset selected day
+    setShowExerciseLibrary(false);
+    setSelectedDayForExercise(null);
   };
 
-  const handleDayUpdate = (dayNumber: number, exercises: Array<{ exercise_id: string; order_index: number }>) => { // Updated type
+  const handleDayUpdate = (dayNumber: number, exercises: Array<{ exercise_id: string; order_index: number }>) => {
     const updatedDays = mesocycle.days?.map(day => 
-      day.day === dayNumber ? { ...day, exercises: exercises } : day // Use day
+      day.day === dayNumber ? { ...day, exercises: exercises } : day
     ) || [];
     
     setMesocycle(prev => ({ ...prev, days: updatedDays }));
@@ -129,14 +141,20 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
       daysPerWeek: mesocycle.daysPerWeek!,
       specialization: mesocycle.specialization || [],
       goalStatement: mesocycle.goalStatement || undefined,
-      days: mesocycle.days || [], // Keep days for internal state/DayBuilder
+      days: mesocycle.days || [],
       exerciseDB: mesocycle.exerciseDB || {},
     };
 
     if (onSave) {
       onSave(mesocycleToSave);
     }
+    clearDraft();
   };
+
+  const handleCancel = () => {
+    clearDraft();
+    window.history.back();
+  }
 
   const muscleVolume = calculateMuscleVolume();
 
@@ -238,7 +256,6 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
         </CardContent>
       </Card>
 
-      {/* Day Planning Section */}
       {mesocycle.daysPerWeek && mesocycle.days && (
         <Card>
           <CardHeader>
@@ -263,7 +280,6 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
         </Card>
       )}
 
-      {/* Volume Analysis */}
       {Object.keys(muscleVolume).length > 0 && (
         <Card>
           <CardHeader>
@@ -309,11 +325,10 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
         </Card>
       )}
 
-      {/* Action Buttons */}
       <div className="flex justify-end gap-3">
         <Button
           variant="outline"
-          onClick={() => window.history.back()}
+          onClick={handleCancel}
         >
           Cancel
         </Button>
@@ -323,12 +338,11 @@ const MesocyclePlanner: React.FC<MesocyclePlannerProps> = ({ onSave, editingMeso
         </Button>
       </div>
 
-      {/* Exercise Library Dialog */}
       {showExerciseLibrary && (
         <ExerciseLibrary
           onClose={() => setShowExerciseLibrary(false)}
           onExerciseAdd={handleExerciseAdd}
-          existingExercises={mesocycle.days?.find(day => day.day === selectedDayForExercise)?.exercises.map(ex => mesocycle.exerciseDB?.[ex.exercise_id]).filter(Boolean) as Exercise[] || []} // Updated to use day and exercise_id
+          existingExercises={mesocycle.days?.find(day => day.day === selectedDayForExercise)?.exercises.map(ex => mesocycle.exerciseDB?.[ex.exercise_id]).filter(Boolean) as Exercise[] || []}
         />
       )}
     </div>

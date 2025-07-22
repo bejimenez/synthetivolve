@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react'
 import { useDebounce } from '@/hooks/useDebounce'
+import { useFormDraft } from '@/hooks/useFormDraft'
 import { useNutrition } from './NutritionDataProvider'
 import { FoodSearchResult } from '@/lib/nutrition/usda'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -24,6 +25,13 @@ interface AddFoodDialogProps {
 
 type TabType = 'search' | 'recent' | 'manual'
 
+interface AddFoodDraft {
+  searchTerm: string
+  quantity: number
+  unit: string
+  activeTab: TabType
+}
+
 export function AddFoodDialog({ open, onClose, onFoodAdded, selectedDate, initialHour }: AddFoodDialogProps) {
   const [activeTab, setActiveTab] = useState<TabType>('search')
   const [searchTerm, setSearchTerm] = useState('')
@@ -33,14 +41,34 @@ export function AddFoodDialog({ open, onClose, onFoodAdded, selectedDate, initia
   const [unit, setUnit] = useState('g')
   const [loading, setLoading] = useState(false)
   
-  // 🔥 FIX: Store the intended logging hour in local state to preserve it throughout the workflow
   const [intendedLoggingHour, setIntendedLoggingHour] = useState<number | null>(null)
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500)
   const { searchFoods, addFoodLog, recentFoods, refreshLogs } = useNutrition()
   
+  const { draft, saveDraft, clearDraft, isLoaded } = useFormDraft<AddFoodDraft>({
+    key: 'add-food-dialog',
+    defaultValues: {
+      searchTerm: '',
+      quantity: 100,
+      unit: 'g',
+      activeTab: 'search',
+    },
+  })
 
-  // 🔥 FIX: Set the intended logging hour when dialog opens and preserve it
+  useEffect(() => {
+    if (isLoaded && draft) {
+      setSearchTerm(draft.searchTerm)
+      setQuantity(draft.quantity)
+      setUnit(draft.unit)
+      setActiveTab(draft.activeTab)
+    }
+  }, [isLoaded, draft])
+
+  useEffect(() => {
+    saveDraft({ searchTerm, quantity, unit, activeTab })
+  }, [searchTerm, quantity, unit, activeTab, saveDraft])
+
   useEffect(() => {
     if (open && initialHour !== null) {
       setIntendedLoggingHour(initialHour)
@@ -65,34 +93,17 @@ export function AddFoodDialog({ open, onClose, onFoodAdded, selectedDate, initia
     }
   }, [debouncedSearchTerm, searchFoods])
 
-  // Simple fix for AddFoodDialog.tsx handleAddFood function
-// Replace the existing handleAddFood function with this:
-
 const handleAddFood = async () => {
   if (!selectedFood) return
 
-  // 🔥 SIMPLE FIX: Create date in local timezone and adjust for UTC conversion
   const localDate = new Date(selectedDate)
   const targetHour = intendedLoggingHour ?? new Date().getHours()
   
-  // Set the time in local timezone
   localDate.setHours(targetHour, 0, 0, 0)
   
-  // Get timezone offset in minutes
   const timezoneOffset = localDate.getTimezoneOffset()
   
-  // Create a new date that accounts for the timezone offset
-  // This ensures that when converted to UTC, it maintains the intended local hour
   const adjustedDate = new Date(localDate.getTime() - (timezoneOffset * 60000))
-  
-  // 🔥 DEBUG: Log the conversion
-  console.log('🔍 DEBUG - Simple timezone fix:')
-  console.log('Target hour:', targetHour)
-  console.log('Local date after setHours:', localDate)
-  console.log('Timezone offset (minutes):', timezoneOffset)
-  console.log('Adjusted date:', adjustedDate)
-  console.log('Final ISO string:', adjustedDate.toISOString())
-  console.log('Expected hour in local time:', targetHour)
 
   const newLog = {
     fdcId: selectedFood.fdcId === 0 ? null : selectedFood.fdcId,
@@ -109,9 +120,8 @@ const handleAddFood = async () => {
 }
 
   const handleManualFoodCreated = (newFood: Food) => {
-    // Transform the created food into a FoodSearchResult for logging
     const transformedFood: FoodSearchResult = {
-      fdcId: 0, // No USDA ID for manual foods
+      fdcId: 0,
       description: newFood.description,
       brandName: newFood.brand_name || undefined,
       dataType: 'Manual',
@@ -127,8 +137,7 @@ const handleAddFood = async () => {
     }
     
     setSelectedFood(transformedFood)
-    setActiveTab('search') // Switch to quantity selection view
-    // 🔥 NOTE: intendedLoggingHour is now preserved across this tab switch
+    setActiveTab('search')
   }
 
   const handleClose = () => {
@@ -137,8 +146,8 @@ const handleAddFood = async () => {
     setSelectedFood(null)
     setQuantity(100)
     setActiveTab('search')
-    // 🔥 FIX: Reset intended logging hour when dialog closes
     setIntendedLoggingHour(null)
+    clearDraft()
     onClose()
   }
 
@@ -174,7 +183,6 @@ const handleAddFood = async () => {
         <DialogHeader>
           <DialogTitle>
             {selectedFood ? `Log "${selectedFood.description}"` : 'Add Food'}
-            {/* 🔥 DEBUG: Temporary display to verify intended time is preserved */}
             {intendedLoggingHour !== null && (
               <span className="text-sm text-muted-foreground ml-2">
                 → {intendedLoggingHour.toString().padStart(2, '0')}:00
@@ -317,8 +325,8 @@ const handleAddFood = async () => {
             </div>
 
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={handleClose}>
-                Cancel
+              <Button variant="outline" onClick={() => setSelectedFood(null)}>
+                Back
               </Button>
               <Button onClick={handleAddFood}>
                 Add Food
