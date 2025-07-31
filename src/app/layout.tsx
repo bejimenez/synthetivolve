@@ -1,15 +1,12 @@
-// src/app/layout.tsx
+// src/app/layout.tsx (Updated to use AppDataProvider)
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth/AuthProvider";
-import { WeightDataProvider } from "@/components/weight/WeightDataProvider";
-import { GoalsDataProvider } from "@/components/goals/GoalsDataProvider";
-import { FitnessDataProvider } from "@/components/fitness/FitnessDataProvider";
+import { AppDataProvider } from "@/components/data/AppDataProvider";
 import { ThemeProvider } from "@/components/theme-provider";
 import AppWrapper from "@/components/layout/AppWrapper";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
-
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -33,14 +30,11 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <WeightDataProvider>
-              <GoalsDataProvider>
-                <FitnessDataProvider>
-                  <AppWrapper>{children}</AppWrapper>
-                  <MobileBottomNav />
-                </FitnessDataProvider>
-              </GoalsDataProvider>
-            </WeightDataProvider>
+            {/* Single unified data provider replaces multiple providers */}
+            <AppDataProvider>
+              <AppWrapper>{children}</AppWrapper>
+              <MobileBottomNav />
+            </AppDataProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

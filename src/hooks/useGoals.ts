@@ -1,5 +1,6 @@
-// src/hooks/useGoals.ts (Updated for backwards compatibility)
-import { useGoalsData, Goal, GoalInsert, GoalUpdate } from '@/components/goals/GoalsDataProvider'
+// src/hooks/useGoals.ts
+import { useAppData } from '@/components/data/AppDataProvider'
+import { Goal, GoalInsert, GoalUpdate } from '@/components/goals/GoalsDataProvider'
 
 interface UseGoalsReturn {
   goals: Goal[]
@@ -19,21 +20,21 @@ export function useGoals(): UseGoalsReturn {
   const {
     goals,
     activeGoal,
-    loading,
-    error,
+    goalsLoading,
+    goalsError,
     createGoal,
     updateGoal,
     deleteGoal,
     completeGoal,
     setGoalActive,
     refreshGoals,
-  } = useGoalsData()
+  } = useAppData()
 
   return {
     goals,
     activeGoal,
-    loading,
-    error,
+    loading: goalsLoading,
+    error: goalsError,
     createGoal,
     updateGoal,
     deleteGoal,
@@ -43,5 +44,5 @@ export function useGoals(): UseGoalsReturn {
   }
 }
 
-// Re-export types for backwards compatibility
+// Re-export types for backward compatibility
 export type { Goal, GoalInsert, GoalUpdate }

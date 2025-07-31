@@ -1,5 +1,6 @@
-// src/hooks/useWeightEntries.ts (Updated for backwards compatibility)
-import { useWeightData, WeightEntry, WeightEntryInput } from '@/components/weight/WeightDataProvider'
+// src/hooks/useWeightEntries.ts
+import { useAppData } from '@/components/data/AppDataProvider'
+import { WeightEntry, WeightEntryInput } from '@/components/weight/WeightDataProvider'
 
 interface UseWeightEntriesReturn {
   weightEntries: WeightEntry[]
@@ -11,26 +12,25 @@ interface UseWeightEntriesReturn {
   refreshEntries: () => Promise<void>
 }
 
-// Legacy hook that wraps the new context for backwards compatibility
 export function useWeightEntries(): UseWeightEntriesReturn {
   const {
-    entries,
-    loading,
-    error,
+    weightEntries,
+    weightLoading,
+    weightError,
     createWeightEntry,
     updateWeightEntry,
     deleteWeightEntry,
-    refreshEntries,
-  } = useWeightData()
+    refreshWeightEntries,
+  } = useAppData()
 
   return {
-    weightEntries: entries,
-    loading,
-    error,
+    weightEntries,
+    loading: weightLoading,
+    error: weightError,
     createWeightEntry,
     updateWeightEntry,
     deleteWeightEntry,
-    refreshEntries,
+    refreshEntries: refreshWeightEntries,
   }
 }
 
