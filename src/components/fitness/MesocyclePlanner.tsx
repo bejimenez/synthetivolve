@@ -26,7 +26,7 @@ const defaultValues: Partial<MesocyclePlan> = {
   weeks: 4,
   daysPerWeek: 4,
   specialization: [],
-  goalStatement: '',
+  goal_statement: '',
   days: [],
   exerciseDB: {}
 };

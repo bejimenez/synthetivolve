@@ -8,6 +8,7 @@ export type MesocycleExerciseRow = Database['public']['Tables']['mesocycle_exerc
 export type WorkoutSessionRow = Database['public']['Tables']['workout_sessions']['Row']
 export type WorkoutExerciseRow = Database['public']['Tables']['workout_exercises']['Row']
 export type SetLogRow = Database['public']['Tables']['set_logs']['Row']
+export type WorkoutLogRow = Database['public']['Tables']['workout_sessions']['Row']
 
 // Muscle group enum
 export type MuscleGroup = 

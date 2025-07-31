@@ -16,8 +16,8 @@ import type {
 import { exerciseRowToExercise, mesocycleRowToMesocycle } from '@/lib/fitness.types'
 
 // Import existing types
-import type { WeightEntry, WeightEntryInput } from '@/components/weight/WeightDataProvider'
-import type { Goal, GoalInsert, GoalUpdate } from '@/components/goals/GoalsDataProvider'
+import type { WeightEntry, WeightEntryInput } from '@/lib/weight.types'
+import type { Goal, GoalInsert, GoalUpdate } from '@/lib/goals.types'
 
 // Data modules for different features
 export type DataModule = 'weight' | 'goals' | 'fitness' | 'nutrition' | 'profile'
