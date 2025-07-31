@@ -1,149 +1,361 @@
-// src/lib/fitness.types.ts
+// src/lib/fitness.types.ts (Complete Refactor)
 import type { Database } from './database.types'
 
-// Use database types as base
+// Database types from the new schema
 export type ExerciseRow = Database['public']['Tables']['exercises']['Row']
 export type MesocycleRow = Database['public']['Tables']['mesocycles']['Row']
-export type WorkoutLogRow = Database['public']['Tables']['workout_logs']['Row']
-export type ExerciseLogRow = Database['public']['Tables']['exercise_logs']['Row']
+export type MesocycleExerciseRow = Database['public']['Tables']['mesocycle_exercises']['Row']
+export type WorkoutSessionRow = Database['public']['Tables']['workout_sessions']['Row']
+export type WorkoutExerciseRow = Database['public']['Tables']['workout_exercises']['Row']
 export type SetLogRow = Database['public']['Tables']['set_logs']['Row']
 
-// Muscle group type
+// Muscle group enum
 export type MuscleGroup = 
   | 'CHEST' | 'BACK' | 'SHOULDERS' | 'TRICEPS' | 'BICEPS' 
   | 'QUADS' | 'HAMSTRINGS' | 'GLUTES' | 'CALVES' | 'ABS' | 'FOREARMS'
 
-// Muscle group volume type
-export type MuscleGroupVolume = { [key in MuscleGroup]: number }
+// Weight type for exercise programming
+export type WeightType = 'percentage' | 'rpe' | 'absolute'
 
-// Legacy Exercise type for backward compatibility
+// Exercise interface (matches database)
 export interface Exercise {
   id: string
   name: string
-  primary: MuscleGroup
-  secondary: MuscleGroup[]
+  primary_muscle_group: MuscleGroup
+  secondary_muscle_groups: MuscleGroup[]
   equipment?: string | null
   notes?: string | null
-  useRIRRPE: boolean | null
+  use_rir_rpe: boolean
+  user_id?: string | null
+  created_at?: string
+  updated_at?: string
+  deleted_at?: string | null
 }
 
-// Convert database row to Exercise type
+// Mesocycle interface (updated to match new database schema)
+export interface Mesocycle {
+  id: string
+  user_id: string
+  name: string
+  weeks: number
+  days_per_week: number
+  specialization: string[] | null
+  goal_statement: string | null
+  is_template: boolean
+  is_active: boolean  // NEW: Now properly tracked
+  start_date: string | null  // NEW: Proper date tracking
+  end_date: string | null    // NEW: Calculated or set end date
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+  
+  // Computed properties
+  current_week?: number
+  days_remaining?: number
+  is_completed?: boolean
+}
+
+// Mesocycle exercise (replaces complex JSONB storage)
+export interface MesocycleExercise {
+  id: string
+  mesocycle_id: string
+  exercise_id: string
+  day_number: number
+  order_index: number
+  sets: number
+  reps_min: number
+  reps_max: number
+  weight_type: WeightType
+  weight_value: number | null
+  rpe_target: number | null
+  rest_seconds: number
+  notes: string | null
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+  
+  // Joined data
+  exercise?: Exercise
+}
+
+// Complete mesocycle with exercises (for planning interface)
+export interface MesocycleWithExercises extends Mesocycle {
+  exercises_by_day: Record<number, MesocycleExercise[]>
+  total_exercises: number
+  unique_exercises: string[]
+}
+
+// Workout session (replaces old WorkoutLog)
+export interface WorkoutSession {
+  id: string
+  user_id: string
+  mesocycle_id: string | null
+  session_date: string
+  week_number: number | null
+  day_number: number | null
+  session_name: string | null
+  notes: string | null
+  started_at: string | null
+  completed_at: string | null
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+  
+  // Related data
+  exercises: WorkoutExercise[]
+  mesocycle?: Mesocycle
+}
+
+// Workout exercise (exercise performed in a session)
+export interface WorkoutExercise {
+  id: string
+  workout_session_id: string
+  exercise_id: string
+  mesocycle_exercise_id: string | null  // Link to planned exercise
+  order_index: number
+  is_substitution: boolean
+  notes: string | null
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+  
+  // Related data
+  exercise: Exercise
+  sets: SetLog[]
+  planned_exercise?: MesocycleExercise
+}
+
+// Set log (actual set performed)
+export interface SetLog {
+  id: string
+  workout_exercise_id: string  // Updated to reference workout_exercises
+  set_number: number
+  weight: number
+  reps: number
+  rir: number | null
+  rpe: number | null
+  created_at: string | null
+}
+
+// Input types for API operations
+export interface CreateMesocycleInput {
+  name: string
+  weeks: number
+  days_per_week: number
+  specialization?: string[]
+  goal_statement?: string
+  is_template?: boolean
+  start_date?: string
+}
+
+export interface UpdateMesocycleInput {
+  name?: string
+  weeks?: number
+  days_per_week?: number
+  specialization?: string[]
+  goal_statement?: string
+  is_template?: boolean
+  is_active?: boolean
+  start_date?: string
+  end_date?: string
+}
+
+export interface CreateMesocycleExerciseInput {
+  mesocycle_id: string
+  exercise_id: string
+  day_number: number
+  order_index?: number
+  sets?: number
+  reps_min?: number
+  reps_max?: number
+  weight_type?: WeightType
+  weight_value?: number
+  rpe_target?: number
+  rest_seconds?: number
+  notes?: string
+}
+
+export interface CreateWorkoutSessionInput {
+  mesocycle_id?: string
+  session_date: string
+  week_number?: number
+  day_number?: number
+  session_name?: string
+  notes?: string
+}
+
+export interface CreateWorkoutExerciseInput {
+  workout_session_id: string
+  exercise_id: string
+  mesocycle_exercise_id?: string
+  order_index?: number
+  is_substitution?: boolean
+  notes?: string
+}
+
+export interface CreateSetLogInput {
+  workout_exercise_id: string
+  set_number: number
+  weight: number
+  reps: number
+  rir?: number
+  rpe?: number
+}
+
+// Helper functions for data transformation
 export function exerciseRowToExercise(row: ExerciseRow): Exercise {
   return {
     id: row.id,
     name: row.name,
-    primary: row.primary_muscle_group as MuscleGroup,
-    secondary: (row.secondary_muscle_groups || []) as MuscleGroup[],
-    equipment: row.equipment || undefined,
-    notes: row.notes || undefined,
-    useRIRRPE: row.use_rir_rpe
+    primary_muscle_group: row.primary_muscle_group as MuscleGroup,
+    secondary_muscle_groups: (row.secondary_muscle_groups || []) as MuscleGroup[],
+    equipment: row.equipment,
+    notes: row.notes,
+    use_rir_rpe: row.use_rir_rpe || false,
+    user_id: row.user_id,
+    created_at: row.created_at ?? undefined,
+    updated_at: row.updated_at ?? undefined,
+    deleted_at: row.deleted_at
   }
 }
 
-// Convert Exercise type to database row format
-export function exerciseToRow(exercise: Omit<Exercise, 'id'>): Omit<ExerciseRow, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'deleted_at'> {
+export function exerciseToRow(exercise: Omit<Exercise, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>): Omit<ExerciseRow, 'id' | 'created_at' | 'updated_at' | 'deleted_at'> {
   return {
     name: exercise.name,
-    primary_muscle_group: exercise.primary,
-    secondary_muscle_groups: exercise.secondary,
+    primary_muscle_group: exercise.primary_muscle_group,
+    secondary_muscle_groups: exercise.secondary_muscle_groups,
     equipment: exercise.equipment || null,
     notes: exercise.notes || null,
-    use_rir_rpe: exercise.useRIRRPE
+    use_rir_rpe: exercise.use_rir_rpe,
+    user_id: exercise.user_id || null
   }
 }
 
-// Set type
-export interface Set {
-  reps: number
-  weight: number
-  rir?: number
-  rpe?: number
-  isWarmup?: boolean
-}
-
-// DayPlan type
-export interface DayPlan {
-  day: number; // Day number (1-7)
-  exercises: Array<{
-    exercise_id: string;
-    order_index: number;
-  }>;
-}
-
-// Set type for logging
-export interface SetLog {
-  set_number: number; // Optional, can be assigned on backend or during processing
-  weight: number;
-  reps: number;
-  rir?: number | null;
-  rpe?: number | null;
-}
-
-// Logged Exercise type for workout logs
-export interface LoggedExercise {
-  exercise_id: string | null;
-  order_index: number;
-  replaced_original?: boolean;
-  was_accessory?: boolean;
-  sets: SetLog[];
-}
-
-// Workout log types
-export interface WorkoutLog {
-  id: string;
-  user_id: string | null; // user_id can be null in DB
-  mesocycle_id: string | null;
-  week_number: number | null;
-  day_number: number | null;
-  workout_date: string; // workout_date is NOT NULL in DB
-  custom_goal_entry: string | null;
-  started_at: string | null; // started_at can be null in DB
-  completed_at: string | null;
-  created_at: string | null; // created_at can be null in DB
-  exercises: LoggedExercise[]; // Nested logged exercises
-}
-
-// Helper function to convert database workout log with relations
-export function buildWorkoutLogFromRows(
-  workoutRow: WorkoutLogRow,
-  exerciseLogs: (ExerciseLogRow & { set_logs: SetLogRow[] })[]
-): WorkoutLog {
+export function mesocycleRowToMesocycle(row: MesocycleRow): Mesocycle {
+  const startDate = row.start_date ? new Date(row.start_date) : null
+  const currentDate = new Date()
+  
+  // Calculate current week if mesocycle has started
+  let current_week: number | undefined
+  let days_remaining: number | undefined
+  let is_completed = false
+  
+  if (startDate && row.weeks) {
+    const daysSinceStart = Math.floor((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+    current_week = Math.max(1, Math.floor(daysSinceStart / 7) + 1)
+    
+    const totalDays = row.weeks * 7
+    days_remaining = Math.max(0, totalDays - daysSinceStart)
+    is_completed = days_remaining === 0
+  }
+  
   return {
-    id: workoutRow.id,
-    user_id: workoutRow.user_id,
-    mesocycle_id: workoutRow.mesocycle_id,
-    week_number: workoutRow.week_number,
-    day_number: workoutRow.day_number,
-    workout_date: workoutRow.workout_date || new Date().toISOString().split('T')[0], // Provide a default if null
-    custom_goal_entry: workoutRow.custom_goal_entry,
-    exercises: exerciseLogs.map(log => ({
-      exercise_id: log.exercise_id,
-      order_index: log.order_index,
-      replaced_original: log.replaced_original || false,
-      was_accessory: log.was_accessory || false,
-      sets: log.set_logs.map(set => ({
-        set_number: set.set_number,
-        reps: set.reps,
-        weight: set.weight,
-        rir: set.rir || null,
-        rpe: set.rpe || null
-      }))
-    })),
-    started_at: workoutRow.started_at || null,
-    completed_at: workoutRow.completed_at || null,
-    created_at: workoutRow.created_at || null
+    id: row.id,
+    user_id: row.user_id || '',
+    name: row.name,
+    weeks: row.weeks,
+    days_per_week: row.days_per_week,
+    specialization: row.specialization,
+    goal_statement: row.goal_statement,
+    is_template: row.is_template || false,
+    is_active: row.is_active || false,
+    start_date: row.start_date,
+    end_date: row.end_date,
+    created_at: row.created_at || '',
+    updated_at: row.updated_at || '',
+    deleted_at: row.deleted_at,
+    current_week,
+    days_remaining,
+    is_completed
   }
 }
 
+export function mesocycleToRow(mesocycle: Omit<Mesocycle, 'id' | 'created_at' | 'updated_at' | 'deleted_at' | 'current_week' | 'days_remaining' | 'is_completed'>): Omit<MesocycleRow, 'id' | 'created_at' | 'updated_at' | 'deleted_at'> {
+  return {
+    user_id: mesocycle.user_id,
+    name: mesocycle.name,
+    weeks: mesocycle.weeks,
+    days_per_week: mesocycle.days_per_week,
+    specialization: mesocycle.specialization,
+    goal_statement: mesocycle.goal_statement,
+    is_template: mesocycle.is_template,
+    is_active: mesocycle.is_active,
+    start_date: mesocycle.start_date,
+    end_date: mesocycle.end_date,
+    plan_data: null // Legacy field, no longer used
+  }
+}
 
-export interface MesocyclePlan {
-  id?: string
-  name: string
-  weeks: number
+// Validation helpers
+export function validateMesocycleInput(input: CreateMesocycleInput): string[] {
+  const errors: string[] = []
+  
+  if (!input.name || input.name.trim().length === 0) {
+    errors.push('Mesocycle name is required')
+  }
+  
+  if (input.weeks < 2 || input.weeks > 16) {
+    errors.push('Mesocycle duration must be between 2 and 16 weeks')
+  }
+  
+  if (input.days_per_week < 1 || input.days_per_week > 7) {
+    errors.push('Days per week must be between 1 and 7')
+  }
+  
+  if (input.start_date) {
+    const startDate = new Date(input.start_date)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    if (startDate < today) {
+      errors.push('Start date cannot be in the past')
+    }
+  }
+  
+  return errors
+}
+
+// Legacy type compatibility (for gradual migration)
+export interface MesocyclePlan extends Mesocycle {
+  // Legacy properties for backward compatibility
   daysPerWeek: number
-  specialization: MuscleGroup[]
-  goalStatement?: string
   isTemplate?: boolean
-  days: DayPlan[] // Use the new DayPlan structure
-  exerciseDB?: Record<string, Exercise>
+  days?: any[] // Legacy day structure
+  exerciseDB?: Record<string, any>
+}
+
+// Convert new mesocycle to legacy format for existing components
+export function mesocycleToLegacyPlan(mesocycle: Mesocycle): MesocyclePlan {
+  return {
+    ...mesocycle,
+    daysPerWeek: mesocycle.days_per_week,
+    isTemplate: mesocycle.is_template,
+    days: [], // Will be populated from mesocycle_exercises
+    exerciseDB: {} // Will be populated from related exercises
+  }
+}
+
+// Get formatted muscle group names
+export function formatMuscleGroupName(muscle: MuscleGroup): string {
+  const formatted = muscle.toLowerCase().replace('_', ' ')
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1)
+}
+
+// Calculate total volume for a mesocycle
+export function calculateMesocycleVolume(exercises: MesocycleExercise[]): Record<MuscleGroup, number> {
+  const volume: Record<MuscleGroup, number> = {} as Record<MuscleGroup, number>
+  
+  exercises.forEach(me => {
+    if (me.exercise) {
+      const primaryVolume = me.sets * ((me.reps_min + me.reps_max) / 2)
+      volume[me.exercise.primary_muscle_group] = (volume[me.exercise.primary_muscle_group] || 0) + primaryVolume
+      
+      me.exercise.secondary_muscle_groups.forEach(secondary => {
+        const secondaryVolume = primaryVolume * 0.5 // Secondary muscles get 50% volume credit
+        volume[secondary] = (volume[secondary] || 0) + secondaryVolume
+      })
+    }
+  })
+  
+  return volume
 }

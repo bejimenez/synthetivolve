@@ -1,4 +1,4 @@
-// src/hooks/useAppSync.ts - New hook for global data synchronization
+// src/hooks/useAppSync.ts - for global data synchronization
 import { useAppData } from '@/components/data/AppDataProvider'
 import type { DataModule } from '@/components/data/AppDataProvider'
 

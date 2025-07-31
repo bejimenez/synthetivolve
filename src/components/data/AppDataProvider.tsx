@@ -1,4 +1,4 @@
-// src/components/data/AppDataProvider.tsx (Complete Implementation)
+// src/components/data/AppDataProvider.tsx (Complete Final Implementation)
 'use client'
 
 import { createContext, useContext, useCallback, useReducer, useEffect, useMemo } from 'react'
@@ -6,11 +6,20 @@ import { useAuth } from '@/components/auth/AuthProvider'
 import { createSupabaseClient } from '@/lib/supabase'
 import type { Database } from '@/lib/database.types'
 
+// Import types from the new fitness system
+import type { 
+  Exercise, 
+  Mesocycle, 
+  MesocycleWithExercises,
+  WorkoutSession,
+  CreateMesocycleInput,
+  UpdateMesocycleInput
+} from '@/lib/fitness.types'
+import { exerciseRowToExercise, mesocycleRowToMesocycle } from '@/lib/fitness.types'
+
 // Import existing types
 import type { WeightEntry, WeightEntryInput } from '@/components/weight/WeightDataProvider'
 import type { Goal, GoalInsert, GoalUpdate } from '@/components/goals/GoalsDataProvider'
-import type { Exercise, MesocyclePlan, WorkoutLog } from '@/lib/fitness.types'
-import { exerciseToRow, exerciseRowToExercise } from '@/lib/fitness.types'
 
 // Data modules for different features
 export type DataModule = 'weight' | 'goals' | 'fitness' | 'nutrition' | 'profile'
@@ -30,11 +39,11 @@ interface AppDataState {
   goalsError: string | null
   goalsLastFetch: number | null
   
-  // Fitness data
+  // Fitness data (updated structure)
   exercises: Exercise[]
-  mesocycles: MesocyclePlan[]
-  workoutLogs: WorkoutLog[]
-  activeMesocycle: MesocyclePlan | null
+  mesocycles: Mesocycle[]
+  workoutSessions: WorkoutSession[]
+  activeMesocycle: Mesocycle | null
   fitnessLoading: boolean
   fitnessError: string | null
   fitnessLastFetch: number | null
@@ -66,13 +75,17 @@ type AppDataAction =
   | { type: 'SET_ACTIVE_GOAL'; payload: Goal | null }
   | { type: 'SET_GOALS_LAST_FETCH'; payload: number }
   
-  // Fitness actions
+  // Fitness actions (updated)
   | { type: 'SET_FITNESS_LOADING'; payload: boolean }
   | { type: 'SET_FITNESS_ERROR'; payload: string | null }
-  | { type: 'SET_FITNESS_DATA'; payload: { exercises: Exercise[], mesocycles: MesocyclePlan[], workoutLogs: WorkoutLog[] } }
+  | { type: 'SET_FITNESS_DATA'; payload: { exercises: Exercise[], mesocycles: Mesocycle[], workoutSessions: WorkoutSession[] } }
   | { type: 'ADD_EXERCISE'; payload: Exercise }
   | { type: 'UPDATE_EXERCISE'; payload: Exercise }
   | { type: 'REMOVE_EXERCISE'; payload: string }
+  | { type: 'ADD_MESOCYCLE'; payload: Mesocycle }
+  | { type: 'UPDATE_MESOCYCLE'; payload: Mesocycle }
+  | { type: 'REMOVE_MESOCYCLE'; payload: string }
+  | { type: 'SET_ACTIVE_MESOCYCLE'; payload: Mesocycle | null }
   | { type: 'SET_FITNESS_LAST_FETCH'; payload: number }
   
   // Global actions
@@ -100,7 +113,7 @@ const initialState: AppDataState = {
   
   exercises: [],
   mesocycles: [],
-  workoutLogs: [],
+  workoutSessions: [],
   activeMesocycle: null,
   fitnessLoading: false,
   fitnessError: null,
@@ -176,7 +189,7 @@ function appDataReducer(state: AppDataState, action: AppDataAction): AppDataStat
     case 'SET_GOALS_LAST_FETCH':
       return { ...state, goalsLastFetch: action.payload }
     
-    // Fitness cases
+    // Fitness cases (updated)
     case 'SET_FITNESS_LOADING':
       return { ...state, fitnessLoading: action.payload }
     case 'SET_FITNESS_ERROR':
@@ -186,7 +199,7 @@ function appDataReducer(state: AppDataState, action: AppDataAction): AppDataStat
         ...state, 
         exercises: action.payload.exercises,
         mesocycles: action.payload.mesocycles,
-        workoutLogs: action.payload.workoutLogs,
+        workoutSessions: action.payload.workoutSessions,
         activeMesocycle: action.payload.mesocycles.find(m => m.is_active) || null,
         fitnessError: null 
       }
@@ -204,6 +217,30 @@ function appDataReducer(state: AppDataState, action: AppDataAction): AppDataStat
         ...state,
         exercises: state.exercises.filter(exercise => exercise.id !== action.payload)
       }
+    case 'ADD_MESOCYCLE':
+      return { 
+        ...state, 
+        mesocycles: [...state.mesocycles, action.payload],
+        // If this is the first mesocycle or it's set to active, make it the active one
+        activeMesocycle: action.payload.is_active ? action.payload : state.activeMesocycle
+      }
+    case 'UPDATE_MESOCYCLE':
+      return {
+        ...state,
+        mesocycles: state.mesocycles.map(mesocycle =>
+          mesocycle.id === action.payload.id ? action.payload : mesocycle
+        ),
+        activeMesocycle: action.payload.is_active ? action.payload : 
+          (state.activeMesocycle?.id === action.payload.id && !action.payload.is_active) ? null : state.activeMesocycle
+      }
+    case 'REMOVE_MESOCYCLE':
+      return {
+        ...state,
+        mesocycles: state.mesocycles.filter(mesocycle => mesocycle.id !== action.payload),
+        activeMesocycle: state.activeMesocycle?.id === action.payload ? null : state.activeMesocycle
+      }
+    case 'SET_ACTIVE_MESOCYCLE':
+      return { ...state, activeMesocycle: action.payload }
     case 'SET_FITNESS_LAST_FETCH':
       return { ...state, fitnessLastFetch: action.payload }
     
@@ -238,10 +275,14 @@ interface AppDataContextType extends AppDataState {
   setGoalActive: (id: string) => Promise<boolean>
   refreshGoals: (force?: boolean) => Promise<void>
   
-  // Fitness methods
-  createExercise: (exercise: Omit<Exercise, 'id'>) => Promise<Exercise | null>
-  updateExercise: (id: string, updates: Partial<Omit<Exercise, 'id'>>) => Promise<Exercise | null>
+  // Fitness methods (updated)
+  createExercise: (exercise: Omit<Exercise, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>) => Promise<Exercise | null>
+  updateExercise: (id: string, updates: Partial<Omit<Exercise, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>>) => Promise<Exercise | null>
   deleteExercise: (id: string) => Promise<boolean>
+  createMesocycle: (mesocycle: CreateMesocycleInput) => Promise<Mesocycle | null>
+  updateMesocycle: (id: string, updates: UpdateMesocycleInput) => Promise<Mesocycle | null>
+  deleteMesocycle: (id: string) => Promise<boolean>
+  setMesocycleActive: (id: string) => Promise<boolean>
   refreshFitness: (force?: boolean) => Promise<void>
   
   // Global methods
@@ -295,7 +336,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
           dispatch({ type: 'SET_GOALS_LAST_FETCH', payload: 0 })
           break
         case 'fitness':
-          dispatch({ type: 'SET_FITNESS_DATA', payload: { exercises: [], mesocycles: [], workoutLogs: [] } })
+          dispatch({ type: 'SET_FITNESS_DATA', payload: { exercises: [], mesocycles: [], workoutSessions: [] } })
           dispatch({ type: 'SET_FITNESS_LAST_FETCH', payload: 0 })
           break
       }
@@ -318,7 +359,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     })
   }, [])
 
-  // Weight data methods
+  // Weight data methods (unchanged)
   const refreshWeightEntries = useCallback(async (force = false) => {
     if (!user) {
       dispatch({ type: 'SET_WEIGHT_ENTRIES', payload: [] })
@@ -368,9 +409,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       const newEntry = result.data
 
       dispatch({ type: 'ADD_WEIGHT_ENTRY', payload: newEntry })
-      
-      // Invalidate related caches (goals might need recalculation)
-      invalidateCache(['goals'])
+      invalidateCache(['goals']) // Weight changes affect goal calculations
       
       return newEntry
     } catch (err) {
@@ -430,7 +469,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     }
   }, [invalidateCache])
 
-  // Goals data methods
+  // Goals data methods (unchanged)
   const refreshGoals = useCallback(async (force = false) => {
     if (!user) {
       dispatch({ type: 'SET_GOALS_DATA', payload: { goals: [], activeGoal: null } })
@@ -438,7 +477,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (!force && !isDataStale('goals')) {
-      return // Use cached data
+      return
     }
 
     try {
@@ -554,7 +593,6 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
 
       dispatch({ type: 'UPDATE_GOAL', payload: data })
       
-      // If this was the active goal, clear active goal
       if (state.activeGoal?.id === id) {
         dispatch({ type: 'SET_ACTIVE_GOAL', payload: null })
       }
@@ -599,42 +637,50 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, supabase, refreshGoals])
 
-  // Fitness data methods
+  // Fitness data methods (updated for new schema)
   const refreshFitness = useCallback(async (force = false) => {
     if (!user) {
-      dispatch({ type: 'SET_FITNESS_DATA', payload: { exercises: [], mesocycles: [], workoutLogs: [] } })
+      dispatch({ type: 'SET_FITNESS_DATA', payload: { exercises: [], mesocycles: [], workoutSessions: [] } })
       return
     }
 
     if (!force && !isDataStale('fitness')) {
-      return // Use cached data
+      return
     }
 
     try {
       dispatch({ type: 'SET_FITNESS_LOADING', payload: true })
       dispatch({ type: 'SET_FITNESS_ERROR', payload: null })
 
-      // Fetch all fitness data in parallel
-      const [exercisesResponse, mesocyclesResponse] = await Promise.all([
-        fetch('/api/fitness/exercises'),
-        fetch('/api/fitness/mesocycles')
+      // Fetch exercises and mesocycles in parallel
+      const [exercisesData, mesocyclesData] = await Promise.all([
+        supabase
+          .from('exercises')
+          .select('*')
+          .eq('user_id', user.id)
+          .is('deleted_at', null)
+          .order('name'),
+        supabase
+          .from('mesocycles')
+          .select('*')
+          .eq('user_id', user.id)
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false })
       ])
 
-      if (!exercisesResponse.ok || !mesocyclesResponse.ok) {
-        throw new Error('Failed to fetch fitness data')
-      }
+      if (exercisesData.error) throw exercisesData.error
+      if (mesocyclesData.error) throw mesocyclesData.error
 
-      const [exercisesResult, mesocyclesResult] = await Promise.all([
-        exercisesResponse.json(),
-        mesocyclesResponse.json()
-      ])
+      // Transform data using the new types
+      const exercises = (exercisesData.data || []).map(exerciseRowToExercise)
+      const mesocycles = (mesocyclesData.data || []).map(mesocycleRowToMesocycle)
 
       dispatch({ 
         type: 'SET_FITNESS_DATA', 
         payload: { 
-          exercises: exercisesResult.data || [], 
-          mesocycles: mesocyclesResult.data || [], 
-          workoutLogs: [] // Would be fetched separately as needed
+          exercises, 
+          mesocycles, 
+          workoutSessions: [] // Will be fetched separately as needed
         } 
       })
       dispatch({ type: 'SET_FITNESS_LAST_FETCH', payload: Date.now() })
@@ -643,74 +689,73 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     } finally {
       dispatch({ type: 'SET_FITNESS_LOADING', payload: false })
     }
-  }, [user, isDataStale])
+  }, [user, supabase, isDataStale])
 
-  const createExercise = useCallback(async (exercise: Omit<Exercise, 'id'>): Promise<Exercise | null> => {
+  const createExercise = useCallback(async (exercise: Omit<Exercise, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>): Promise<Exercise | null> => {
+    if (!user) return null
+
     try {
       dispatch({ type: 'SET_FITNESS_ERROR', payload: null })
       
-      const rowData = exerciseToRow(exercise)
-      const response = await fetch('/api/fitness/exercises', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(rowData),
-      })
+      const { data, error } = await supabase
+        .from('exercises')
+        .insert({
+          ...exercise,
+          user_id: user.id,
+        })
+        .select()
+        .single()
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to create exercise')
-      }
+      if (error) throw error
 
-      const createdExerciseRow = await response.json()
-      const createdExercise = exerciseRowToExercise(createdExerciseRow)
-      
-      dispatch({ type: 'ADD_EXERCISE', payload: createdExercise })
-      return createdExercise
+      const newExercise = exerciseRowToExercise(data)
+      dispatch({ type: 'ADD_EXERCISE', payload: newExercise })
+      return newExercise
     } catch (err) {
       dispatch({ type: 'SET_FITNESS_ERROR', payload: err instanceof Error ? err.message : 'Failed to create exercise' })
       return null
     }
-  }, [])
+  }, [user, supabase])
 
-  const updateExercise = useCallback(async (id: string, updates: Partial<Omit<Exercise, 'id'>>): Promise<Exercise | null> => {
+  const updateExercise = useCallback(async (id: string, updates: Partial<Omit<Exercise, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>>): Promise<Exercise | null> => {
+    if (!user) return null
+
     try {
       dispatch({ type: 'SET_FITNESS_ERROR', payload: null })
       
-      const rowData = exerciseToRow(updates as Omit<Exercise, 'id'>)
-      const response = await fetch(`/api/fitness/exercises/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(rowData),
-      })
+      const { data, error } = await supabase
+        .from('exercises')
+        .update(updates)
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select()
+        .single()
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to update exercise')
-      }
+      if (error) throw error
 
-      const updatedExerciseRow = await response.json()
-      const updatedExercise = exerciseRowToExercise(updatedExerciseRow)
-      
+      const updatedExercise = exerciseRowToExercise(data)
       dispatch({ type: 'UPDATE_EXERCISE', payload: updatedExercise })
       return updatedExercise
     } catch (err) {
       dispatch({ type: 'SET_FITNESS_ERROR', payload: err instanceof Error ? err.message : 'Failed to update exercise' })
       return null
     }
-  }, [])
+  }, [user, supabase])
 
   const deleteExercise = useCallback(async (id: string): Promise<boolean> => {
+    if (!user) return false
+
     try {
       dispatch({ type: 'SET_FITNESS_ERROR', payload: null })
       
-      const response = await fetch(`/api/fitness/exercises/${id}`, {
-        method: 'DELETE',
-      })
+      // Soft delete
+      const { error } = await supabase
+        .from('exercises')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', id)
+        .eq('user_id', user.id)
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to delete exercise')
-      }
+      if (error) throw error
 
       dispatch({ type: 'REMOVE_EXERCISE', payload: id })
       return true
@@ -718,7 +763,108 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: 'SET_FITNESS_ERROR', payload: err instanceof Error ? err.message : 'Failed to delete exercise' })
       return false
     }
-  }, [])
+  }, [user, supabase])
+
+  const createMesocycle = useCallback(async (mesocycleInput: CreateMesocycleInput): Promise<Mesocycle | null> => {
+    if (!user) return null
+
+    try {
+      dispatch({ type: 'SET_FITNESS_ERROR', payload: null })
+      
+      const { data, error } = await supabase
+        .from('mesocycles')
+        .insert({
+          ...mesocycleInput,
+          user_id: user.id,
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      const newMesocycle = mesocycleRowToMesocycle(data)
+      dispatch({ type: 'ADD_MESOCYCLE', payload: newMesocycle })
+      return newMesocycle
+    } catch (err) {
+      dispatch({ type: 'SET_FITNESS_ERROR', payload: err instanceof Error ? err.message : 'Failed to create mesocycle' })
+      return null
+    }
+  }, [user, supabase])
+
+  const updateMesocycle = useCallback(async (id: string, updates: UpdateMesocycleInput): Promise<Mesocycle | null> => {
+    if (!user) return null
+
+    try {
+      dispatch({ type: 'SET_FITNESS_ERROR', payload: null })
+      
+      const { data, error } = await supabase
+        .from('mesocycles')
+        .update(updates)
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select()
+        .single()
+
+      if (error) throw error
+
+      const updatedMesocycle = mesocycleRowToMesocycle(data)
+      dispatch({ type: 'UPDATE_MESOCYCLE', payload: updatedMesocycle })
+      return updatedMesocycle
+    } catch (err) {
+      dispatch({ type: 'SET_FITNESS_ERROR', payload: err instanceof Error ? err.message : 'Failed to update mesocycle' })
+      return null
+    }
+  }, [user, supabase])
+
+  const deleteMesocycle = useCallback(async (id: string): Promise<boolean> => {
+    if (!user) return false
+
+    try {
+      dispatch({ type: 'SET_FITNESS_ERROR', payload: null })
+      
+      // Soft delete
+      const { error } = await supabase
+        .from('mesocycles')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', id)
+        .eq('user_id', user.id)
+
+      if (error) throw error
+
+      dispatch({ type: 'REMOVE_MESOCYCLE', payload: id })
+      return true
+    } catch (err) {
+      dispatch({ type: 'SET_FITNESS_ERROR', payload: err instanceof Error ? err.message : 'Failed to delete mesocycle' })
+      return false
+    }
+  }, [user, supabase])
+
+  const setMesocycleActive = useCallback(async (id: string): Promise<boolean> => {
+    if (!user) return false
+
+    try {
+      dispatch({ type: 'SET_FITNESS_ERROR', payload: null })
+      
+      // The database trigger will handle deactivating other mesocycles
+      const { data, error } = await supabase
+        .from('mesocycles')
+        .update({ is_active: true })
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select()
+        .single()
+
+      if (error) throw error
+
+      // Refresh fitness data to get updated active state
+      await refreshFitness(true)
+      
+      return true
+    } catch (err) {
+      dispatch({ type: 'SET_FITNESS_ERROR', payload: err instanceof Error ? err.message : 'Failed to activate mesocycle' })
+      return false
+    }
+  }, [user, supabase, refreshFitness])
 
   // Global refresh method
   const refreshAllData = useCallback(async (force = false) => {
@@ -744,7 +890,6 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     if (user) {
       refreshAllData()
     } else {
-      // Clear all data when user logs out
       dispatch({ type: 'RESET_ALL_DATA' })
     }
   }, [user?.id, refreshAllData])
@@ -768,6 +913,10 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     createExercise,
     updateExercise,
     deleteExercise,
+    createMesocycle,
+    updateMesocycle,
+    deleteMesocycle,
+    setMesocycleActive,
     refreshFitness,
     // Global methods
     refreshAllData,
@@ -791,6 +940,10 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     createExercise,
     updateExercise,
     deleteExercise,
+    createMesocycle,
+    updateMesocycle,
+    deleteMesocycle,
+    setMesocycleActive,
     refreshFitness,
     refreshAllData,
     clearCache,
@@ -813,4 +966,91 @@ export function useAppData() {
     throw new Error('useAppData must be used within an AppDataProvider')
   }
   return context
+}
+
+// Backward compatibility hook exports for existing components
+export function useWeightData() {
+  const {
+    weightEntries,
+    weightLoading,
+    weightError,
+    createWeightEntry,
+    updateWeightEntry,
+    deleteWeightEntry,
+    refreshWeightEntries,
+  } = useAppData()
+
+  return {
+    entries: weightEntries,
+    loading: weightLoading,
+    error: weightError,
+    createWeightEntry,
+    updateWeightEntry,
+    deleteWeightEntry,
+    refreshEntries: refreshWeightEntries,
+  }
+}
+
+export function useGoalsData() {
+  const {
+    goals,
+    activeGoal,
+    goalsLoading,
+    goalsError,
+    createGoal,
+    updateGoal,
+    deleteGoal,
+    completeGoal,
+    setGoalActive,
+    refreshGoals,
+  } = useAppData()
+
+  return {
+    goals,
+    activeGoal,
+    loading: goalsLoading,
+    error: goalsError,
+    createGoal,
+    updateGoal,
+    deleteGoal,
+    completeGoal,
+    setGoalActive,
+    refreshGoals,
+  }
+}
+
+export function useFitnessData() {
+  const {
+    exercises,
+    mesocycles,
+    workoutSessions,
+    activeMesocycle,
+    fitnessLoading,
+    fitnessError,
+    createExercise,
+    updateExercise,
+    deleteExercise,
+    createMesocycle,
+    updateMesocycle,
+    deleteMesocycle,
+    setMesocycleActive,
+    refreshFitness,
+  } = useAppData()
+
+  return {
+    exercises,
+    mesocycles,
+    workoutLogs: workoutSessions, // Backward compatibility
+    activeMesocycle,
+    loading: fitnessLoading,
+    error: fitnessError,
+    createExercise,
+    updateExercise,
+    deleteExercise,
+    createMesocycle,
+    updateMesocycle,
+    deleteMesocycle,
+    setMesocycleActive,
+    refreshAll: refreshFitness,
+  }
 }

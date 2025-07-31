@@ -158,39 +158,39 @@ export interface Database {
       exercises: {
         Row: {
           id: string
-          user_id: string | null
           name: string
           primary_muscle_group: string
           secondary_muscle_groups: string[] | null
           equipment: string | null
           notes: string | null
           use_rir_rpe: boolean | null
+          user_id: string | null
           created_at: string | null
           updated_at: string | null
           deleted_at: string | null
         }
         Insert: {
           id?: string
-          user_id?: string | null
           name: string
           primary_muscle_group: string
           secondary_muscle_groups?: string[] | null
           equipment?: string | null
           notes?: string | null
           use_rir_rpe?: boolean | null
+          user_id?: string | null
           created_at?: string | null
           updated_at?: string | null
           deleted_at?: string | null
         }
         Update: {
           id?: string
-          user_id?: string | null
           name?: string
           primary_muscle_group?: string
           secondary_muscle_groups?: string[] | null
           equipment?: string | null
           notes?: string | null
           use_rir_rpe?: boolean | null
+          user_id?: string | null
           created_at?: string | null
           updated_at?: string | null
           deleted_at?: string | null
@@ -345,10 +345,13 @@ export interface Database {
           specialization: string[] | null
           goal_statement: string | null
           is_template: boolean | null
+          is_active: boolean | null  // NEW FIELD
+          start_date: string | null  // NEW FIELD
+          end_date: string | null    // NEW FIELD
           created_at: string | null
           updated_at: string | null
           deleted_at: string | null
-          plan_data: Json | null
+          plan_data: Json | null // Legacy field, will be phased out
         }
         Insert: {
           id?: string
@@ -359,6 +362,9 @@ export interface Database {
           specialization?: string[] | null
           goal_statement?: string | null
           is_template?: boolean | null
+          is_active?: boolean | null
+          start_date?: string | null
+          end_date?: string | null
           created_at?: string | null
           updated_at?: string | null
           deleted_at?: string | null
@@ -373,10 +379,69 @@ export interface Database {
           specialization?: string[] | null
           goal_statement?: string | null
           is_template?: boolean | null
+          is_active?: boolean | null
+          start_date?: string | null
+          end_date?: string | null
           created_at?: string | null
           updated_at?: string | null
           deleted_at?: string | null
           plan_data?: Json | null
+        }
+      },
+      mesocycle_exercises: {
+        Row: {
+          id: string
+          mesocycle_id: string
+          exercise_id: string
+          day_number: number
+          order_index: number
+          sets: number
+          reps_min: number
+          reps_max: number
+          weight_type: string
+          weight_value: number | null
+          rpe_target: number | null
+          rest_seconds: number
+          notes: string | null
+          created_at: string | null
+          updated_at: string | null
+          deleted_at: string | null
+        }
+        Insert: {
+          id?: string
+          mesocycle_id: string
+          exercise_id: string
+          day_number: number
+          order_index?: number
+          sets?: number
+          reps_min?: number
+          reps_max?: number
+          weight_type?: string
+          weight_value?: number | null
+          rpe_target?: number | null
+          rest_seconds?: number
+          notes?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+          deleted_at?: string | null
+        }
+        Update: {
+          id?: string
+          mesocycle_id?: string
+          exercise_id?: string
+          day_number?: number
+          order_index?: number
+          sets?: number
+          reps_min?: number
+          reps_max?: number
+          weight_type?: string
+          weight_value?: number | null
+          rpe_target?: number | null
+          rest_seconds?: number
+          notes?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+          deleted_at?: string | null
         }
       },
       mesocycle_days: {
@@ -460,7 +525,8 @@ export interface Database {
       set_logs: {
         Row: {
           id: string
-          exercise_log_id: string | null
+          exercise_log_id: string | null  // Legacy field
+          workout_exercise_id: string | null  // NEW field
           set_number: number
           weight: number
           reps: number
@@ -471,6 +537,7 @@ export interface Database {
         Insert: {
           id?: string
           exercise_log_id?: string | null
+          workout_exercise_id?: string | null
           set_number: number
           weight: number
           reps: number
@@ -481,6 +548,7 @@ export interface Database {
         Update: {
           id?: string
           exercise_log_id?: string | null
+          workout_exercise_id?: string | null
           set_number?: number
           weight?: number
           reps?: number
@@ -515,42 +583,89 @@ export interface Database {
           created_at?: string
         }
       },
-      workout_logs: {
+      workout_sessions: {
         Row: {
           id: string
-          user_id: string | null
+          user_id: string
           mesocycle_id: string | null
+          session_date: string
           week_number: number | null
           day_number: number | null
-          workout_date: string
-          custom_goal_entry: string | null
+          session_name: string | null
+          notes: string | null
           started_at: string | null
           completed_at: string | null
           created_at: string | null
+          updated_at: string | null
+          deleted_at: string | null
         }
         Insert: {
           id?: string
-          user_id?: string | null
+          user_id: string
           mesocycle_id?: string | null
+          session_date: string
           week_number?: number | null
           day_number?: number | null
-          workout_date?: string
-          custom_goal_entry?: string | null
+          session_name?: string | null
+          notes?: string | null
           started_at?: string | null
           completed_at?: string | null
           created_at?: string | null
+          updated_at?: string | null
+          deleted_at?: string | null
         }
         Update: {
           id?: string
-          user_id?: string | null
+          user_id?: string
           mesocycle_id?: string | null
+          session_date?: string
           week_number?: number | null
           day_number?: number | null
-          workout_date?: string
-          custom_goal_entry?: string | null
+          session_name?: string | null
+          notes?: string | null
           started_at?: string | null
           completed_at?: string | null
           created_at?: string | null
+          updated_at?: string | null
+          deleted_at?: string | null
+        }
+      },
+      workout_exercises: {
+        Row: {
+          id: string
+          workout_session_id: string
+          exercise_id: string
+          mesocycle_exercise_id: string | null
+          order_index: number
+          is_substitution: boolean | null
+          notes: string | null
+          created_at: string | null
+          updated_at: string | null
+          deleted_at: string | null
+        }
+        Insert: {
+          id?: string
+          workout_session_id: string
+          exercise_id: string
+          mesocycle_exercise_id?: string | null
+          order_index?: number
+          is_substitution?: boolean | null
+          notes?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+          deleted_at?: string | null
+        }
+        Update: {
+          id?: string
+          workout_session_id?: string
+          exercise_id?: string
+          mesocycle_exercise_id?: string | null
+          order_index?: number
+          is_substitution?: boolean | null
+          notes?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+          deleted_at?: string | null
         }
       },
     }
