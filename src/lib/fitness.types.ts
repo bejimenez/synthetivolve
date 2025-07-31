@@ -316,12 +316,17 @@ export function validateMesocycleInput(input: CreateMesocycleInput): string[] {
 }
 
 // Legacy type compatibility (for gradual migration)
+export interface DayPlan {
+  day: number;
+  exercises: Array<{ exercise_id: string; order_index: number }>;
+}
+
 export interface MesocyclePlan extends Mesocycle {
   // Legacy properties for backward compatibility
   daysPerWeek: number
   isTemplate?: boolean
-  days?: any[] // Legacy day structure
-  exerciseDB?: Record<string, any>
+  days?: DayPlan[] // Legacy day structure
+  exerciseDB?: Record<string, Exercise>
 }
 
 // Convert new mesocycle to legacy format for existing components
@@ -358,4 +363,55 @@ export function calculateMesocycleVolume(exercises: MesocycleExercise[]): Record
   })
   
   return volume
+}
+
+// Legacy types for workout logs, will be replaced by WorkoutSession
+//export type WorkoutLogRow = Database['public']['Tables']['workout_sessions']['Row']
+export type ExerciseLogRow = Database['public']['Tables']['exercise_logs']['Row']
+
+export interface LoggedExercise {
+  exercise_id: string
+  order_index: number
+  replaced_original: boolean | null
+  was_accessory: boolean | null
+  sets: SetLog[]
+}
+
+export interface WorkoutLog {
+  id: string
+  user_id: string
+  mesocycle_id: string | null
+  week_number: number | null
+  day_number: number | null
+  workout_date: string
+  started_at: string | null
+  completed_at: string | null
+  custom_goal_entry: string | null
+  created_at: string | null
+  exercises: LoggedExercise[]
+}
+
+export function buildWorkoutLogFromRows(
+  workoutRow: WorkoutLogRow,
+  exerciseLogs: (ExerciseLogRow & { set_logs: SetLogRow[] })[]
+): WorkoutLog {
+  return {
+    id: workoutRow.id,
+    user_id: workoutRow.user_id || '',
+    mesocycle_id: workoutRow.mesocycle_id,
+    week_number: workoutRow.week_number,
+    day_number: workoutRow.day_number,
+    workout_date: workoutRow.workout_date,
+    started_at: workoutRow.started_at,
+    completed_at: workoutRow.completed_at,
+    custom_goal_entry: workoutRow.custom_goal_entry,
+    created_at: workoutRow.created_at,
+    exercises: exerciseLogs.map(exLogRow => ({
+      exercise_id: exLogRow.exercise_id || '',
+      order_index: exLogRow.order_index,
+      replaced_original: exLogRow.replaced_original,
+      was_accessory: exLogRow.was_accessory,
+      sets: exLogRow.set_logs,
+    })),
+  }
 }

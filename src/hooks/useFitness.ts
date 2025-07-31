@@ -1,7 +1,6 @@
 import { useAppData } from '@/components/data/AppDataProvider'
 import type { 
   Exercise, 
-  Mesocycle, 
   WorkoutSession, 
   CreateMesocycleInput,
   UpdateMesocycleInput,
@@ -19,8 +18,8 @@ interface UseFitnessReturn {
   createExercise: (exercise: Omit<Exercise, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>) => Promise<Exercise | null>
   updateExercise: (id: string, updates: Partial<Omit<Exercise, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>>) => Promise<Exercise | null>
   deleteExercise: (id: string) => Promise<boolean>
-  createMesocycle: (mesocycle: any) => Promise<any> // Legacy signature, will adapt internally
-  updateMesocycle: (id: string, updates: any) => Promise<any>
+  createMesocycle: (mesocycle: MesocyclePlan) => Promise<MesocyclePlan | null> // Legacy signature, will adapt internally
+  updateMesocycle: (id: string, updates: Partial<MesocyclePlan>) => Promise<MesocyclePlan | null>
   deleteMesocycle: (id: string) => Promise<boolean>
   setMesocycleActive: (id: string) => Promise<boolean>
   refreshAll: () => Promise<void>
@@ -49,16 +48,16 @@ export function useFitness(): UseFitnessReturn {
   const legacyActiveMesocycle = activeMesocycle ? mesocycleToLegacyPlan(activeMesocycle) : null
 
   // Adapter function for createMesocycle to handle legacy input format
-  const createMesocycle = async (legacyMesocycle: any): Promise<any> => {
+  const createMesocycle = async (legacyMesocycle: MesocyclePlan): Promise<MesocyclePlan | null> => {
     // Convert legacy MesocyclePlan input to new CreateMesocycleInput format
     const newMesocycleInput: CreateMesocycleInput = {
       name: legacyMesocycle.name,
       weeks: legacyMesocycle.weeks,
       days_per_week: legacyMesocycle.daysPerWeek || legacyMesocycle.days_per_week,
-      specialization: legacyMesocycle.specialization,
+      specialization: legacyMesocycle.specialization ?? undefined,
       goal_statement: legacyMesocycle.goalStatement || legacyMesocycle.goal_statement,
       is_template: legacyMesocycle.isTemplate || legacyMesocycle.is_template || false,
-      start_date: legacyMesocycle.start_date,
+      start_date: legacyMesocycle.start_date ?? undefined,
     }
 
     const result = await createMesocycleNew(newMesocycleInput)
@@ -66,7 +65,7 @@ export function useFitness(): UseFitnessReturn {
   }
 
   // Adapter function for updateMesocycle
-  const updateMesocycle = async (id: string, legacyUpdates: any): Promise<any> => {
+  const updateMesocycle = async (id: string, legacyUpdates: Partial<MesocyclePlan>): Promise<MesocyclePlan | null> => {
     // Convert legacy updates to new format
     const newUpdates: UpdateMesocycleInput = {}
     

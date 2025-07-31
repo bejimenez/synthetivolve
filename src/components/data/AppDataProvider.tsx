@@ -4,13 +4,11 @@
 import { createContext, useContext, useCallback, useReducer, useEffect, useMemo } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { createSupabaseClient } from '@/lib/supabase'
-import type { Database } from '@/lib/database.types'
 
 // Import types from the new fitness system
 import type { 
   Exercise, 
   Mesocycle, 
-  MesocycleWithExercises,
   WorkoutSession,
   CreateMesocycleInput,
   UpdateMesocycleInput
@@ -96,7 +94,6 @@ type AppDataAction =
 
 // Cache configuration
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
-const STALE_WHILE_REVALIDATE_DURATION = 30 * 60 * 1000 // 30 minutes
 
 // Initial state
 const initialState: AppDataState = {
@@ -304,12 +301,6 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const supabase = createSupabaseClient()
 
   // Utility functions
-  const isDataStale = useCallback((module: DataModule): boolean => {
-    const lastFetch = getLastFetchTime(module)
-    if (!lastFetch) return true
-    return Date.now() - lastFetch > CACHE_DURATION
-  }, [])
-
   const getLastFetchTime = useCallback((module: DataModule): number | null => {
     switch (module) {
       case 'weight': return state.weightLastFetch
@@ -318,6 +309,12 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       default: return null
     }
   }, [state.weightLastFetch, state.goalsLastFetch, state.fitnessLastFetch])
+
+  const isDataStale = useCallback((module: DataModule): boolean => {
+    const lastFetch = getLastFetchTime(module)
+    if (!lastFetch) return true
+    return Date.now() - lastFetch > CACHE_DURATION
+  }, [getLastFetchTime])
 
   const clearCache = useCallback((modules?: DataModule[]) => {
     if (!modules) {
@@ -617,7 +614,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         .eq('user_id', user.id)
 
       // Then activate the selected goal
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('goals')
         .update({ is_active: true })
         .eq('id', id)
@@ -846,7 +843,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: 'SET_FITNESS_ERROR', payload: null })
       
       // The database trigger will handle deactivating other mesocycles
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('mesocycles')
         .update({ is_active: true })
         .eq('id', id)
@@ -892,7 +889,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     } else {
       dispatch({ type: 'RESET_ALL_DATA' })
     }
-  }, [user?.id, refreshAllData])
+  }, [user, refreshAllData])
 
   // Memoized context value
   const contextValue = useMemo(() => ({

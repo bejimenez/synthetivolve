@@ -66,9 +66,9 @@ const SortableExerciseItem: React.FC<SortableExerciseItemProps> = ({ exercise, o
             <div className="font-medium text-sm text-gray-900 dark:text-gray-100">{exercise.name}</div>
             <div className="flex items-center space-x-1 mt-1">
               <Badge variant="default" className="text-xs">
-                {formatMuscleGroupName(exercise.primary)}
+                {formatMuscleGroupName(exercise.primary_muscle_group)}
               </Badge>
-              {exercise.secondary.map(muscle => (
+              {exercise.secondary_muscle_groups.map(muscle => (
                 <Badge key={muscle} variant="outline" className="text-xs">
                   {formatMuscleGroupName(muscle)}
                 </Badge>

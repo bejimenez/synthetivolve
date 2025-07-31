@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { Plus, Minus, ChevronDown, ChevronUp, History } from 'lucide-react';
-import { Exercise, SetLog, LoggedExercise, MuscleGroup } from '@/lib/fitness.types';
+import { Exercise, SetLog, WorkoutExercise, MuscleGroup } from '@/lib/fitness.types';
 import { formatMuscleGroupName } from '@/lib/fitness_utils';
 import { useFitness } from '@/hooks/useFitness';
 
@@ -28,7 +28,7 @@ const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
 }) => {
   const [sets, setSets] = useState<SetLog[]>(existingSets);
   const [showPrevious, setShowPrevious] = useState(false);
-  const [previousWorkout, setPreviousWorkout] = useState<LoggedExercise | null>(null);
+  const [previousWorkout, setPreviousWorkout] = useState<WorkoutExercise | null>(null);
   const { workoutLogs } = useFitness();
 
   useEffect(() => {
@@ -38,7 +38,7 @@ const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
   useEffect(() => {
     if (showPreviousData) {
       const lastWorkout = workoutLogs
-        .filter(log => log.exercises.some((ex: LoggedExercise) => ex.exercise_id === exercise.id)) // Use exercise_id
+        .filter(log => log.exercises.some(ex => ex.exercise_id === exercise.id)) // Use exercise_id
         .sort((a, b) => {
           const dateA = a.created_at ? new Date(a.created_at).getTime() : 0; // Treat null as very old
           const dateB = b.created_at ? new Date(b.created_at).getTime() : 0; // Treat null as very old
@@ -46,21 +46,21 @@ const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
         })[0];
       
       if (lastWorkout) {
-        const exerciseData = lastWorkout.exercises.find((ex: LoggedExercise) => ex.exercise_id === exercise.id); // Use exercise_id
+        const exerciseData = lastWorkout.exercises.find(ex => ex.exercise_id === exercise.id); // Use exercise_id
         setPreviousWorkout(exerciseData || null);
       }
     }
   }, [exercise.id, showPreviousData, workoutLogs]);
 
   const addSet = () => {
-    const newSet: SetLog = {
+    const newSet: Partial<SetLog> = {
       set_number: sets.length + 1,
       weight: 0,
       reps: 0,
-      ...(exercise.useRIRRPE ? { rir: 0 } : { rpe: 0 })
+      ...(exercise.use_rir_rpe ? { rir: 0 } : { rpe: 0 })
     };
     
-    const updatedSets = [...sets, newSet];
+    const updatedSets = [...sets, newSet as SetLog];
     setSets(updatedSets);
     onUpdate(updatedSets);
   };
@@ -86,9 +86,9 @@ const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
     updateSet(setIndex, 'weight', previousSet.weight);
     updateSet(setIndex, 'reps', previousSet.reps);
     
-    if (exercise.useRIRRPE && previousSet.rir !== undefined) {
+    if (exercise.use_rir_rpe && previousSet.rir !== undefined) {
       updateSet(setIndex, 'rir', previousSet.rir);
-    } else if (!exercise.useRIRRPE && previousSet.rpe !== undefined) {
+    } else if (!exercise.use_rir_rpe && previousSet.rpe !== undefined) {
       updateSet(setIndex, 'rpe', previousSet.rpe);
     }
   };
@@ -131,9 +131,9 @@ const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
         
         <div className="flex items-center space-x-2">
           <Badge variant="default" className="text-xs">
-            {formatMuscleGroupName(exercise.primary as MuscleGroup)}
+            {formatMuscleGroupName(exercise.primary_muscle_group as MuscleGroup)}
           </Badge>
-          {exercise.secondary.map((muscle) => (
+          {exercise.secondary_muscle_groups.map((muscle) => (
             <Badge key={muscle} variant="outline" className="text-xs">
               {formatMuscleGroupName(muscle as MuscleGroup)}
             </Badge>
@@ -144,7 +144,7 @@ const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
             </Badge>
           )}
           <Badge variant="outline" className="text-xs">
-            {exercise.useRIRRPE ? 'RIR' : 'RPE'}
+            {exercise.use_rir_rpe ? 'RIR' : 'RPE'}
           </Badge>
         </div>
       </CardHeader>
@@ -161,14 +161,14 @@ const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
                 <div className="grid grid-cols-4 gap-2 text-xs text-gray-600 mb-2 dark:text-gray-400">
                   <span>Weight</span>
                   <span>Reps</span>
-                  <span>{exercise.useRIRRPE ? 'RIR' : 'RPE'}</span>
+                  <span>{exercise.use_rir_rpe ? 'RIR' : 'RPE'}</span>
                   <span>Volume</span>
                 </div>
                 {(previousWorkout.sets as SetLog[]).map((set, index) => (
                   <div key={index} className="grid grid-cols-4 gap-2 text-sm text-gray-900 dark:text-gray-100">
                     <span>{set.weight} kg</span>
                     <span>{set.reps}</span>
-                    <span>{exercise.useRIRRPE ? set.rir || '-' : set.rpe || '-'}</span>
+                    <span>{exercise.use_rir_rpe ? set.rir || '-' : set.rpe || '-'}</span>
                     <span>{(set.weight * set.reps).toFixed(0)} kg</span>
                   </div>
                 ))}
@@ -183,7 +183,7 @@ const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
             <span className="col-span-1">Set</span>
             <span className="col-span-3">Weight (kg)</span>
             <span className="col-span-2">Reps</span>
-            <span className="col-span-2">{exercise.useRIRRPE ? 'RIR' : 'RPE'}</span>
+            <span className="col-span-2">{exercise.use_rir_rpe ? 'RIR' : 'RPE'}</span>
             <span className="col-span-2">Volume</span>
             <span className="col-span-2">Actions</span>
           </div>
@@ -218,15 +218,15 @@ const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
               <div className="col-span-2">
                 <Input
                   type="number"
-                  value={exercise.useRIRRPE ? (set.rir || '') : (set.rpe || '')}
+                  value={exercise.use_rir_rpe ? (set.rir || '') : (set.rpe || '')}
                   onChange={(e) => {
                     const value = parseInt(e.target.value) || 0;
-                    updateSet(index, exercise.useRIRRPE ? 'rir' : 'rpe', value);
+                    updateSet(index, exercise.use_rir_rpe ? 'rir' : 'rpe', value);
                   }}
                   placeholder="0"
                   className="h-8"
                   min="0"
-                  max={exercise.useRIRRPE ? 10 : 10}
+                  max={exercise.use_rir_rpe ? 10 : 10}
                 />
               </div>
               

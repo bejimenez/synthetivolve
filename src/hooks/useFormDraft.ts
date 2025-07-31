@@ -54,7 +54,7 @@ export function useFormDraft<T extends object>({
     });
     
     setIsLoaded(true)
-  }, [key, defaultValues, persistToUrl, urlStateKey, searchParams.toString()])
+  }, [key, defaultValues, persistToUrl, urlStateKey, searchParams])
 
   // Auto-save draft with debouncing (memory + URL)
   const saveDraft = useCallback((values: T) => {
