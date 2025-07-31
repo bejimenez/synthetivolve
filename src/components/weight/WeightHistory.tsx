@@ -3,7 +3,7 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import { format, parseISO } from 'date-fns'
-import { useWeightData } from '@/components/weight/WeightDataProvider'
+import { useWeightData } from '@/components/data/AppDataProvider'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
